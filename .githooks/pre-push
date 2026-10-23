@@ -1,0 +1,10 @@
+#!/bin/sh
+# main 직접 push 차단. PR로 병합한다. (최초 1회 등 예외: ALLOW_MAIN_PUSH=1 git push ...)
+[ "$ALLOW_MAIN_PUSH" = "1" ] && exit 0
+while read local_ref local_sha remote_ref remote_sha; do
+  if [ "$remote_ref" = "refs/heads/main" ]; then
+    echo "BLOCKED: main 에 직접 push 할 수 없습니다. 브랜치를 push 하고 PR 을 만드세요."
+    exit 1
+  fi
+done
+exit 0

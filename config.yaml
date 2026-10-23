@@ -1,0 +1,12 @@
+# 분석 설정 한 파일. 값을 바꾸고 파이프라인을 재실행하면 전체가 재현된다.
+# 공유 파일: 수정은 단독 PR로 하고 팀에 공지한다.
+entry_seconds: 7
+speeds_mps: [1.0, 0.8, 0.7]
+min_sample: 5
+outlier:
+  max_length_m: 80
+  max_green_s: 200
+exposure_radius_m: 300
+exposure_radius_sensitivity_m: [200, 500]
+crs_storage: "EPSG:4326"
+crs_compute: "EPSG:5179"

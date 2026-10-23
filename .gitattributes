@@ -1,0 +1,9 @@
+* text=auto eol=lf
+
+# 원본 CSV/바이너리는 줄바꿈·인코딩 변환 금지
+*.csv -text
+*.geojson -text
+*.pmtiles binary
+*.png binary
+*.jpg binary
+*.pdf binary

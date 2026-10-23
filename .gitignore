@@ -1,0 +1,36 @@
+# --- 데이터: 원본·중간 산출물은 절대 올리지 않는다 (CLAUDE.md R1) ---
+data/*
+!data/download_log.csv
+field/photos/
+*.gpkg
+*.parquet
+*.xlsx
+*.xls
+*.zip
+
+# --- 키·비밀 ---
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+
+# --- Python ---
+__pycache__/
+*.pyc
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# --- Web ---
+node_modules/
+web/dist/
+
+# --- OS / 에디터 ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# --- Claude 로컬 설정 ---
+.claude/settings.local.json

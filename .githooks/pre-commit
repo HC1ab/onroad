@@ -1,0 +1,33 @@
+#!/bin/sh
+# 유출 방지 (CLAUDE.md R1, R3). 우회(--no-verify) 금지.
+fail=0
+staged=$(git diff --cached --name-only --diff-filter=ACM)
+
+for f in $staged; do
+  case "$f" in
+    data/raw/*|data/interim/*|field/photos/*|.env|*.key|*.pem|*.gpkg|*.parquet|*.xlsx|*.xls)
+      echo "BLOCKED (올리면 안 되는 경로/형식): $f"; fail=1 ;;
+  esac
+  size=$(git cat-file -s ":$f" 2>/dev/null || echo 0)
+  if [ "$size" -gt 52428800 ]; then
+    echo "BLOCKED (50MB 초과): $f"; fail=1
+  fi
+done
+
+if [ -n "$staged" ]; then
+  hits=$(git diff --cached -U0 -- . ':!.githooks' | grep -E '^\+' | grep -Ei '[a-z0-9_-]*(key|secret|token|passwd|password)[a-z0-9_-]*[[:space:]]*[=:][[:space:]]*["'"'"']?[A-Za-z0-9%+/=_-]{20,}')
+  if [ -n "$hits" ]; then
+    echo "BLOCKED (키/비밀로 보이는 문자열이 추가됨). 값은 .env 에만 둔다:"
+    echo "$hits" | cut -c1-80
+    fail=1
+  fi
+fi
+
+if command -v gitleaks >/dev/null 2>&1; then
+  gitleaks protect --staged --redact -v || fail=1
+else
+  echo "(참고) gitleaks 미설치: 추가 스캔 생략. 설치 권장: winget install gitleaks.gitleaks"
+fi
+
+[ "$fail" -eq 0 ] || { echo "커밋 중단. 위 항목을 unstage 하세요: git restore --staged <파일>"; exit 1; }
+exit 0
