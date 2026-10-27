@@ -55,6 +55,7 @@ def test_response_contract_and_source_values(database, path, kind):
     '/api/areas?speed=2', '/api/areas?speed=nan', '/api/areas?speed=foo',
     '/api/areas?sigungu=x', '/api/areas/123/crosswalks',
     '/api/crosswalks/candidates?radius=400', '/api/crosswalks/candidates?radius=300.5',
+    '/api/areas?radius=400', '/api/areas/21090730/crosswalks?radius=100',
     '/api/crosswalks/candidates?bbox=nan,0,1,1',
     '/api/crosswalks/candidates?bbox=10,0,1,1',
     '/api/crosswalks/candidates?bbox=-181,0,1,1',
@@ -85,10 +86,39 @@ def test_filters_and_empty_bbox(database):
 def test_missing_data_not_fabricated(database):
     assert client.get('/api/areas/00000000/crosswalks').status_code == 404
     for path in ('/api/areas?speed=0.7', '/api/crosswalks/candidates?radius=200',
-                 '/api/areas/21090740/crosswalks'):
+                 '/api/areas/21090740/crosswalks', '/api/areas?radius=500',
+                 '/api/areas/21090730/crosswalks?radius=200'):
         response = client.get(path)
         assert response.status_code == 500
-        assert response.json()['error']['code'] == 'internal_error'
+        assert response.json()['error'] == {
+            'code': 'internal_error', 'message': '요청한 속도·반경·지역의 결과가 아직 적재되지 않았습니다.'}
+
+
+def test_radius_is_part_of_the_key(database):
+    """반경별 결과를 따로 적재하고, 요청한 반경의 값만 돌려준다."""
+    bundle = read_bundle(ROOT / 'samples', ROOT, True)
+    extra = []
+    for kind, data in bundle:
+        if kind in ('areas', 'area_crosswalks'):
+            copy = json.loads(json.dumps(data))
+            copy['radius_m'] = 500
+            if kind == 'areas':
+                for item in copy['items']:
+                    item['n_candidate'] = item['n_candidate'] + 1
+            else:
+                for item in copy['items']:
+                    item['exposure_cnt'] = item['exposure_cnt'] + 1
+                    item['flags']['market'] = True
+            extra.append((kind, copy))
+    with psycopg.connect(database) as conn:
+        ingest(conn, bundle + extra, True)
+    a300 = client.get('/api/areas?radius=300').json()
+    a500 = client.get('/api/areas?radius=500').json()
+    assert a300['radius_m'] == 300 and a500['radius_m'] == 500
+    by300 = {i['adm_cd']: i['n_candidate'] for i in a300['items']}
+    assert all(i['n_candidate'] == by300[i['adm_cd']] + 1 for i in a500['items'])
+    c500 = client.get('/api/areas/21090730/crosswalks?radius=500').json()
+    assert c500['radius_m'] == 500 and all(i['flags']['market'] for i in c500['items'])
 
 
 def test_empty_imported_details_and_real_marker(database):

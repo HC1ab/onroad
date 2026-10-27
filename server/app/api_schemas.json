@@ -2,7 +2,7 @@
   "area_crosswalks.schema.json": {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "area_crosswalks.schema.json",
-    "title": "GET /api/areas/{adm_cd}/crosswalks?speed=",
+    "title": "GET /api/areas/{adm_cd}/crosswalks?speed=&radius=",
     "description": "한 읍면동의 횡단보도 목록. 지역 상세 패널(F7)에 쓴다. 기본 정렬은 gap_s 내림차순.",
     "type": "object",
     "required": [
@@ -19,6 +19,15 @@
       },
       "speed": {
         "$ref": "common.schema.json#/$defs/speed"
+      },
+      "radius_m": {
+        "type": "integer",
+        "enum": [
+          200,
+          300,
+          500
+        ],
+        "description": "flags·exposure_cnt·is_candidate 를 계산한 노출 반경(m). 요청의 radius 와 같다."
       },
       "items": {
         "type": "array",
@@ -96,7 +105,7 @@
         "enum": [
           0.7,
           0.8,
-          1.0
+          1
         ],
         "description": "보행 속도 가정(m/s). 0.7 노인, 0.8 보행약자, 1.0 일반."
       },
@@ -239,7 +248,7 @@
   "areas.schema.json": {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "areas.schema.json",
-    "title": "GET /api/areas?speed=&sido=&sigungu=",
+    "title": "GET /api/areas?speed=&radius=&sido=&sigungu=",
     "description": "읍면동별 집계. 속도 하나 기준. 지도 채색(F5), 사분면(F5), 상위 N(F7)에 쓴다.",
     "type": "object",
     "required": [
@@ -253,6 +262,15 @@
       },
       "speed": {
         "$ref": "common.schema.json#/$defs/speed"
+      },
+      "radius_m": {
+        "type": "integer",
+        "enum": [
+          200,
+          300,
+          500
+        ],
+        "description": "n_candidate 를 계산한 노출 반경(m). 요청의 radius 와 같다."
       },
       "thresholds": {
         "type": "object",
