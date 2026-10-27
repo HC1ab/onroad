@@ -74,14 +74,56 @@ export interface MetaResponse {
   limits_text: string
 }
 
-// 검증 결과는 W6(#22)에서 화면을 만들 때 세부 타입을 쓴다.
+export interface V1Result {
+  n: number
+  mean_diff_s: number
+  flash_included_n: number
+  points: {
+    cw_id: string
+    length_m: number
+    recorded_green_s: number
+    measured_green_s: number
+    measured_flash_s: number
+    diff_s: number
+  }[]
+}
+
+export interface V2Result {
+  top_n: number
+  pairs: { a: Speed; b: Speed; spearman: number; top_n_overlap: number }[]
+}
+
+export interface V3Result {
+  speed: Speed
+  recent_years: number[]
+  overlap_ratio: number
+  ratio_vs_random: number
+  p_value: number
+  n_permutations: number
+  random_distribution: number[]
+}
+
+export type FacilityKind = 'senior_center' | 'market' | 'protect_zone'
+
+export interface V4Result {
+  speed: Speed
+  spearman: number
+  by_group: { group: string; spearman: number; n: number }[]
+  inside_outside: { facility: FacilityKind; inside_short_ratio: number; outside_short_ratio: number }[]
+}
+
+export interface V5Result {
+  coefficients: { term: string; estimate: number; ci_low: number; ci_high: number }[]
+}
+
+/** 검증 결과(F8). 아직 계산하지 않은 항목은 null */
 export interface ValidationResponse {
   _sample?: boolean
-  v1: unknown
-  v2: unknown
-  v3: unknown
-  v4: unknown
-  v5: unknown
+  v1: V1Result | null
+  v2: V2Result | null
+  v3: V3Result | null
+  v4: V4Result | null
+  v5: V5Result | null
 }
 
 export type BoundaryProps = { adm_cd: string; adm_name: string; sido: string; sigungu: string }

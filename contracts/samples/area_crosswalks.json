@@ -2,6 +2,7 @@
   "_sample": true,
   "adm_cd": "21090730",
   "speed": 0.8,
+  "radius_m": 300,
   "items": [
     {
       "cw_id": "SAMPLE-21090730-002",

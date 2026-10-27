@@ -1,23 +1,41 @@
+import { useState } from 'react'
 import { api, API_MODE } from './api/client'
-import { AreaSummary } from './components/AreaSummary'
+import { AreaDetail } from './components/AreaDetail'
 import { Footer } from './components/Footer'
 import { Legend } from './components/Legend'
 import { LoadState } from './components/LoadState'
-import { MapView } from './components/MapView'
+import { MapView, type Bbox } from './components/MapView'
+import { QuadrantChart } from './components/QuadrantChart'
 import { SpeedSelector } from './components/SpeedSelector'
+import { Tabs } from './components/Tabs'
+import { TopList } from './components/TopList'
 import { useApi } from './hooks/useApi'
+import { useRoute } from './lib/route'
+import { ValidationPage } from './pages/ValidationPage'
 import { AppStateProvider, useAppState } from './state/AppState'
 
 function Main() {
-  const { speed } = useAppState()
+  const { speed, layers, selectedAdmCd } = useAppState()
+  const route = useRoute()
+  const onMap = route === 'map'
+  const [bbox, setBbox] = useState<Bbox | null>(null)
   const boundaries = useApi((s) => api.boundaries(s), [])
   const areas = useApi((s) => api.areas(speed, s), [speed])
+  // 후보 점은 켜져 있고 지도 범위를 알 때만 요청한다. 지도를 움직이거나 속도를 바꾸면 다시 요청.
+  const bboxKey = bbox?.join(',') ?? ''
+  const candidates = useApi(
+    (s) => (layers.candidates && bbox ? api.candidates(speed, bbox, s) : Promise.resolve(null)),
+    [speed, bboxKey, layers.candidates],
+  )
   const meta = useApi((s) => api.meta(s), [])
 
-  const error = boundaries.error ?? areas.error
+  const selectedArea = areas.data?.items.find((a) => a.adm_cd === selectedAdmCd) ?? null
+
+  const error = boundaries.error ?? areas.error ?? candidates.error
   const retry = () => {
     if (boundaries.error) boundaries.reload()
     if (areas.error) areas.reload()
+    if (candidates.error) candidates.reload()
   }
 
   return (
@@ -27,21 +45,42 @@ function Main() {
           <h1>한 박자</h1>
           <span className="muted">점검 우선순위 후보 지도</span>
         </div>
-        <SpeedSelector />
+        <Tabs route={route} />
+        {onMap && <SpeedSelector />}
         {API_MODE === 'mock' && <span className="badge">샘플 데이터 (mock) · 실제 분석 결과 아님</span>}
       </header>
 
-      <main className="body">
+      {/* 검증 화면에서도 지도는 지우지 않고 숨긴다(돌아왔을 때 위치·선택 유지). */}
+      <main className={selectedArea ? "body wide" : "body"} hidden={!onMap}>
         <section className="map-wrap">
-          <MapView boundaries={boundaries.data} areas={areas.data?.items ?? null} />
-          <Legend />
+          <MapView
+            boundaries={boundaries.data}
+            areas={areas.data?.items ?? null}
+            candidates={layers.candidates ? candidates.data : null}
+            onBoundsChange={setBbox}
+            visible={onMap}
+          />
+          <Legend candidateCount={candidates.data?.features.length ?? null} />
           <LoadState loading={boundaries.loading || areas.loading} error={error} onRetry={retry} />
         </section>
+        {/* 지역을 고르면 오른쪽 패널을 넓혀 상세를 보여주고, 닫으면 사분면·상위 N 으로 돌아간다. */}
         <aside className="side">
-          {/* W4(#20) 사분면, W5(#21) 상위 N·상세 패널이 이 영역에 들어간다. */}
-          <AreaSummary areas={areas.data?.items ?? null} />
+          {selectedArea ? (
+            <AreaDetail key={selectedArea.adm_cd} area={selectedArea} thresholdsData={areas.data} />
+          ) : (
+            <>
+              <QuadrantChart data={areas.data} />
+              <TopList data={areas.data} />
+            </>
+          )}
         </aside>
       </main>
+
+      {!onMap && (
+        <main className="body-page">
+          <ValidationPage meta={meta.data} />
+        </main>
+      )}
 
       <Footer meta={meta.data} />
     </div>
