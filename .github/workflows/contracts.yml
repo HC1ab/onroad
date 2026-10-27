@@ -21,5 +21,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install "jsonschema>=4.18" referencing
+      - run: pip install "jsonschema>=4.18" referencing openapi-spec-validator==0.7.1
       - run: python contracts/check_samples.py
+      - name: OpenAPI 명세 검사 (외부 스키마 참조 포함)
+        run: openapi-spec-validator contracts/openapi.yaml

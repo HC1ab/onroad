@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>한 박자 API 명세</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.17.14/swagger-ui.css">
+  <style>
+    body { margin: 0; background: #fff; }
+    .note { font: 14px/1.5 "Malgun Gothic", "Apple SD Gothic Neo", sans-serif; background: #fdeee3; color: #7a2a08; padding: 10px 16px; }
+    .note a { color: #c2410c; }
+  </style>
+</head>
+<body>
+  <div class="note">
+    main 브랜치의 <a href="https://github.com/HC1ab/onroad/blob/main/contracts/openapi.yaml">contracts/openapi.yaml</a>을 보여줍니다.
+    응답 형식의 기준은 같은 폴더의 JSON Schema입니다. 로컬 서버를 띄우면 "Try it out"으로 직접 호출할 수 있습니다(<code>docker compose up</code>).
+    · <a href="../onboarding.html">온보딩 문서</a>
+  </div>
+  <div id="swagger"></div>
+  <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.17.14/swagger-ui-bundle.js"></script>
+  <script>
+    window.ui = SwaggerUIBundle({
+      url: 'https://raw.githubusercontent.com/HC1ab/onroad/main/contracts/openapi.yaml',
+      dom_id: '#swagger',
+      deepLinking: true,
+      docExpansion: 'list',
+      defaultModelsExpandDepth: 0,
+      tryItOutEnabled: false,
+      // ?url=... 로 다른 브랜치나 로컬 명세를 미리 볼 수 있다.
+      queryConfigEnabled: true,
+    })
+  </script>
+</body>
+</html>

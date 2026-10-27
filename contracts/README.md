@@ -13,6 +13,12 @@
 | `boundaries.schema.json` | 읍면동 경계 정적 파일 (API 아님) | `samples/boundaries.json` | F5 |
 | `common.schema.json` | 공통 정의 (`adm_cd`, `speed`, 비율, 노출 플래그) | — | — |
 
+## API 명세 (Swagger)
+- [`openapi.yaml`](openapi.yaml): 엔드포인트·파라미터·오류 응답을 담은 OpenAPI 3.1 명세. 응답 본문은 위 JSON Schema를 `$ref`로 참조한다.
+- 보기: https://hc1ab.github.io/onroad/api/ (main 기준). 다른 브랜치는 `?url=<raw 주소>`를 붙인다.
+- 로컬 서버를 띄우면 http://localhost:8000/api/docs 에서도 볼 수 있다(B3 #14에서 이 명세와 맞춘다).
+- 엔드포인트나 파라미터를 바꿀 때는 이 파일과 스키마를 같은 PR에서 함께 고친다.
+
 ## 규칙
 - **기준은 이 폴더의 JSON Schema(2020-12)다.** 서버 응답과 파이프라인 결과는 이 스키마를 통과해야 한다. 서버의 OpenAPI 문서는 이 스키마에 맞춰 만든다.
 - 속도는 요청마다 하나(`speed=0.7|0.8|1.0`)이고, 응답에는 그 속도의 값만 담는다.

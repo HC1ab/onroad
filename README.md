@@ -5,6 +5,7 @@
 - **처음 왔다면 여기부터:** [팀 온보딩 문서 (웹)](https://hc1ab.github.io/onroad/onboarding.html) — 원본은 [docs/onboarding.html](docs/onboarding.html)
 - 기획: [docs/PRD.md](docs/PRD.md)
 - 데이터 수집: [docs/data-collection-guide.md](docs/data-collection-guide.md)
+- **API 명세 (Swagger):** https://hc1ab.github.io/onroad/api/ — 원본은 [contracts/openapi.yaml](contracts/openapi.yaml)
 - 협업 규칙: [CLAUDE.md](CLAUDE.md)
 - 작업 보드: [MVP 작업 보드 이슈 #29](https://github.com/HC1ab/onroad/issues/29)
 

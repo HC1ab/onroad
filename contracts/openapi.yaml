@@ -1,0 +1,261 @@
+openapi: 3.1.0
+info:
+  title: 한 박자 API
+  version: 0.1.0
+  summary: 횡단보도 초록불 시간 전수 점검 — 읽기 전용 API
+  description: |
+    전국 횡단보도의 기록된 녹색신호시간을 기준식 `7 + L/v`와 비교한 결과를 제공하는 **읽기 전용** API입니다.
+    계산은 파이프라인이 미리 끝내 두고, API는 결과를 조회만 합니다.
+
+    - 모든 엔드포인트는 `GET`입니다. 다른 메서드는 `405`로 거부합니다.
+    - 응답 본문 형식은 같은 폴더의 `*.schema.json`(JSON Schema 2020-12)이 기준입니다. 이 문서는 그 스키마를 참조합니다.
+    - `adm_cd`는 문자열, 좌표는 EPSG:4326, 시간은 초(`_s`), 비율은 0~1입니다.
+    - 속도(`speed`)는 요청마다 하나이며 응답에는 그 속도의 값만 담깁니다.
+    - 표현 원칙: 결과는 "점검 우선순위 후보", "기록값이 기준식보다 짧음"으로만 표현합니다. 위험·위반 판정이 아닙니다.
+
+    샘플 응답은 `contracts/samples/`에 있습니다(가상 값, `_sample: true`).
+  license:
+    name: 데이터 출처 표기 필요 (admdongkor CC BY 4.0 등)
+servers:
+  - url: http://localhost:8080
+    description: 로컬 (docker compose, nginx 경유)
+  - url: http://localhost:8000
+    description: 로컬 (API 직접)
+tags:
+  - name: 지도
+    description: 읍면동 채색, 사분면, 상위 N, 후보 점
+  - name: 상세
+    description: 지역별 횡단보도 목록
+  - name: 검증·기준 정보
+    description: V1~V5, 기준월·커버리지·출처
+  - name: 내려받기
+    description: CSV (P1)
+  - name: 운영
+    description: 상태 확인
+
+paths:
+  /api/areas:
+    get:
+      tags: [지도]
+      operationId: listAreas
+      summary: 읍면동별 집계
+      description: 지도 채색(F5), 사분면(F5), 상위 N(F7)에 쓰는 읍면동 단위 값. 속도 슬라이더를 바꾸면 이 요청만 다시 보냅니다(F6).
+      parameters:
+        - $ref: '#/components/parameters/speed'
+        - name: sido
+          in: query
+          description: 시도명으로 거르기 (F10, P1)
+          schema: { type: string }
+          example: 부산광역시
+        - name: sigungu
+          in: query
+          description: 시군구명으로 거르기 (F10, P1). sido 와 함께 쓴다.
+          schema: { type: string }
+          example: 해운대구
+      responses:
+        '200':
+          description: 성공
+          content:
+            application/json:
+              schema: { $ref: './areas.schema.json' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /api/areas/{adm_cd}/crosswalks:
+    get:
+      tags: [상세]
+      operationId: listAreaCrosswalks
+      summary: 읍면동의 횡단보도 목록
+      description: 지역 상세 패널(F7). 기본 정렬은 짧은 초(gap_s) 내림차순.
+      parameters:
+        - name: adm_cd
+          in: path
+          required: true
+          description: 읍면동 코드 (문자열)
+          schema: { $ref: './common.schema.json#/$defs/adm_cd' }
+          example: '21090730'
+        - $ref: '#/components/parameters/speed'
+      responses:
+        '200':
+          description: 성공
+          content:
+            application/json:
+              schema: { $ref: './area_crosswalks.schema.json' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /api/crosswalks/candidates:
+    get:
+      tags: [지도]
+      operationId: listCandidates
+      summary: 후보 횡단보도 점 레이어
+      description: |
+        gap > 0 이면서 노출 플래그가 1개 이상인 횡단보도(GeoJSON 점). 지도 점 레이어(F5)와 노출 반경 슬라이더(F11).
+        bbox 없이 전국을 요청하면 응답이 커지므로 지도 화면 범위를 넘긴다.
+      parameters:
+        - $ref: '#/components/parameters/speed'
+        - name: bbox
+          in: query
+          description: 화면 범위 `minLon,minLat,maxLon,maxLat` (EPSG:4326)
+          schema:
+            type: string
+            pattern: '^-?\d+(\.\d+)?,-?\d+(\.\d+)?,-?\d+(\.\d+)?,-?\d+(\.\d+)?$'
+          example: 129.05,35.13,129.22,35.23
+        - name: radius
+          in: query
+          description: 노출 반경(m). 기본 300, 민감도 200/500.
+          schema: { type: integer, enum: [200, 300, 500], default: 300 }
+      responses:
+        '200':
+          description: 성공
+          content:
+            application/geo+json:
+              schema: { $ref: './candidates.schema.json' }
+            application/json:
+              schema: { $ref: './candidates.schema.json' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /api/validation:
+    get:
+      tags: [검증·기준 정보]
+      operationId: getValidation
+      summary: 검증 결과 V1~V5
+      description: 검증 화면(F8). 아직 계산하지 않은 항목은 null. 결과가 기대와 달라도 그대로 담깁니다.
+      responses:
+        '200':
+          description: 성공
+          content:
+            application/json:
+              schema: { $ref: './validation.schema.json' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /api/meta:
+    get:
+      tags: [검증·기준 정보]
+      operationId: getMeta
+      summary: 기준 정보와 한계 고지
+      description: 모든 화면 하단의 한계 고지·출처(F9), 인구 기준월, 좌표 커버리지, 녹색신호시간 정의 확정 여부.
+      responses:
+        '200':
+          description: 성공
+          content:
+            application/json:
+              schema: { $ref: './meta.schema.json' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /api/export/areas.csv:
+    get:
+      tags: [내려받기]
+      operationId: exportAreasCsv
+      summary: 읍면동 집계 CSV (F12, P1)
+      parameters:
+        - $ref: '#/components/parameters/speed'
+      responses:
+        '200':
+          description: UTF-8(BOM) CSV. 칼럼은 areas 응답의 items 필드와 같다.
+          content:
+            text/csv:
+              schema: { type: string }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /api/export/crosswalks.csv:
+    get:
+      tags: [내려받기]
+      operationId: exportCrosswalksCsv
+      summary: 후보 횡단보도 목록 CSV (F12, P1)
+      parameters:
+        - $ref: '#/components/parameters/speed'
+      responses:
+        '200':
+          description: UTF-8(BOM) CSV. 칼럼은 area_crosswalks 응답의 items 필드(flags 는 펼침)와 같다.
+          content:
+            text/csv:
+              schema: { type: string }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /data/boundaries.json:
+    get:
+      tags: [지도]
+      operationId: getBoundaries
+      summary: 읍면동 경계 (정적 파일)
+      description: |
+        API가 아니라 nginx가 제공하는 정적 파일입니다. 값은 담지 않으며 `/api/areas`의 `adm_cd`로 붙입니다.
+        단순화·gzip 처리(전국 약 350KB). 출처: admdongkor(CC BY 4.0).
+      responses:
+        '200':
+          description: 성공
+          content:
+            application/geo+json:
+              schema: { $ref: './boundaries.schema.json' }
+
+  /healthz:
+    get:
+      tags: [운영]
+      operationId: healthz
+      summary: 상태 확인
+      description: API가 떠 있고 DB에 연결되면 200, DB 연결이 안 되면 503.
+      responses:
+        '200':
+          description: 정상
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Health' }
+              example: { status: ok, db: ok }
+        '503':
+          description: DB 연결 실패
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Health' }
+              example: { status: degraded, db: down }
+
+components:
+  parameters:
+    speed:
+      name: speed
+      in: query
+      description: 보행 속도 가정(m/s). 0.7 노인, 0.8 보행약자, 1.0 일반.
+      schema:
+        type: number
+        enum: [0.7, 0.8, 1.0]
+        default: 0.8
+
+  schemas:
+    Health:
+      type: object
+      required: [status, db]
+      properties:
+        status: { type: string, enum: [ok, degraded] }
+        db: { type: string, enum: [ok, down] }
+
+  responses:
+    BadRequest:
+      description: 요청 값이 올바르지 않음 (예. speed 가 0.7/0.8/1.0 이 아님)
+      content:
+        application/json:
+          schema: { $ref: './error.schema.json' }
+          example: { error: { code: bad_request, message: 요청 값이 올바르지 않습니다. } }
+    NotFound:
+      description: 대상 없음
+      content:
+        application/json:
+          schema: { $ref: './error.schema.json' }
+          example: { error: { code: not_found, message: 요청한 대상을 찾을 수 없습니다. } }
+    RateLimited:
+      description: 요청이 너무 많음
+      content:
+        application/json:
+          schema: { $ref: './error.schema.json' }
+          example: { error: { code: rate_limited, message: 요청이 너무 많습니다. 잠시 후 다시 시도해 주세요. } }
+    InternalError:
+      description: 서버 오류 (내부 정보는 담지 않음)
+      content:
+        application/json:
+          schema: { $ref: './error.schema.json' }
+          example: { error: { code: internal_error, message: 서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요. } }
