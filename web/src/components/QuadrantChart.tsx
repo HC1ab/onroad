@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import type { AreasResponse } from '../api/types'
-import { buildPoints, countPriority, niceMax, ticks, type PlotPoint, type Thresholds } from '../lib/quadrant'
+import { pct0 as pct, pct1 } from '../lib/format'
+import { buildPoints, countPriority, effectiveThresholds, niceMax, ticks, type PlotPoint, type Thresholds } from '../lib/quadrant'
 import { useAppState } from '../state/AppState'
 import { LOW_SAMPLE_COLOR } from './mapStyle'
 
@@ -11,24 +12,17 @@ const PAD = { left: 40, right: 12, top: 14, bottom: 34 }
 const PW = W - PAD.left - PAD.right
 const PH = H - PAD.top - PAD.bottom
 
-const pct = (v: number) => `${Math.round(v * 100)}%`
-const pct1 = (v: number) => `${(v * 100).toFixed(1)}%`
-
 type Axis = 'x' | 'y'
 
 /** 읍면동 사분면 (F5). 가로 = 기준식보다 짧은 비율, 세로 = 65세 이상 비율. */
 export function QuadrantChart({ data }: { data: AreasResponse | null }) {
-  const { selectedAdmCd, select } = useAppState()
+  const { selectedAdmCd, select, customThresholds: custom, setCustomThresholds: setCustom } = useAppState()
   const svgRef = useRef<SVGSVGElement>(null)
-  // 사용자가 경계선을 옮기기 전에는 API 기본값(중앙값)을 따른다.
-  const [custom, setCustom] = useState<Thresholds | null>(null)
   const [drag, setDrag] = useState<Axis | null>(null)
   const [hover, setHover] = useState<PlotPoint | null>(null)
 
-  const base: Thresholds | null = data
-    ? { x: data.thresholds.short_ratio_median, y: data.thresholds.ratio_65plus_median }
-    : null
-  const t = custom ?? base
+  // 사용자가 경계선을 옮기기 전에는 API 기본값(중앙값)을 따른다. 경계선은 상위 N 목록과 공유한다.
+  const t: Thresholds | null = effectiveThresholds(data, custom)
 
   const view = useMemo(() => {
     if (!data || !t) return null

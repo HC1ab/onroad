@@ -1,17 +1,18 @@
 import { useState } from 'react'
 import { api, API_MODE } from './api/client'
-import { AreaSummary } from './components/AreaSummary'
+import { AreaDetail } from './components/AreaDetail'
 import { Footer } from './components/Footer'
 import { Legend } from './components/Legend'
 import { LoadState } from './components/LoadState'
 import { MapView, type Bbox } from './components/MapView'
 import { QuadrantChart } from './components/QuadrantChart'
 import { SpeedSelector } from './components/SpeedSelector'
+import { TopList } from './components/TopList'
 import { useApi } from './hooks/useApi'
 import { AppStateProvider, useAppState } from './state/AppState'
 
 function Main() {
-  const { speed, layers } = useAppState()
+  const { speed, layers, selectedAdmCd } = useAppState()
   const [bbox, setBbox] = useState<Bbox | null>(null)
   const boundaries = useApi((s) => api.boundaries(s), [])
   const areas = useApi((s) => api.areas(speed, s), [speed])
@@ -22,6 +23,8 @@ function Main() {
     [speed, bboxKey, layers.candidates],
   )
   const meta = useApi((s) => api.meta(s), [])
+
+  const selectedArea = areas.data?.items.find((a) => a.adm_cd === selectedAdmCd) ?? null
 
   const error = boundaries.error ?? areas.error ?? candidates.error
   const retry = () => {
@@ -41,7 +44,7 @@ function Main() {
         {API_MODE === 'mock' && <span className="badge">샘플 데이터 (mock) · 실제 분석 결과 아님</span>}
       </header>
 
-      <main className="body">
+      <main className={selectedArea ? "body wide" : "body"}>
         <section className="map-wrap">
           <MapView
             boundaries={boundaries.data}
@@ -52,10 +55,16 @@ function Main() {
           <Legend candidateCount={candidates.data?.features.length ?? null} />
           <LoadState loading={boundaries.loading || areas.loading} error={error} onRetry={retry} />
         </section>
+        {/* 지역을 고르면 오른쪽 패널을 넓혀 상세를 보여주고, 닫으면 사분면·상위 N 으로 돌아간다. */}
         <aside className="side">
-          <QuadrantChart data={areas.data} />
-          {/* W5(#21) 상위 N·상세 패널이 이 아래에 들어간다. */}
-          <AreaSummary areas={areas.data?.items ?? null} />
+          {selectedArea ? (
+            <AreaDetail key={selectedArea.adm_cd} area={selectedArea} thresholdsData={areas.data} />
+          ) : (
+            <>
+              <QuadrantChart data={areas.data} />
+              <TopList data={areas.data} />
+            </>
+          )}
         </aside>
       </main>
 

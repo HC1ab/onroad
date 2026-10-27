@@ -80,9 +80,10 @@ export function MapView({ boundaries, areas, candidates, onBoundsChange }: Props
   const mapRef = useRef<maplibregl.Map | null>(null)
   const readyRef = useRef(false)
   const pointPopup = useRef<maplibregl.Popup | null>(null)
+  const focusPopup = useRef<maplibregl.Popup | null>(null)
   const boundsCb = useRef(onBoundsChange)
   boundsCb.current = onBoundsChange
-  const { selection, select, layers } = useAppState()
+  const { selection, select, layers, focus } = useAppState()
 
   // 레이어가 준비된 뒤 실행 (준비 전이면 준비 이벤트를 기다린다)
   const whenLayers = (fn: (map: maplibregl.Map) => void) => {
@@ -233,6 +234,20 @@ export function MapView({ boundaries, areas, candidates, onBoundsChange }: Props
       map.fitBounds(boundsOf({ type: 'FeatureCollection', features: [f] }), { padding, maxZoom: 14, duration: 600 })
     })
   }, [selection, boundaries])
+
+  // 상세 표에서 고른 횡단보도로 이동해 표시한다.
+  useEffect(() => {
+    focusPopup.current?.remove()
+    focusPopup.current = null
+    if (!focus) return
+    whenLayers((map) => {
+      map.flyTo({ center: [focus.lon, focus.lat], zoom: Math.max(map.getZoom(), 16), duration: 600 })
+      focusPopup.current = new maplibregl.Popup({ offset: 10, className: 'map-tip', closeOnClick: false })
+        .setLngLat([focus.lon, focus.lat])
+        .setHTML(`<b>선택한 횡단보도</b><br>${esc(focus.label)}`)
+        .addTo(map)
+    })
+  }, [focus])
 
   return <div ref={container} className="map" aria-label="읍면동 지도" />
 }
