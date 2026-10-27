@@ -3,6 +3,10 @@
 export type Speed = 0.7 | 0.8 | 1.0
 export const SPEEDS: readonly Speed[] = [0.7, 0.8, 1.0]
 
+/** 목적지 노출 반경(m). 기본 300(결정 기록 005), 민감도 200·500 */
+export type Radius = 200 | 300 | 500
+export const RADII: readonly Radius[] = [200, 300, 500]
+
 export type Quadrant = 'high_high' | 'high_low' | 'low_high' | 'low_low'
 
 export interface AreaItem {
@@ -23,6 +27,7 @@ export interface AreaItem {
 export interface AreasResponse {
   _sample?: boolean
   speed: Speed
+  radius_m?: Radius
   thresholds: { short_ratio_median: number; ratio_65plus_median: number }
   items: AreaItem[]
 }
@@ -52,6 +57,7 @@ export interface AreaCrosswalksResponse {
   _sample?: boolean
   adm_cd: string
   speed: Speed
+  radius_m?: Radius
   items: CrosswalkItem[]
 }
 
@@ -61,7 +67,7 @@ export interface CandidatesResponse extends GeoJSON.FeatureCollection<
 > {
   _sample?: boolean
   speed?: Speed
-  radius_m?: 200 | 300 | 500
+  radius_m?: Radius
 }
 
 export interface MetaResponse {

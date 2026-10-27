@@ -28,9 +28,9 @@ interface Props {
 
 /** 지역 상세 패널 (F7). 오른쪽 패널을 넓혀서 보여준다. */
 export function AreaDetail({ area, thresholdsData }: Props) {
-  const { speed, select, customThresholds, focus, setFocus } = useAppState()
+  const { speed, radius, select, customThresholds, focus, setFocus } = useAppState()
   const [onlyShort, setOnlyShort] = useState(true)
-  const cws = useApi((s) => api.areaCrosswalks(area.adm_cd, speed, s), [area.adm_cd, speed])
+  const cws = useApi((s) => api.areaCrosswalks(area.adm_cd, speed, radius, s), [area.adm_cd, speed, radius])
 
   const t = effectiveThresholds(thresholdsData, customThresholds)
   const quadrant = t && area.short_ratio !== null && area.ratio_65plus !== null ? classify(area.short_ratio, area.ratio_65plus, t) : null
@@ -46,7 +46,7 @@ export function AreaDetail({ area, thresholdsData }: Props) {
         <button type="button" className="close-btn" aria-label="상세 닫기" onClick={() => select(null, 'list')}>✕</button>
       </div>
       <h2>{area.adm_name}</h2>
-      <p className="muted">{area.sido} {area.sigungu} · 속도 기준 {speed.toFixed(1)} m/s</p>
+      <p className="muted">{area.sido} {area.sigungu} · 속도 기준 {speed.toFixed(1)} m/s · 노출 반경 {radius}m</p>
 
       <dl className="stats">
         <div><dt>65세 이상 비율</dt><dd>{pct1(area.ratio_65plus)}</dd></div>

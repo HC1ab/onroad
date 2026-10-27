@@ -3,11 +3,12 @@ import type { AreasResponse } from '../api/types'
 import { pct1 } from '../lib/format'
 import { classify, effectiveThresholds } from '../lib/quadrant'
 import { rankAreas, SORT_LABEL, TOP_N_OPTIONS, type SortKey } from '../lib/ranking'
+import { regionLabel } from '../lib/region'
 import { useAppState } from '../state/AppState'
 
 /** 상위 N 지역 목록 (F7). 행을 누르면 지도가 그 지역으로 이동하고 상세가 열린다. */
 export function TopList({ data }: { data: AreasResponse | null }) {
-  const { select, customThresholds } = useAppState()
+  const { select, customThresholds, region } = useAppState()
   const [sortKey, setSortKey] = useState<SortKey>('short_ratio')
   const [n, setN] = useState<number>(TOP_N_OPTIONS[0])
 
@@ -28,7 +29,7 @@ export function TopList({ data }: { data: AreasResponse | null }) {
   return (
     <section className="card toplist">
       <div className="card-head">
-        <h3>상위 {n}개 지역</h3>
+        <h3>{regionLabel(region)} 상위 {n}개 지역</h3>
       </div>
       <div className="toplist-controls">
         <label>

@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import maplibregl, { type ExpressionSpecification, type LngLatBoundsLike } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import type { AreaItem, BoundariesResponse, CandidatesResponse } from '../api/types'
+import { regionBounds } from '../lib/region'
 import { useAppState } from '../state/AppState'
 import {
   CANDIDATE_COLOR,
@@ -85,7 +86,8 @@ export function MapView({ boundaries, areas, candidates, onBoundsChange, visible
   const focusPopup = useRef<maplibregl.Popup | null>(null)
   const boundsCb = useRef(onBoundsChange)
   boundsCb.current = onBoundsChange
-  const { selection, select, layers, focus } = useAppState()
+  const { selection, select, layers, focus, region } = useAppState()
+  const regionInit = useRef(true)
 
   // 레이어가 준비된 뒤 실행 (준비 전이면 준비 이벤트를 기다린다)
   const whenLayers = (fn: (map: maplibregl.Map) => void) => {
@@ -236,6 +238,21 @@ export function MapView({ boundaries, areas, candidates, onBoundsChange, visible
       map.fitBounds(boundsOf({ type: 'FeatureCollection', features: [f] }), { padding, maxZoom: 14, duration: 600 })
     })
   }, [selection, boundaries])
+
+  // 지역 필터: 고르면 그 지역 전체가 보이게, 전국으로 돌리면 전체가 보이게 이동 (첫 렌더는 경계 추가 때 이미 맞춤)
+  useEffect(() => {
+    if (regionInit.current) {
+      regionInit.current = false
+      return
+    }
+    if (!boundaries) return
+    whenLayers((map) => {
+      const b = regionBounds(boundaries, region)
+      if (!b) return
+      const { clientWidth: w, clientHeight: h } = map.getContainer()
+      map.fitBounds(b, { padding: Math.max(10, Math.min(60, w / 6, h / 6)), duration: 600 })
+    })
+  }, [region, boundaries])
 
   // 숨김(검증 화면)에서 돌아오면 크기를 다시 맞춘다. 숨겨진 동안 크기가 0이었기 때문.
   useEffect(() => {
