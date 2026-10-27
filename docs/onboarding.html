@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>한 박자 팀 온보딩</title>
+<style>
+:root{
+  --bg:#ffffff; --surface:#faf7f4; --border:#ead9cc; --text:#1f2933; --muted:#5b6672;
+  --accent:#c2410c; --accent-soft:#fdeee3; --ok:#166534; --ok-soft:#e7f5ec; --warn:#92400e; --warn-soft:#fef3c7;
+  --code-bg:#f4efe9;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#16181b; --surface:#1e2125; --border:#3a3430; --text:#e8e6e3; --muted:#a3a9b0;
+    --accent:#f59a62; --accent-soft:#3a271c; --ok:#86efac; --ok-soft:#1b2e22; --warn:#fcd34d; --warn-soft:#352b12;
+    --code-bg:#262a2f;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#16181b; --surface:#1e2125; --border:#3a3430; --text:#e8e6e3; --muted:#a3a9b0;
+  --accent:#f59a62; --accent-soft:#3a271c; --ok:#86efac; --ok-soft:#1b2e22; --warn:#fcd34d; --warn-soft:#352b12;
+  --code-bg:#262a2f;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.65 "Pretendard","Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",sans-serif}
+a{color:var(--accent)}
+code,pre{font-family:ui-monospace,"Cascadia Code",Consolas,monospace;font-size:.9em}
+code{background:var(--code-bg);padding:.1em .35em;border-radius:4px}
+pre{background:var(--code-bg);padding:14px 16px;border-radius:8px;overflow-x:auto;line-height:1.5}
+pre code{background:none;padding:0}
+.wrap{max-width:1040px;margin:0 auto;padding:0 16px}
+header.hero{padding:48px 0 28px;border-bottom:1px solid var(--border)}
+.hero h1{font-size:2rem;margin:0 0 6px}
+.hero p.lead{font-size:1.1rem;color:var(--muted);margin:0 0 18px;max-width:46em}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:3px 12px;font-size:.85rem;font-weight:600}
+nav.toc{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--border)}
+nav.toc ul{list-style:none;margin:0;padding:10px 0;display:flex;gap:6px 16px;flex-wrap:wrap;font-size:.9rem}
+nav.toc a{text-decoration:none;color:var(--muted)}
+nav.toc a:hover{color:var(--accent)}
+section{padding:36px 0 8px}
+h2{font-size:1.45rem;margin:0 0 12px}
+h3{font-size:1.1rem;margin:22px 0 8px}
+p{margin:0 0 12px}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px}
+.card h3{margin-top:0}
+.formula{font-size:1.5rem;font-weight:700;color:var(--accent);text-align:center;padding:14px;background:var(--accent-soft);border-radius:10px;margin:8px 0 14px}
+table{width:100%;border-collapse:collapse;font-size:.93rem;margin:6px 0 14px}
+th,td{border-bottom:1px solid var(--border);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:var(--surface);font-weight:700}
+.tablewrap{overflow-x:auto}
+.tag{display:inline-block;font-size:.75rem;font-weight:700;border-radius:4px;padding:1px 7px}
+.p0{background:var(--accent-soft);color:var(--accent)}
+.p1{background:var(--surface);color:var(--muted);border:1px solid var(--border)}
+.note{border-radius:10px;padding:12px 16px;margin:10px 0 16px}
+.note.warn{background:var(--warn-soft);color:var(--warn)}
+.note.ok{background:var(--ok-soft);color:var(--ok)}
+.note.info{background:var(--accent-soft)}
+.flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:8px;margin:10px 0 16px}
+.flow .step{flex:1 1 150px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px}
+.flow .step b{display:block;color:var(--accent)}
+.flow .arrow{align-self:center;color:var(--accent);font-weight:700}
+ol.steps li{margin-bottom:8px}
+.dos{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.dos ul{margin:0;padding-left:20px}
+footer{border-top:1px solid var(--border);margin-top:36px;padding:20px 0 40px;color:var(--muted);font-size:.88rem}
+@media (max-width:600px){ .hero h1{font-size:1.6rem} .flow .arrow{display:none} }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <h1>한 박자 (onroad) 팀 온보딩</h1>
+    <p class="lead">처음 합류한 팀원이 10분 안에 프로젝트를 이해하고, 자기 구역에서 바로 작업을 시작할 수 있게 정리한 문서입니다. 세부 기준은 항상 <a href="PRD.md">PRD</a>와 <a href="../CLAUDE.md">CLAUDE.md</a>가 우선입니다.</p>
+    <div class="chips">
+      <span class="chip">마감 11/3 배포</span>
+      <span class="chip">Python · FastAPI · PostGIS</span>
+      <span class="chip">MapLibre 웹 지도</span>
+      <span class="chip">Ubuntu 서버</span>
+    </div>
+  </div>
+</header>
+
+<nav class="toc" aria-label="목차">
+  <div class="wrap">
+    <ul>
+      <li><a href="#why">1. 왜 하나</a></li>
+      <li><a href="#what">2. 무엇을 만드나</a></li>
+      <li><a href="#arch">3. 구조</a></li>
+      <li><a href="#data">4. 데이터</a></li>
+      <li><a href="#features">5. 기능</a></li>
+      <li><a href="#zones">6. 구역과 역할</a></li>
+      <li><a href="#setup">7. 개발 환경</a></li>
+      <li><a href="#workflow">8. 작업 흐름</a></li>
+      <li><a href="#rules">9. 지켜야 할 규칙</a></li>
+      <li><a href="#status">10. 현재 상태</a></li>
+      <li><a href="#first">11. 첫날 할 일</a></li>
+    </ul>
+  </div>
+</nav>
+
+<main class="wrap">
+
+<section id="why">
+  <h2>1. 왜 하나 — 문제 정의</h2>
+  <p>고령자에게 횡단보도 초록불은 짧게 느껴지고, 건너는 중에 신호가 바뀔 수 있습니다. 고령자가 자주 지나는 곳일수록 초록불 시간이 더 필요합니다.</p>
+  <p>보행 신호 시간의 기준은 <b>진입 7초 + 횡단 거리 1m당 1초(1m/s)</b>입니다. 노인보호구역 등에는 0.7~0.8m/s를 적용하라는 지침이 있지만, 이 기준을 <b>전국 모든 횡단보도에 적용해 본 점검</b>은 찾지 못했습니다. 지금까지의 개선은 모두 선정된 일부 지점(수십~1,000곳)에 대한 것입니다.</p>
+  <div class="note info"><b>우리의 차별점:</b> 같은 기준으로 전국을 전수 계산해서, 초록불이 기준식보다 짧게 기록된 곳이 아직 남아 있는지 데이터로 찾고, 지자체가 점검 순서를 정하도록 돕습니다.</div>
+</section>
+
+<section id="what">
+  <h2>2. 무엇을 만드나</h2>
+  <p>모든 판정은 아래 식 하나에서 나옵니다. 속도 v만 바꿔 세 번 계산합니다.</p>
+  <div class="formula">필요시간 = 7 + 연장 ÷ v &nbsp;·&nbsp; gap = 필요시간 − 기록된 녹색신호시간</div>
+  <div class="tablewrap"><table>
+    <tr><th>속도 v</th><th>의미</th><th>근거</th></tr>
+    <tr><td>1.0 m/s</td><td>일반 기준</td><td>신호 설치 기준</td></tr>
+    <tr><td>0.8 m/s</td><td>보행약자</td><td>서울시 안내</td></tr>
+    <tr><td>0.7 m/s</td><td>노인</td><td>경찰·제주·국토부</td></tr>
+  </table></div>
+  <p>gap &gt; 0이면 "기록값이 기준식보다 짧음"으로 표시합니다. 그 위에 두 가지 노출을 겹칩니다.</p>
+  <div class="grid">
+    <div class="card"><h3>거주 노출</h3><p>읍면동별 65세 이상 인구 비율. 짧음 비율과 함께 <b>2축 사분면</b>을 만들고, 오른쪽 위 칸이 "점검 우선순위 후보" 지역입니다.</p></div>
+    <div class="card"><h3>목적지·사고 노출</h3><p>횡단보도 반경 300m 안에 경로당·전통시장·노인보호구역이 있는지, 노인 보행사고 다발지역 안인지. 하나라도 걸리면 "후보 횡단보도"입니다.</p></div>
+    <div class="card"><h3>검증</h3><p>V1 현장 실측, V2 속도 민감도, V3 사고다발지역 연관성(연도 분할), V4 이미 조정됐는가. 결과가 기대와 달라도 그대로 보여줍니다.</p></div>
+  </div>
+  <p style="margin-top:14px">결과물은 <b>URL 하나로 접속하는 웹 지도</b>입니다: 읍면동 채색지도, 속도 슬라이더, 사분면 차트, 상위 N 지역 목록, 지역 상세, 검증 화면.</p>
+</section>
+
+<section id="arch">
+  <h2>3. 구조 — 서버가 프론트까지 내려준다</h2>
+  <div class="flow">
+    <div class="step"><b>공공데이터</b>횡단보도, 경계, 인구, 사고, 시설</div>
+    <div class="arrow">→</div>
+    <div class="step"><b>파이프라인</b>정제 · 읍면동 배정 · gap 계산 · 집계 · 노출 플래그 (미리 계산)</div>
+    <div class="arrow">→</div>
+    <div class="step"><b>서버 (Ubuntu)</b>Nginx → FastAPI(읽기 전용) → PostgreSQL+PostGIS</div>
+    <div class="arrow">→</div>
+    <div class="step"><b>브라우저</b>지도 · 슬라이더 · 사분면 · 목록 · 검증</div>
+  </div>
+  <ul>
+    <li><b>계산은 파이프라인이 미리 끝냅니다.</b> 서버는 결과 테이블을 조회해서 내려주기만 합니다. 속도 슬라이더를 움직이면 <code>speed</code> 값만 바꿔 다시 조회합니다.</li>
+    <li><b>쓰기 기능은 없습니다.</b> 로그인, 사용자 입력 저장 모두 없습니다.</li>
+    <li><b>원본 데이터와 인증키는 서버에 올리지 않습니다.</b> 서버 DB에는 결과 테이블만 들어갑니다.</li>
+    <li>읍면동 경계 도형은 API가 아니라 단순화한 정적 파일로 제공합니다(전국 원본이 약 35MB).</li>
+  </ul>
+  <h3>API (모두 GET)</h3>
+  <div class="tablewrap"><table>
+    <tr><th>엔드포인트</th><th>용도</th></tr>
+    <tr><td><code>/api/areas?speed=&amp;sido=&amp;sigungu=</code></td><td>읍면동별 짧음 비율, 65세 이상 비율, 사분면</td></tr>
+    <tr><td><code>/api/areas/{adm_cd}/crosswalks?speed=</code></td><td>지역별 횡단보도 목록</td></tr>
+    <tr><td><code>/api/crosswalks/candidates?bbox=&amp;speed=&amp;radius=</code></td><td>후보 횡단보도 점 레이어</td></tr>
+    <tr><td><code>/api/validation</code></td><td>V1~V5 결과</td></tr>
+    <tr><td><code>/api/meta</code></td><td>기준월, 커버리지, 필드 정의 상태, 출처</td></tr>
+    <tr><td><code>/api/export/{areas|crosswalks}.csv</code></td><td>결과 내려받기</td></tr>
+    <tr><td><code>/healthz</code></td><td>상태 확인</td></tr>
+  </table></div>
+</section>
+
+<section id="data">
+  <h2>4. 데이터</h2>
+  <p>원본 받는 법과 확인 항목은 <a href="data-collection-guide.md">수집 가이드</a>에 있습니다. 원본은 <code>data/raw/</code>에 두고 Git에는 올리지 않습니다. 받을 때마다 <code>data/download_log.csv</code>에 한 줄 기록합니다.</p>
+  <div class="tablewrap"><table>
+    <tr><th>데이터</th><th>활용 항목</th><th>활용</th><th>구분</th></tr>
+    <tr><td>전국 횡단보도</td><td>연장, 녹색신호시간, 위도·경도</td><td>7+L/v 계산 후 기록값과 비교</td><td><span class="tag p0">필수</span></td></tr>
+    <tr><td>읍면동 경계 (admdongkor)</td><td>읍면동 코드, 경계 도형</td><td>횡단보도를 읍면동에 배정</td><td><span class="tag p0">필수</span></td></tr>
+    <tr><td>65세 이상 인구 (행안부)</td><td>65세 이상, 총인구, 행정기관 코드</td><td>비율 계산, 사분면 세로축</td><td><span class="tag p0">필수</span></td></tr>
+    <tr><td>노인 보행사고 다발지역</td><td>다발지역 범위, 사고 건수, 연도</td><td>과거 연도는 노출, 최근 연도는 검증</td><td><span class="tag p0">필수</span></td></tr>
+    <tr><td>경로당·전통시장·보호구역</td><td>위도, 경도, 시설 유형</td><td>반경 300m 안 노출 표시</td><td><span class="tag p1">선택</span></td></tr>
+  </table></div>
+  <h3>게이트 — 통과 못 하면 멈춘다</h3>
+  <div class="tablewrap"><table>
+    <tr><th>게이트</th><th>확인할 것</th></tr>
+    <tr><td>A</td><td>횡단보도 데이터: 부산 행 수, 연장·녹색신호시간·좌표 입력률, <b>녹색신호시간이 점멸을 포함하는지</b></td></tr>
+    <tr><td>B</td><td>65세 이상 인구: 전국 읍면동을 받을 수 있는지, 총인구가 있는지</td></tr>
+    <tr><td>C</td><td>경계 코드와 인구 코드가 몇 % 일치하는지</td></tr>
+    <tr><td>D</td><td>선택 데이터의 좌표 입력률, 사고 데이터의 연도 범위</td></tr>
+  </table></div>
+  <div class="note warn"><b>가장 큰 리스크:</b> 녹색신호시간 필드가 점멸을 포함하는지 모르는 상태로 결과를 "부족"이라 부르는 것. 확정 전에는 "부족"이 아니라 "짧음(gap&gt;0, 정의 미확정)"으로 씁니다.</div>
+</section>
+
+<section id="features">
+  <h2>5. 기능 (PRD 6장 요약)</h2>
+  <p>P0가 모두 동작해야 MVP입니다. P1·P2는 시간이 남을 때만 합니다.</p>
+  <div class="tablewrap"><table>
+    <tr><th>ID</th><th>우선</th><th>기능</th></tr>
+    <tr><td>F1~F4</td><td><span class="tag p0">P0</span></td><td>적재·정제, 좌표→읍면동 조인, 속도 3종 gap 계산, 읍면동 집계와 노출 플래그</td></tr>
+    <tr><td>F5~F7</td><td><span class="tag p0">P0</span></td><td>채색지도·사분면·후보 점, 속도 슬라이더(2초 안 갱신), 상위 N과 지역 상세</td></tr>
+    <tr><td>F8~F9</td><td><span class="tag p0">P0</span></td><td>검증 화면(V1~V4 수치), 모든 화면 하단 한계 고지</td></tr>
+    <tr><td>F15~F16</td><td><span class="tag p0">P0</span></td><td>읽기 전용 API 서버, Ubuntu 배포(재부팅 후 자동 기동)</td></tr>
+    <tr><td>F10~F12</td><td><span class="tag p1">P1</span></td><td>시도·시군구 필터, 노출 반경 슬라이더, CSV 내려받기</td></tr>
+    <tr><td>F17~F18</td><td><span class="tag p1">P1</span></td><td>프론트 mock 모드, 정적 폴백(서버 장애 대비)</td></tr>
+    <tr><td>F13~F14</td><td><span class="tag p1">P2</span></td><td>병원 노출 플래그, 지역 상세 템플릿 해설</td></tr>
+  </table></div>
+</section>
+
+<section id="zones">
+  <h2>6. 구역과 역할 — 폴더가 곧 담당</h2>
+  <p>바이브 코딩에서 충돌은 AI가 남의 파일을 건드릴 때 생깁니다. 그래서 <b>자기 구역 폴더만 수정</b>하고, 구역 사이는 <code>contracts/</code>로만 연결합니다.</p>
+  <div class="tablewrap"><table>
+    <tr><th>구역</th><th>폴더</th><th>하는 일</th></tr>
+    <tr><td>A-pipeline</td><td><code>pipeline/</code>, <code>data/download_log.csv</code></td><td>수집·정제·공간조인·gap·집계 (F1~F4)</td></tr>
+    <tr><td>B-validation</td><td><code>validation/</code></td><td>V1~V5, 부산 현장 실측</td></tr>
+    <tr><td>C-web</td><td><code>web/</code></td><td>지도·사분면·슬라이더·목록 (F5~F7, F9~F12, F17)</td></tr>
+    <tr><td>D-docs</td><td><code>docs/</code></td><td>게이트 보고서, 결정 기록, 발표 자료</td></tr>
+    <tr><td>E-server</td><td><code>server/</code></td><td>API, Docker Compose, Ubuntu 배포 (F15, F16, F18)</td></tr>
+  </table></div>
+  <ul>
+    <li>각 구역 폴더의 <code>CLAUDE.md</code>에 그 구역 전용 규칙이 있습니다. AI 세션은 자동으로 읽습니다.</li>
+    <li><b>공유 파일</b> <code>config.yaml</code>(분석 설정값), <code>contracts/</code>(API 응답 스키마·샘플)는 단독 PR로만 고치고 팀에 공지합니다.</li>
+    <li>남의 구역에 수정이 필요하면 직접 고치지 말고 이슈로 요청합니다.</li>
+  </ul>
+</section>
+
+<section id="setup">
+  <h2>7. 개발 환경</h2>
+  <h3>처음 한 번</h3>
+<pre><code>git clone git@github.com:HC1ab/onroad.git
+cd onroad
+sh scripts/setup.sh        # 훅 설치, .env 생성
+gh auth login              # 이슈를 읽고 쓰려면 필요</code></pre>
+  <p>Windows에서는 한글 파일명이 깨지지 않게 <code>git config --global core.quotepath false</code>도 권장합니다. 인증키가 필요하면 <code>.env</code>에만 넣습니다.</p>
+
+  <h3>로컬 실행 (local 환경)</h3>
+<pre><code>docker compose up          # DB(:5432) + API(:8000)
+cd web &amp;&amp; npm run dev      # 프론트(:5173), /api 는 :8000 으로 프록시</code></pre>
+  <div class="note warn"><b>아직 준비 중:</b> <code>docker-compose.yml</code>, <code>server/</code> 코드, <code>web/</code> 프로젝트는 지금 저장소에 없습니다. E-server와 C-web 담당이 만들면 이 명령이 동작합니다.</div>
+  <ul>
+    <li>서버가 없어도 프론트는 <b>mock 모드</b>(<code>VITE_API_MODE=mock</code>)로 <code>contracts/samples/</code>의 JSON을 읽어 개발할 수 있게 만들 예정입니다(P1).</li>
+    <li>로컬과 서버는 같은 Docker 이미지를 쓰고, 차이는 <code>.env.local</code>/<code>.env.prod</code> 값으로만 둡니다.</li>
+  </ul>
+  <div class="tablewrap"><table>
+    <tr><th>환경</th><th>용도</th><th>데이터</th></tr>
+    <tr><td>local</td><td>각자 PC 개발</td><td>작은 샘플(부산 일부)</td></tr>
+    <tr><td>server-dev (선택)</td><td>팀 통합 확인</td><td>부산 전체</td></tr>
+    <tr><td>prod</td><td>발표·제출 (학과 클라우드 Ubuntu)</td><td>전국</td></tr>
+  </table></div>
+</section>
+
+<section id="workflow">
+  <h2>8. 작업 흐름 — 이슈가 곧 프롬프트</h2>
+  <p>AI 세션은 저장소 파일은 읽지만 채팅 내용은 모릅니다. 그래서 모든 작업과 결정은 이슈와 문서로 남깁니다.</p>
+  <ol class="steps">
+    <li><b>이슈에서 시작:</b> 작업·수정 요청·결정 모두 이슈로 만듭니다. 템플릿(task, change-request, decision)을 채우면 그대로 AI에게 줄 프롬프트가 됩니다.</li>
+    <li><b>세션 시작:</b> <code>git pull --rebase origin main</code> → <code>gh issue view 번호 --comments</code> → 브랜치 <code>구역/번호-주제</code> (예: <code>pipeline/12-f1-clean</code>)</li>
+    <li><b>작업:</b> 자기 구역 파일만 수정. 병렬로 AI를 여러 개 돌릴 때는 <code>git worktree</code>로 폴더를 나눕니다.</li>
+    <li><b>세션 종료:</b> 한 일·수치·막힌 점·후속 작업을 이슈 코멘트로 남기고, 후속 작업은 새 이슈로 만듭니다.</li>
+    <li><b>PR:</b> 본문에 <code>Closes #번호</code>. 작게, 1~2일 안에. main은 보호되어 있어 PR + squash merge로만 들어갑니다.</li>
+    <li><b>결정이 나면</b> <code>docs/decisions/NNN-제목.md</code>에 기록합니다. 다음 AI 세션이 이 폴더를 읽습니다.</li>
+  </ol>
+  <p>커밋 메시지는 <code>type(구역): 내용</code> 형식입니다. 예: <code>feat(pipeline): F1 제외 사유 표 추가</code></p>
+  <p>이슈 라벨: 구역(<code>A-pipeline</code> 등), 종류(<code>task</code>, <code>change-request</code>, <code>blocker</code>, <code>question</code>, <code>decision</code>), 게이트(<code>gate-A</code>~<code>gate-C</code>).</p>
+</section>
+
+<section id="rules">
+  <h2>9. 지켜야 할 규칙</h2>
+  <p>이 저장소는 <b>퍼블릭</b>입니다. 코드, 커밋, 이슈, PR 모두 공개된다고 생각하고 씁니다.</p>
+  <div class="dos">
+    <div class="card"><h3>올리면 안 되는 것</h3><ul>
+      <li><code>data/raw/</code>, <code>data/interim/</code>, 엑셀·GeoPackage·Parquet</li>
+      <li><code>.env</code>와 인증키 (코드·이슈·채팅·스크린샷 모두 금지)</li>
+      <li>현장 실측 사진, 50MB 넘는 파일</li>
+      <li><code>git add .</code> 대신 파일을 지정해서 add</li>
+    </ul></div>
+    <div class="card"><h3>쓰면 안 되는 표현</h3><ul>
+      <li>"위험", "위반", "불법", "시간을 늘려야 한다"</li>
+      <li>점멸 정의 확정 전의 "부족 N%" 같은 확정형 수치</li>
+      <li>"~ 때문에", "늘리면 사고가 준다" 같은 인과 표현</li>
+    </ul></div>
+    <div class="card"><h3>써야 하는 표현</h3><ul>
+      <li>"점검 우선순위 후보"</li>
+      <li>"기록값이 기준식보다 짧음"</li>
+      <li>"짧음(gap&gt;0, 정의 미확정)"</li>
+    </ul></div>
+    <div class="card"><h3>바꾸면 안 되는 기술 결정</h3><ul>
+      <li>저장 좌표계 EPSG:4326, 거리 계산은 EPSG:5179</li>
+      <li>읍면동 코드 <code>adm_cd</code>는 항상 문자열</li>
+      <li>원본 파일은 수정 금지 (엑셀로 열어 저장 금지)</li>
+      <li>분석 설정값은 <code>config.yaml</code>에서만 읽기</li>
+    </ul></div>
+  </div>
+  <div class="note ok">커밋하면 <code>.githooks/pre-commit</code>이 금지 경로·대용량·키 패턴을 자동으로 막습니다. 막히면 우회(<code>--no-verify</code>)하지 말고 파일을 빼세요.</div>
+</section>
+
+<section id="status">
+  <h2>10. 현재 상태</h2>
+  <div class="tablewrap"><table>
+    <tr><th>항목</th><th>상태</th></tr>
+    <tr><td>저장소, 훅, 이슈·PR 템플릿, 구역 폴더</td><td>완료</td></tr>
+    <tr><td>PRD 서버 구조 반영 (F15~F18, API, 환경)</td><td><code>docs</code> 브랜치에만 있음. main 병합 전</td></tr>
+    <tr><td>와이어프레임 (메인·상세·검증)</td><td><code>docs/wireframe/</code> (<code>docs</code> 브랜치)</td></tr>
+    <tr><td>게이트 A·B·C (데이터 확인)</td><td>미완료. 읍면동 경계만 받아서 속성 확인함</td></tr>
+    <tr><td>파이프라인, API, 웹 코드</td><td>시작 전</td></tr>
+    <tr><td>학과 클라우드 서버</td><td>사양·접근 방법 미확인</td></tr>
+  </table></div>
+  <div class="note warn"><code>docs</code> 브랜치가 main에 합쳐지기 전까지는 main의 PRD와 CLAUDE.md가 이전 버전(서버 없음)입니다. 서버 관련 작업은 <code>docs</code> 브랜치의 PRD를 보세요.</div>
+</section>
+
+<section id="first">
+  <h2>11. 첫날 할 일 (역할별)</h2>
+  <div class="grid">
+    <div class="card"><h3>공통</h3><p>7장 "처음 한 번" 실행 → 이 문서와 PRD 2·3·8장 읽기 → 맡은 이슈 확인.</p></div>
+    <div class="card"><h3>A-pipeline</h3><p>수집 가이드 순서대로 R1 → R3 → R2를 받고 게이트 A·B·C 결과를 이슈에 보고. 급한 순서가 이것입니다.</p></div>
+    <div class="card"><h3>B-validation</h3><p>V1 현장 실측 계획(부산 5~10곳, 인도에서만 측정) 세우기. 점멸 포함 여부를 가장 빨리 확정하는 방법입니다.</p></div>
+    <div class="card"><h3>C-web</h3><p><code>web/</code>에 Vite + MapLibre 프로젝트 생성, <code>contracts/samples/</code>로 읍면동 채색지도부터.</p></div>
+    <div class="card"><h3>E-server</h3><p>FastAPI 골격, <code>docker-compose.yml</code>(db·api·nginx), <code>/healthz</code>와 <code>/api/areas</code>부터. 최소 서버로 URL 접속을 먼저 통과.</p></div>
+    <div class="card"><h3>D-docs</h3><p>게이트 보고서 양식 정리, 발표 3분 데모 흐름(PRD 5장) 초안.</p></div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    기준 문서: <a href="PRD.md">PRD</a> · <a href="data-collection-guide.md">데이터 수집 가이드</a> · <a href="../CLAUDE.md">CLAUDE.md</a> · <a href="decisions/README.md">결정 기록</a><br>
+    이 도구는 연관성까지만 보여주며 개별 횡단보도를 위험이나 위반으로 단정하지 않습니다. 데이터 출처: 전국횡단보도표준데이터, admdongkor(CC BY 4.0), 행정안전부 등.
+  </div>
+</footer>
+
+</body>
+</html>
