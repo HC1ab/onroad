@@ -1,0 +1,29 @@
+# Disposable, internal-only database. No production volumes or host ports.
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: trust
+      POSTGRES_DB: onroad_test
+    tmpfs:
+      - /var/lib/postgresql/data
+    networks: [test]
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U postgres -d onroad_test"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+  tests:
+    build: .
+    environment:
+      TEST_DATABASE_DSN: host=db dbname=onroad_test user=postgres
+    volumes:
+      - ../contracts:/contracts:ro
+    networks: [test]
+    depends_on:
+      db:
+        condition: service_healthy
+    command: [python, -m, pytest, -q, -p, "no:cacheprovider"]
+networks:
+  test:
+    internal: true
