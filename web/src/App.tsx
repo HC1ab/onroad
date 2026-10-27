@@ -38,6 +38,9 @@ function Main() {
     [areas.data, region],
   )
 
+  // mock 이거나, 서버가 샘플을 적재해 내려준 경우(_sample) 모두 샘플임을 표시한다.
+  const isSample = API_MODE === 'mock' || !!areas.data?._sample || !!meta.data?._sample
+
   const error = boundaries.error ?? areas.error ?? candidates.error
   const retry = () => {
     if (boundaries.error) boundaries.reload()
@@ -55,7 +58,9 @@ function Main() {
         <Tabs route={route} />
         {onMap && <RegionFilter boundaries={boundaries.data} />}
         {onMap && <SpeedSelector />}
-        {API_MODE === 'mock' && <span className="badge">샘플 데이터 (mock) · 실제 분석 결과 아님</span>}
+        {isSample && (
+          <span className="badge">{API_MODE === 'mock' ? '샘플 데이터 (mock)' : '샘플 데이터'} · 실제 분석 결과 아님</span>
+        )}
       </header>
 
       {/* 검증 화면에서도 지도는 지우지 않고 숨긴다(돌아왔을 때 위치·선택 유지). */}
@@ -77,8 +82,17 @@ function Main() {
             <AreaDetail key={selectedArea.adm_cd} area={selectedArea} thresholdsData={areas.data} />
           ) : (
             <>
-              <QuadrantChart data={scoped} />
-              <TopList data={scoped} />
+              {areas.error ? (
+                <section className="card">
+                  <h3>읍면동 결과 없음</h3>
+                  <p className="muted">선택한 속도·반경의 결과를 불러오지 못했습니다. 지도 위 안내에서 다시 시도할 수 있습니다.</p>
+                </section>
+              ) : (
+                <>
+                  <QuadrantChart data={scoped} />
+                  <TopList data={scoped} />
+                </>
+              )}
             </>
           )}
         </aside>

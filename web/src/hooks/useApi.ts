@@ -29,6 +29,8 @@ export function useApi<T>(load: (signal: AbortSignal) => Promise<T>, deps: reado
       })
       .catch((e: unknown) => {
         if (ctrl.signal.aborted || (e instanceof DOMException && e.name === 'AbortError')) return
+        // 실패한 조건(예: 적재되지 않은 속도)에서 이전 조건의 값이 그대로 보이지 않게 비운다.
+        setData(null)
         setError(e instanceof Error ? e : new Error(String(e)))
       })
       .finally(() => {
