@@ -1,13 +1,14 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "areas.schema.json",
-  "title": "GET /api/areas?speed=&sido=&sigungu=",
+  "title": "GET /api/areas?speed=&radius=&sido=&sigungu=",
   "description": "읍면동별 집계. 속도 하나 기준. 지도 채색(F5), 사분면(F5), 상위 N(F7)에 쓴다.",
   "type": "object",
   "required": ["speed", "thresholds", "items"],
   "properties": {
     "_sample": { "$ref": "common.schema.json#/$defs/sample_flag" },
     "speed": { "$ref": "common.schema.json#/$defs/speed" },
+    "radius_m": { "type": "integer", "enum": [200, 300, 500], "description": "n_candidate 를 계산한 노출 반경(m). 요청의 radius 와 같다." },
     "thresholds": {
       "type": "object",
       "description": "사분면 경계선 기본값(전국 중앙값). 화면에서 조절할 수 있다.",
