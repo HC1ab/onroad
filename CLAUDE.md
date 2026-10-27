@@ -18,12 +18,14 @@
 | --- | --- | --- |
 | A-pipeline | `pipeline/`, `data/download_log.csv` | 수집·정제·공간조인·gap·집계 (F1~F4) |
 | B-validation | `validation/` | V1~V5, 현장 실측 |
-| C-web | `web/` | 지도·사분면·슬라이더 (F5~F7, F9~F12) |
+| C-web | `web/` | 지도·사분면·슬라이더 (F5~F7, F9~F12, F17) |
 | D-docs | `docs/` | 게이트 보고서, 결정 기록, 발표 |
+| E-server | `server/` | 읽기 전용 API, Docker Compose, Ubuntu 배포 (F15, F16, F18) |
 
 - **자기 구역 밖 파일은 수정하지 않는다.** 필요하면 담당에게 이슈로 요청한다.
 - 공유 파일(`config.yaml`, `contracts/`)은 단독 PR로만 수정하고 팀에 공지한다.
-- 구역 사이 접점은 `contracts/`의 스키마와 샘플뿐이다. 웹은 `contracts/samples/`로 먼저 개발한다.
+- 구역 사이 접점은 `contracts/`의 스키마와 샘플뿐이다. 웹은 서버가 없어도 `contracts/samples/`로 먼저 개발한다(mock 모드).
+- 로컬 개발: DB와 API는 `docker compose up`, 프론트는 `/api`를 :8000으로 프록시한다. 환경 값은 `.env`에만 둔다(`.env.example` 참고).
 - 병렬 작업은 `git worktree`를 쓴다. 한 폴더에서 AI 세션 두 개를 돌리지 않는다.
 
 ## R1~R6 유출 방지·공개 규칙
