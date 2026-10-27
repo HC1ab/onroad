@@ -21,6 +21,13 @@ _MESSAGES = {
 }
 
 
+# 상황별 안내 문구(HTTPException detail 로 지정). 코드는 계약의 enum 을 그대로 쓴다.
+NOT_LOADED = 'not_loaded'
+_DETAIL_MESSAGES = {
+    NOT_LOADED: '요청한 속도·반경·지역의 결과가 아직 적재되지 않았습니다.',
+}
+
+
 def error_body(code: str, message: str | None = None) -> dict:
     return {"error": {"code": code, "message": message or _MESSAGES[code]}}
 
@@ -29,7 +36,8 @@ def install(app: FastAPI) -> None:
     @app.exception_handler(StarletteHTTPException)
     async def http_error(_: Request, exc: StarletteHTTPException):
         code = _CODES.get(exc.status_code, "internal_error" if exc.status_code >= 500 else "bad_request")
-        return JSONResponse(error_body(code), status_code=exc.status_code)
+        message = _DETAIL_MESSAGES.get(exc.detail) if isinstance(exc.detail, str) else None
+        return JSONResponse(error_body(code, message), status_code=exc.status_code)
 
     @app.exception_handler(RequestValidationError)
     async def validation_error(_: Request, exc: RequestValidationError):

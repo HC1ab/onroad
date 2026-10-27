@@ -12,6 +12,10 @@ from referencing import Registry, Resource
 from .settings import get_settings
 
 KINDS = ('areas', 'area_crosswalks', 'candidates', 'validation', 'meta')
+# 반경이 없는 묶음(계약 #46 이전)은 기본 반경으로 본다.
+DEFAULT_RADIUS = 300
+# 반경에 따라 달라지는 항목. 횡단보도 기본 속성(위치·연장·기록값) 비교에서 뺀다.
+VARIES = ('t_need_s', 'gap_s', 'is_candidate', 'flags', 'exposure_cnt')
 
 
 def read_bundle(source, contracts, sample=False):
@@ -55,7 +59,9 @@ def ingest(conn, documents, sample=False):
         if kind != 'areas':
             continue
         speed = data['speed']
-        conn.execute('INSERT INTO area_summary VALUES (%s,%s)', (speed, Jsonb(data['thresholds'])))
+        radius = data.get('radius_m', DEFAULT_RADIUS)
+        conn.execute('INSERT INTO area_summary (speed, radius_m, thresholds) VALUES (%s,%s,%s)',
+                     (speed, radius, Jsonb(data['thresholds'])))
         for item in data['items']:
             code = item['adm_cd']
             attrs = tuple(item[k] for k in ('adm_name', 'sido', 'sigungu'))
@@ -64,19 +70,21 @@ def ingest(conn, documents, sample=False):
             if code not in areas:
                 conn.execute('INSERT INTO admin_area VALUES (%s,%s,%s,%s)', (code, *attrs))
                 areas[code] = attrs
-            conn.execute('INSERT INTO area_vulnerability VALUES (%s,%s,%s)', (speed, code, Jsonb(item)))
+            conn.execute('INSERT INTO area_vulnerability (speed, radius_m, adm_cd, payload) VALUES (%s,%s,%s,%s)',
+                         (speed, radius, code, Jsonb(item)))
     seen_details = set()
     for kind, data in documents:
         if kind == 'area_crosswalks':
-            key = (data['adm_cd'], data['speed'])
+            radius = data.get('radius_m', DEFAULT_RADIUS)
+            key = (data['adm_cd'], data['speed'], radius)
             if key in seen_details:
                 raise ValueError('Duplicate area detail document')
             seen_details.add(key)
             if key[0] not in areas:
                 raise ValueError('Unknown area in detail document')
-            conn.execute('INSERT INTO area_detail VALUES (%s,%s)', key)
+            conn.execute('INSERT INTO area_detail (adm_cd, speed, radius_m) VALUES (%s,%s,%s)', key)
             for item in data['items']:
-                base = {k: v for k, v in item.items() if k not in ('t_need_s', 'gap_s', 'is_candidate')}
+                base = {k: v for k, v in item.items() if k not in VARIES}
                 identity = (data['adm_cd'], base)
                 cw_id = item['cw_id']
                 if cw_id in base_crosswalks and base_crosswalks[cw_id] != identity:
@@ -85,8 +93,8 @@ def ingest(conn, documents, sample=False):
                     conn.execute('INSERT INTO crosswalk VALUES (%s,%s,ST_SetSRID(ST_MakePoint(%s,%s),4326),%s)',
                                  (cw_id, data['adm_cd'], item['lon'], item['lat'], Jsonb(base)))
                     base_crosswalks[cw_id] = identity
-                conn.execute('INSERT INTO crosswalk_gap VALUES (%s,%s,%s,%s)',
-                             (cw_id, data['speed'], item['is_candidate'], Jsonb(item)))
+                conn.execute('INSERT INTO crosswalk_gap (cw_id, speed, radius_m, is_candidate, payload) '
+                             'VALUES (%s,%s,%s,%s,%s)', (cw_id, data['speed'], radius, item['is_candidate'], Jsonb(item)))
         elif kind == 'candidates':
             conn.execute('INSERT INTO candidate_layer VALUES (%s,%s)', (data['speed'], data['radius_m']))
             for feature in data['features']:
