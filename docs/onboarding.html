@@ -259,14 +259,31 @@ cd web &amp;&amp; npm install &amp;&amp; npm run dev   # 프론트(:5173), /api 
   <p>AI 세션은 저장소 파일은 읽지만 채팅 내용은 모릅니다. 그래서 모든 작업과 결정은 이슈와 문서로 남깁니다.</p>
   <ol class="steps">
     <li><b>이슈에서 시작:</b> 작업·수정 요청·결정 모두 이슈로 만듭니다. 템플릿(task, change-request, decision)을 채우면 그대로 AI에게 줄 프롬프트가 됩니다.</li>
-    <li><b>세션 시작:</b> <code>git pull --rebase origin main</code> → <code>gh issue view 번호 --comments</code> → 브랜치 <code>구역/번호-주제</code> (예: <code>pipeline/12-f1-clean</code>)</li>
+    <li><b>세션 시작:</b> 자기 트랙 브랜치를 최신으로(<code>git checkout frontend &amp;&amp; git pull</code>) → <code>gh issue view 번호 --comments</code> → 작업 브랜치 <code>구역/번호-주제</code> (예: <code>web/18-choropleth</code>)</li>
     <li><b>작업:</b> 자기 구역 파일만 수정. 병렬로 AI를 여러 개 돌릴 때는 <code>git worktree</code>로 폴더를 나눕니다.</li>
     <li><b>세션 종료:</b> 한 일·수치·막힌 점·후속 작업을 이슈 코멘트로 남기고, 후속 작업은 새 이슈로 만듭니다.</li>
-    <li><b>PR:</b> 본문에 <code>Closes #번호</code>. 작게, 1~2일 안에. main은 보호되어 있어 PR + squash merge로만 들어갑니다.</li>
+    <li><b>PR:</b> <b>자기 트랙 브랜치로</b>(<code>gh pr create --base frontend</code>), 본문에 <code>Refs #번호</code>. 작게, 1~2일 안에. squash merge.</li>
+    <li><b>통합:</b> 통합 단계(I1~I5)마다 트랙 → main PR을 "merge commit"으로 병합하고, 이때 완료 이슈를 <code>Closes #번호</code>로 닫습니다.</li>
     <li><b>결정이 나면</b> <code>docs/decisions/NNN-제목.md</code>에 기록합니다. 다음 AI 세션이 이 폴더를 읽습니다.</li>
   </ol>
+  <h3>트랙 브랜치</h3>
+<pre><code>main ─┬─ frontend ── web/18-choropleth       작업 PR → 트랙 (squash)
+      ├─ backend  ── server/13-db-schema
+      └─ data     ── pipeline/5-f1-clean
+트랙 → main : 통합 단계마다 PR (merge commit)</code></pre>
+  <div class="tablewrap"><table>
+    <tr><th>트랙</th><th>구역</th><th>이슈 라벨</th></tr>
+    <tr><td><code>frontend</code></td><td><code>web/</code></td><td><code>frontend</code></td></tr>
+    <tr><td><code>backend</code></td><td><code>server/</code>, <code>docker-compose.yml</code></td><td><code>backend</code></td></tr>
+    <tr><td><code>data</code></td><td><code>pipeline/</code>, <code>validation/</code>, <code>data/download_log.csv</code></td><td><code>db</code></td></tr>
+  </table></div>
+  <ul>
+    <li><b>main이 바뀌면 트랙에 바로 받습니다:</b> <code>git checkout 트랙 &amp;&amp; git pull &amp;&amp; git merge origin/main &amp;&amp; git push</code>. rebase나 force push는 하지 않습니다. <code>contracts/</code> 변경은 당일 반영합니다.</li>
+    <li><b>main으로 바로 가는 예외:</b> 공유 파일(<code>contracts/</code>, <code>config.yaml</code>)과 공통 문서(<code>docs/</code>, <code>README.md</code>, <code>CLAUDE.md</code>).</li>
+    <li>보호 규칙은 main에만 있습니다. 트랙 브랜치에도 직접 push하지 말고 PR로 넣습니다.</li>
+  </ul>
   <p>커밋 메시지는 <code>type(구역): 내용</code> 형식입니다. 예: <code>feat(pipeline): F1 제외 사유 표 추가</code></p>
-  <p>이슈 라벨: 구역(<code>A-pipeline</code> 등), 종류(<code>task</code>, <code>change-request</code>, <code>blocker</code>, <code>question</code>, <code>decision</code>), 게이트(<code>gate-A</code>~<code>gate-C</code>).</p>
+  <p>이슈 라벨: 트랙(<code>frontend</code>, <code>backend</code>, <code>db</code>), 구역(<code>A-pipeline</code> 등), 종류(<code>task</code>, <code>change-request</code>, <code>blocker</code>, <code>question</code>, <code>decision</code>), 우선순위(<code>P0</code>, <code>P1</code>), 게이트(<code>gate-A</code>~<code>gate-C</code>), <code>integration</code>.</p>
 </section>
 
 <section id="rules">

@@ -97,10 +97,22 @@ PR을 올리면 GitHub Actions가 바뀐 구역의 검사를 자동으로 돌린
 
 ## 5. 작업 방법 (요약)
 
+트랙 브랜치 방식이다. `main` 아래에 트랙 브랜치 `frontend`, `backend`, `data`가 있고, 작업은 자기 트랙에서 갈라진다.
+
+```text
+main ─┬─ frontend ── web/18-choropleth
+      ├─ backend  ── server/13-db-schema
+      └─ data     ── pipeline/5-f1-clean
+```
+
 1. 이슈를 고른다 ([작업 보드 #29](https://github.com/HC1ab/onroad/issues/29)). AI 세션에는 `gh issue view 번호 --comments`로 이슈를 읽힌다.
-2. `main`에서 브랜치: `구역/이슈번호-주제` (예: `web/18-choropleth`)
+2. 자기 트랙에서 브랜치: `git checkout frontend && git pull` → `git checkout -b web/18-choropleth`
 3. 자기 구역 폴더만 수정, 파일을 지정해 `git add`
-4. 결과를 이슈 코멘트로 남기고 PR (`Closes #번호`), squash merge
+4. 결과를 이슈 코멘트로 남기고 **트랙으로 PR** (`gh pr create --base frontend`, 본문 `Refs #번호`), squash merge
+5. 통합 단계마다 트랙 → `main` PR (merge commit, `Closes #번호` 목록)
+6. `main`이 바뀌면 트랙에 받는다: `git checkout frontend && git pull && git merge origin/main && git push`
+
+공유 파일(`contracts/`, `config.yaml`)과 공통 문서는 `main`으로 바로 PR한다. 보호 규칙은 `main`에만 있다.
 
 자세한 규칙은 [CLAUDE.md](CLAUDE.md)와 [온보딩 문서](https://hc1ab.github.io/onroad/onboarding.html).
 

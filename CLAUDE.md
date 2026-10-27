@@ -4,14 +4,15 @@
 이 repo는 **퍼블릭**이다. 쓰는 모든 글(코드, 커밋, 이슈, PR)은 공개된다고 가정한다.
 
 ## 세션 시작 (매번)
-1. `git pull --rebase origin main`
+1. 자기 트랙 브랜치를 최신으로: `git checkout <트랙> && git pull origin <트랙>` (트랙은 아래 "브랜치" 표)
 2. 맡은 이슈를 읽는다: `gh issue view <번호> --comments` (연결된 이슈와 `docs/decisions/`도 확인)
-3. 브랜치를 만든다: `<구역>/<이슈번호>-<주제>` (예: `pipeline/12-f1-clean`)
+3. 트랙 브랜치에서 작업 브랜치를 만든다: `<구역>/<이슈번호>-<주제>` (예: `pipeline/5-f1-clean`)
 
 ## 세션 종료 (매번)
 1. 이슈에 코멘트로 남긴다: 한 일, 수치, 이상한 점, 막힌 점, 후속 작업
 2. 후속 작업·수정 요청은 새 이슈로 만든다 (채팅·구두로만 남기지 않는다)
-3. PR을 만든다. 본문에 `Closes #번호`. 작은 PR로.
+3. **자기 트랙 브랜치로** PR을 만든다(`--base <트랙>`). 본문에 `Refs #번호`. 작은 PR로.
+   - `Closes #번호`는 main으로 가는 PR에서만 이슈를 닫는다. 작업 PR에서는 `Refs`, 이슈는 트랙 → main PR에서 닫는다.
 
 ## 구역 (폴더 = 담당)
 | 구역 | 폴더 | 내용 |
@@ -43,7 +44,28 @@
 - 분석 설정값은 `config.yaml`에서만 읽는다. 코드에 숫자를 박지 않는다.
 - 주소→좌표 지오코딩, 결측 채우기는 먼저 이슈로 합의한다.
 
+## 브랜치 (트랙 브랜치 방식)
+```text
+main ─┬─ frontend ── web/18-choropleth        작업 PR → 트랙 (squash)
+      ├─ backend  ── server/13-db-schema
+      └─ data     ── pipeline/5-f1-clean
+트랙 → main : 통합 단계마다 PR (merge commit)
+```
+
+| 트랙 브랜치 | 구역(폴더) | 이슈 라벨 |
+| --- | --- | --- |
+| `frontend` | `web/` | `frontend` |
+| `backend` | `server/`, `docker-compose.yml` | `backend` |
+| `data` | `pipeline/`, `validation/`, `data/download_log.csv` | `db` |
+
+- **작업 PR은 자기 트랙 브랜치로**, squash merge. 작업 브랜치 수명은 1~2일.
+- **트랙 → main은 통합 단계(I1 10/30 등)마다 PR**, "Create a merge commit"으로 병합한다(squash 하면 트랙과 main의 이력이 갈라져 다음 동기화 때 충돌이 생긴다). 이 PR 본문에 완료된 이슈를 `Closes #번호`로 모두 적는다.
+- **동기화: main이 바뀌면 각 트랙에 바로 받는다.** `git checkout <트랙> && git pull origin <트랙> && git merge origin/main && git push`. rebase·force push 하지 않는다. 특히 `contracts/` 변경은 당일 반영한다.
+- **main 직행 예외:** 공유 파일(`contracts/`, `config.yaml`)과 공통 문서(`docs/`, `README.md`, `CLAUDE.md`)는 main으로 바로 PR하고, 병합 후 세 트랙이 동기화한다.
+- 보호 규칙은 main에만 있다(PR 필수, force push 금지). 트랙 브랜치는 보호가 없으니 직접 push하지 말고 PR로 넣는다.
+- 트랙 이름과 같은 접두어(`frontend/…`, `backend/…`, `data/…`)의 브랜치는 만들 수 없다. 작업 브랜치는 구역 접두어(`web/`, `server/`, `pipeline/`, `validation/`)를 쓴다.
+
 ## Git 규칙
 - 커밋: `type(구역): 내용` (예: `feat(pipeline): F1 제외 사유 표 추가`). 타입: feat, fix, docs, chore, refactor.
-- main에 직접 push 하지 않는다. PR + squash merge.
-- 브랜치 수명은 1~2일. 길어지면 쪼갠다.
+- main에 직접 push 하지 않는다.
+- 작업 브랜치 수명은 1~2일. 길어지면 쪼갠다.
