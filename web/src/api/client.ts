@@ -65,7 +65,12 @@ async function mockAreas(speed: Speed, signal?: AbortSignal): Promise<AreasRespo
     const short_ratio = Math.min(1, Math.round(it.short_ratio * f * 1000) / 1000)
     return { ...it, short_ratio, n_short: Math.round(it.n_analyzed * short_ratio) }
   })
-  return delay({ ...sample, speed, items }, signal)
+  // 실제 API 는 속도마다 중앙값을 다시 계산하므로 mock 도 경계값을 같은 비율로 맞춘다.
+  const thresholds = {
+    ...sample.thresholds,
+    short_ratio_median: Math.min(1, Math.round(sample.thresholds.short_ratio_median * f * 1000) / 1000),
+  }
+  return delay({ ...sample, speed, thresholds, items }, signal)
 }
 
 // ---- 공개 API ----

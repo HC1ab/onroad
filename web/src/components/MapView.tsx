@@ -82,7 +82,7 @@ export function MapView({ boundaries, areas, candidates, onBoundsChange }: Props
   const pointPopup = useRef<maplibregl.Popup | null>(null)
   const boundsCb = useRef(onBoundsChange)
   boundsCb.current = onBoundsChange
-  const { selectedAdmCd, setSelectedAdmCd, layers } = useAppState()
+  const { selection, select, layers } = useAppState()
 
   // 레이어가 준비된 뒤 실행 (준비 전이면 준비 이벤트를 기다린다)
   const whenLayers = (fn: (map: maplibregl.Map) => void) => {
@@ -153,7 +153,7 @@ export function MapView({ boundaries, areas, candidates, onBoundsChange }: Props
       const hover = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 12, className: 'map-tip' })
       map.on('click', 'areas-fill', (e) => {
         const adm = e.features?.[0]?.properties?.adm_cd as string | undefined
-        if (adm) setSelectedAdmCd(adm)
+        if (adm) select(adm, 'map')
       })
       map.on('mousemove', 'areas-fill', (e) => {
         const f = e.features?.[0]
@@ -188,7 +188,7 @@ export function MapView({ boundaries, areas, candidates, onBoundsChange }: Props
     }
     if (readyRef.current) add()
     else map.once('onroad:ready', add)
-  }, [boundaries, setSelectedAdmCd])
+  }, [boundaries, select])
 
   // 값 → feature-state (속도를 바꾸면 경계는 그대로 두고 값만 바꾼다)
   // 표본 부족 빗금은 패턴이 feature-state 를 못 쓰므로 adm_cd 목록 필터로 건다.
@@ -202,13 +202,11 @@ export function MapView({ boundaries, areas, candidates, onBoundsChange }: Props
       const low = areas.filter((a) => a.low_sample).map((a) => a.adm_cd)
       map.setFilter('areas-hatch', ['in', ['get', 'adm_cd'], ['literal', low]])
     })
-     
   }, [areas])
 
   // 후보 점 데이터
   useEffect(() => {
     whenLayers((map) => (map.getSource(CANDIDATES) as maplibregl.GeoJSONSource).setData(candidates ?? EMPTY))
-     
   }, [candidates])
 
   // 레이어 켜기/끄기
@@ -220,14 +218,21 @@ export function MapView({ boundaries, areas, candidates, onBoundsChange }: Props
       map.setLayoutProperty('candidates-pt', 'visibility', vis(layers.candidates))
       if (!layers.candidates) pointPopup.current?.remove()
     })
-     
   }, [layers])
 
-  // 선택 강조
+  // 선택 강조. 사분면·목록에서 고르면 그 읍면동으로 지도를 옮긴다(지도에서 고르면 그대로).
   useEffect(() => {
-    whenLayers((map) => map.setFilter('areas-selected', ['==', ['get', 'adm_cd'], selectedAdmCd ?? '']))
-     
-  }, [selectedAdmCd])
+    whenLayers((map) => {
+      map.setFilter('areas-selected', ['==', ['get', 'adm_cd'], selection?.admCd ?? ''])
+      if (!selection || selection.source === 'map' || !boundaries) return
+      const f = boundaries.features.find((x) => x.properties.adm_cd === selection.admCd)
+      if (!f) return
+      // 지도 영역이 작을 때(좁은 화면) 여백이 지도보다 커지지 않게 한다.
+      const { clientWidth: w, clientHeight: h } = map.getContainer()
+      const padding = Math.max(10, Math.min(80, w / 5, h / 5))
+      map.fitBounds(boundsOf({ type: 'FeatureCollection', features: [f] }), { padding, maxZoom: 14, duration: 600 })
+    })
+  }, [selection, boundaries])
 
   return <div ref={container} className="map" aria-label="읍면동 지도" />
 }

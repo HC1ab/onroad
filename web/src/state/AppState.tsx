@@ -6,12 +6,21 @@ export interface LayerVisibility {
   candidates: boolean
 }
 
+/** 어디서 선택했는지. 지도 밖(사분면·목록)에서 선택하면 지도가 그 지역으로 이동한다. */
+export type SelectionSource = 'map' | 'chart' | 'list'
+
+export interface Selection {
+  admCd: string
+  source: SelectionSource
+}
+
 // 화면 전체가 함께 쓰는 선택 상태. 지도·사분면·목록이 같은 값을 보고 동시에 바뀐다.
 interface AppState {
   speed: Speed
   setSpeed: (s: Speed) => void
+  selection: Selection | null
   selectedAdmCd: string | null
-  setSelectedAdmCd: (adm: string | null) => void
+  select: (admCd: string | null, source: SelectionSource) => void
   layers: LayerVisibility
   toggleLayer: (key: keyof LayerVisibility) => void
 }
@@ -22,12 +31,16 @@ export const DEFAULT_SPEED: Speed = 0.8
 
 export function AppStateProvider({ children }: { children: ReactNode }) {
   const [speed, setSpeed] = useState<Speed>(DEFAULT_SPEED)
-  const [selectedAdmCd, setSelectedAdmCd] = useState<string | null>(null)
+  const [selection, setSelection] = useState<Selection | null>(null)
   const [layers, setLayers] = useState<LayerVisibility>({ choropleth: true, candidates: true })
+  const select = useCallback(
+    (admCd: string | null, source: SelectionSource) => setSelection(admCd ? { admCd, source } : null),
+    [],
+  )
   const toggleLayer = useCallback((key: keyof LayerVisibility) => setLayers((l) => ({ ...l, [key]: !l[key] })), [])
   const value = useMemo(
-    () => ({ speed, setSpeed, selectedAdmCd, setSelectedAdmCd, layers, toggleLayer }),
-    [speed, selectedAdmCd, layers, toggleLayer],
+    () => ({ speed, setSpeed, selection, selectedAdmCd: selection?.admCd ?? null, select, layers, toggleLayer }),
+    [speed, selection, select, layers, toggleLayer],
   )
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }
