@@ -7,7 +7,7 @@ const pct = (v: number | null) => (v === null ? '—' : `${(v * 100).toFixed(1)}
 export function AreaSummary({ areas }: { areas: AreaItem[] | null }) {
   const { selectedAdmCd } = useAppState()
   const a = areas?.find((x) => x.adm_cd === selectedAdmCd)
-  if (!a) return <p className="muted">지도에서 읍면동을 누르면 요약이 여기에 나옵니다.</p>
+  if (!a) return <p className="muted">지도나 사분면에서 읍면동을 누르면 요약이 여기에 나옵니다.</p>
   return (
     <div className="summary">
       <h2>{a.adm_name}</h2>

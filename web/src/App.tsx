@@ -5,6 +5,7 @@ import { Footer } from './components/Footer'
 import { Legend } from './components/Legend'
 import { LoadState } from './components/LoadState'
 import { MapView, type Bbox } from './components/MapView'
+import { QuadrantChart } from './components/QuadrantChart'
 import { SpeedSelector } from './components/SpeedSelector'
 import { useApi } from './hooks/useApi'
 import { AppStateProvider, useAppState } from './state/AppState'
@@ -52,7 +53,8 @@ function Main() {
           <LoadState loading={boundaries.loading || areas.loading} error={error} onRetry={retry} />
         </section>
         <aside className="side">
-          {/* W4(#20) 사분면, W5(#21) 상위 N·상세 패널이 이 영역에 들어간다. */}
+          <QuadrantChart data={areas.data} />
+          {/* W5(#21) 상위 N·상세 패널이 이 아래에 들어간다. */}
           <AreaSummary areas={areas.data?.items ?? null} />
         </aside>
       </main>

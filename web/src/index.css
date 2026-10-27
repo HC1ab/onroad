@@ -81,3 +81,35 @@ a { color: var(--accent); }
   .body { grid-template-columns: 1fr; grid-template-rows: 1fr auto; }
   .side { border-left: none; border-top: 1px solid var(--border); max-height: 40vh; }
 }
+
+/* 사분면 (W4) */
+.side { display: flex; flex-direction: column; gap: 14px; }
+.card { border: 1px solid var(--border); border-radius: 10px; padding: 12px; background: var(--surface); }
+.card-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.card h3 { margin: 0 0 6px; font-size: 15px; }
+.priority-count { font-size: 12px; font-weight: 700; color: #b84f12; }
+.quadrant-plot { position: relative; }
+.quadrant-plot { max-width: 420px; }
+.quadrant-plot svg { width: 100%; height: auto; display: block; touch-action: none; user-select: none; }
+.q-priority { fill: var(--accent-soft); }
+.q-priority-label { font-size: 10px; font-weight: 700; fill: #b84f12; }
+.q-axis { stroke: #cbd2d9; }
+.q-tick { font-size: 9px; fill: var(--muted); }
+.q-label { font-size: 10px; fill: var(--text); }
+.q-pt-wrap { cursor: pointer; transition: transform 0.4s ease; }
+.q-pt { fill: #f3a36b; stroke: #fff; stroke-width: 1; }
+.q-pt.hh { fill: #b84f12; }
+.q-pt.low { fill: #fff; stroke-width: 1.5; }
+.q-sel { fill: none; stroke: #111827; stroke-width: 2; }
+.q-th { stroke: #6b7280; stroke-dasharray: 4 3; pointer-events: none; }
+.q-th-hit { stroke: transparent; stroke-width: 12; }
+.q-th-hit.x { cursor: ew-resize; }
+.q-th-hit.y { cursor: ns-resize; }
+.q-tip {
+  position: absolute; transform: translate(-50%, calc(-100% - 10px)); pointer-events: none; white-space: nowrap;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; font-size: 11px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+.quadrant-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 11px; margin-top: 4px; }
+.link-btn { border: none; background: none; color: var(--accent); cursor: pointer; padding: 0; font: inherit; text-decoration: underline; }
+.q-legend-low { display: inline-block; width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid #c9ccd1; vertical-align: middle; }
