@@ -66,7 +66,7 @@ def test_idempotent_import_and_spatial_index(conn, bundle):
     assert conn.execute('SELECT count(*) FROM admin_area').fetchone()[0] == len(areas['items'])
     assert conn.execute('SELECT count(*) FROM crosswalk_gap').fetchone()[0] == len(detail['items'])
     assert conn.execute('SELECT bool_and(ST_SRID(geom)=4326) FROM candidate').fetchone()[0]
-    assert conn.execute('SELECT count(*) FROM schema_migration').fetchone()[0] == 1
+    assert conn.execute('SELECT count(*) FROM schema_migration').fetchone()[0] == 2
     assert conn.execute('SELECT is_sample FROM dataset').fetchone()[0] is True
     assert conn.execute('SELECT DISTINCT speed FROM area_summary').fetchall() == [(Decimal('0.8'),)]
 

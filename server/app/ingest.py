@@ -47,7 +47,7 @@ def ingest(conn, documents, sample=False):
     """Caller transaction covers migrations and all writes, including replacement."""
     conn.execute('SELECT pg_advisory_xact_lock(1373013)')
     migrate(conn)
-    conn.execute('TRUNCATE candidate, candidate_layer, crosswalk_gap, crosswalk, area_vulnerability, area_summary, admin_area, result_document, dataset')
+    conn.execute('TRUNCATE candidate, candidate_layer, crosswalk_gap, crosswalk, area_detail, area_vulnerability, area_summary, admin_area, result_document, dataset')
     conn.execute('INSERT INTO dataset (is_sample) VALUES (%s)', (sample,))
     areas = {}
     base_crosswalks = {}
@@ -74,6 +74,7 @@ def ingest(conn, documents, sample=False):
             seen_details.add(key)
             if key[0] not in areas:
                 raise ValueError('Unknown area in detail document')
+            conn.execute('INSERT INTO area_detail VALUES (%s,%s)', key)
             for item in data['items']:
                 base = {k: v for k, v in item.items() if k not in ('t_need_s', 'gap_s', 'is_candidate')}
                 identity = (data['adm_cd'], base)
