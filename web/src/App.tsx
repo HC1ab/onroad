@@ -1,23 +1,32 @@
+import { useState } from 'react'
 import { api, API_MODE } from './api/client'
 import { AreaSummary } from './components/AreaSummary'
 import { Footer } from './components/Footer'
 import { Legend } from './components/Legend'
 import { LoadState } from './components/LoadState'
-import { MapView } from './components/MapView'
+import { MapView, type Bbox } from './components/MapView'
 import { SpeedSelector } from './components/SpeedSelector'
 import { useApi } from './hooks/useApi'
 import { AppStateProvider, useAppState } from './state/AppState'
 
 function Main() {
-  const { speed } = useAppState()
+  const { speed, layers } = useAppState()
+  const [bbox, setBbox] = useState<Bbox | null>(null)
   const boundaries = useApi((s) => api.boundaries(s), [])
   const areas = useApi((s) => api.areas(speed, s), [speed])
+  // 후보 점은 켜져 있고 지도 범위를 알 때만 요청한다. 지도를 움직이거나 속도를 바꾸면 다시 요청.
+  const bboxKey = bbox?.join(',') ?? ''
+  const candidates = useApi(
+    (s) => (layers.candidates && bbox ? api.candidates(speed, bbox, s) : Promise.resolve(null)),
+    [speed, bboxKey, layers.candidates],
+  )
   const meta = useApi((s) => api.meta(s), [])
 
-  const error = boundaries.error ?? areas.error
+  const error = boundaries.error ?? areas.error ?? candidates.error
   const retry = () => {
     if (boundaries.error) boundaries.reload()
     if (areas.error) areas.reload()
+    if (candidates.error) candidates.reload()
   }
 
   return (
@@ -33,8 +42,13 @@ function Main() {
 
       <main className="body">
         <section className="map-wrap">
-          <MapView boundaries={boundaries.data} areas={areas.data?.items ?? null} />
-          <Legend />
+          <MapView
+            boundaries={boundaries.data}
+            areas={areas.data?.items ?? null}
+            candidates={layers.candidates ? candidates.data : null}
+            onBoundsChange={setBbox}
+          />
+          <Legend candidateCount={candidates.data?.features.length ?? null} />
           <LoadState loading={boundaries.loading || areas.loading} error={error} onRetry={retry} />
         </section>
         <aside className="side">

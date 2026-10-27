@@ -1,5 +1,10 @@
-import { createContext, useContext, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
 import type { Speed } from '../api/types'
+
+export interface LayerVisibility {
+  choropleth: boolean
+  candidates: boolean
+}
 
 // 화면 전체가 함께 쓰는 선택 상태. 지도·사분면·목록이 같은 값을 보고 동시에 바뀐다.
 interface AppState {
@@ -7,6 +12,8 @@ interface AppState {
   setSpeed: (s: Speed) => void
   selectedAdmCd: string | null
   setSelectedAdmCd: (adm: string | null) => void
+  layers: LayerVisibility
+  toggleLayer: (key: keyof LayerVisibility) => void
 }
 
 const Ctx = createContext<AppState | null>(null)
@@ -16,7 +23,12 @@ export const DEFAULT_SPEED: Speed = 0.8
 export function AppStateProvider({ children }: { children: ReactNode }) {
   const [speed, setSpeed] = useState<Speed>(DEFAULT_SPEED)
   const [selectedAdmCd, setSelectedAdmCd] = useState<string | null>(null)
-  const value = useMemo(() => ({ speed, setSpeed, selectedAdmCd, setSelectedAdmCd }), [speed, selectedAdmCd])
+  const [layers, setLayers] = useState<LayerVisibility>({ choropleth: true, candidates: true })
+  const toggleLayer = useCallback((key: keyof LayerVisibility) => setLayers((l) => ({ ...l, [key]: !l[key] })), [])
+  const value = useMemo(
+    () => ({ speed, setSpeed, selectedAdmCd, setSelectedAdmCd, layers, toggleLayer }),
+    [speed, selectedAdmCd, layers, toggleLayer],
+  )
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }
 
