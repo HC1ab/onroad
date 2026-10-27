@@ -198,9 +198,13 @@ export function MapView({ boundaries, areas, candidates, onBoundsChange, visible
   // 값 → feature-state (속도를 바꾸면 경계는 그대로 두고 값만 바꾼다)
   // 표본 부족 빗금은 패턴이 feature-state 를 못 쓰므로 adm_cd 목록 필터로 건다.
   useEffect(() => {
-    if (!areas) return
     whenLayers((map) => {
       map.removeFeatureState({ source: AREAS })
+      // 값이 없으면(불러오기 실패 등) 이전 색을 남기지 않고 '값 없음'으로 둔다.
+      if (!areas) {
+        map.setFilter('areas-hatch', ['in', ['get', 'adm_cd'], ['literal', []]])
+        return
+      }
       for (const a of areas) {
         map.setFeatureState({ source: AREAS, id: a.adm_cd }, { short_ratio: a.short_ratio, low_sample: a.low_sample })
       }
