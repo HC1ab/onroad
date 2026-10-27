@@ -1,0 +1,42 @@
+name: server
+
+on:
+  pull_request:
+    paths:
+      - "server/**"
+      - "docker-compose.yml"
+      - ".github/workflows/server.yml"
+  push:
+    branches: [main]
+    paths:
+      - "server/**"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build API image
+        run: docker build -t onroad-api ./server
+      - name: Unit tests
+        run: docker run --rm onroad-api python -m pytest -q -p no:cacheprovider tests
+      - name: Compose smoke test (/healthz)
+        env:
+          DB_PASSWORD: ci-only-password
+        run: |
+          mkdir -p web/dist
+          docker compose up -d --build
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:8080/healthz; then exit 0; fi
+            sleep 2
+          done
+          docker compose logs
+          exit 1
+      - name: Shut down
+        if: always()
+        env:
+          DB_PASSWORD: ci-only-password
+        run: docker compose down -v
