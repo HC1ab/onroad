@@ -1,4 +1,7 @@
-Closes #
+<!-- 작업 PR(트랙 브랜치로): Refs #번호 / 트랙 → main PR: 완료 이슈마다 Closes #번호 -->
+Refs #
+
+**대상 브랜치:** frontend · backend · data · main(공유 파일·공통 문서, 통합)
 
 ## 무엇을
 ## 관련 ID (F/V/게이트)
