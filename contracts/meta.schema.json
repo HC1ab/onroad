@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meta.schema.json",
+  "title": "GET /api/meta",
+  "description": "화면 하단 한계 고지·출처(F9)와 데이터 기준 정보.",
+  "type": "object",
+  "required": ["ref_month", "built_at", "coverage_ratio", "green_def_status", "sources", "limits_text"],
+  "properties": {
+    "_sample": { "$ref": "common.schema.json#/$defs/sample_flag" },
+    "ref_month": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}$", "description": "65세 이상 인구 기준 월" },
+    "built_at": { "type": "string", "format": "date-time", "description": "파이프라인 실행 시각" },
+    "coverage_ratio": { "$ref": "common.schema.json#/$defs/ratio", "description": "좌표가 있어 분석 가능한 횡단보도 비율" },
+    "green_def_status": {
+      "type": "string",
+      "enum": ["unconfirmed", "includes_flash", "excludes_flash"],
+      "description": "녹색신호시간이 점멸을 포함하는지. unconfirmed 이면 화면에 '정의 확정 전'을 표시한다"
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "url"],
+        "properties": {
+          "name": { "type": "string" },
+          "url": { "type": "string" },
+          "license": { "type": "string" },
+          "modified": { "type": "string" }
+        }
+      }
+    },
+    "limits_text": { "type": "string", "description": "모든 화면 하단에 그대로 표시하는 한계 문구" }
+  }
+}

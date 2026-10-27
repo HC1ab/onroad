@@ -1,0 +1,6 @@
+{
+  "error": {
+    "code": "not_found",
+    "message": "해당 읍면동을 찾을 수 없습니다."
+  }
+}

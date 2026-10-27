@@ -1,0 +1,151 @@
+{
+  "_sample": true,
+  "adm_cd": "21090730",
+  "speed": 0.8,
+  "items": [
+    {
+      "cw_id": "SAMPLE-21090730-002",
+      "lat": 35.173956,
+      "lon": 129.1556,
+      "length_m": 21,
+      "green_s": 28.1,
+      "t_need_s": 33.3,
+      "gap_s": 5.2,
+      "flags": {
+        "senior_center": true,
+        "market": false,
+        "protect_zone": true,
+        "crash_zone_past": false,
+        "hospital": null
+      },
+      "exposure_cnt": 2,
+      "is_candidate": true
+    },
+    {
+      "cw_id": "SAMPLE-21090730-005",
+      "lat": 35.174474,
+      "lon": 129.15927,
+      "length_m": 24,
+      "green_s": 32.7,
+      "t_need_s": 37,
+      "gap_s": 4.3,
+      "flags": {
+        "senior_center": true,
+        "market": true,
+        "protect_zone": true,
+        "crash_zone_past": true,
+        "hospital": null
+      },
+      "exposure_cnt": 4,
+      "is_candidate": true
+    },
+    {
+      "cw_id": "SAMPLE-21090730-003",
+      "lat": 35.180911,
+      "lon": 129.154569,
+      "length_m": 33,
+      "green_s": 44.9,
+      "t_need_s": 48.3,
+      "gap_s": 3.4,
+      "flags": {
+        "senior_center": true,
+        "market": false,
+        "protect_zone": false,
+        "crash_zone_past": false,
+        "hospital": null
+      },
+      "exposure_cnt": 1,
+      "is_candidate": true
+    },
+    {
+      "cw_id": "SAMPLE-21090730-001",
+      "lat": 35.17684,
+      "lon": 129.155661,
+      "length_m": 27,
+      "green_s": 38.2,
+      "t_need_s": 40.8,
+      "gap_s": 2.6,
+      "flags": {
+        "senior_center": false,
+        "market": false,
+        "protect_zone": false,
+        "crash_zone_past": false,
+        "hospital": null
+      },
+      "exposure_cnt": 0,
+      "is_candidate": false
+    },
+    {
+      "cw_id": "SAMPLE-21090730-004",
+      "lat": 35.179707,
+      "lon": 129.152348,
+      "length_m": 23,
+      "green_s": 34,
+      "t_need_s": 35.8,
+      "gap_s": 1.8,
+      "flags": {
+        "senior_center": true,
+        "market": false,
+        "protect_zone": false,
+        "crash_zone_past": false,
+        "hospital": null
+      },
+      "exposure_cnt": 1,
+      "is_candidate": true
+    },
+    {
+      "cw_id": "SAMPLE-21090730-007",
+      "lat": 35.177841,
+      "lon": 129.154496,
+      "length_m": 12,
+      "green_s": 25.3,
+      "t_need_s": 22,
+      "gap_s": -3.3,
+      "flags": {
+        "senior_center": true,
+        "market": false,
+        "protect_zone": false,
+        "crash_zone_past": false,
+        "hospital": null
+      },
+      "exposure_cnt": 1,
+      "is_candidate": false
+    },
+    {
+      "cw_id": "SAMPLE-21090730-008",
+      "lat": 35.177171,
+      "lon": 129.155339,
+      "length_m": 26,
+      "green_s": 43.3,
+      "t_need_s": 39.5,
+      "gap_s": -3.8,
+      "flags": {
+        "senior_center": true,
+        "market": true,
+        "protect_zone": false,
+        "crash_zone_past": false,
+        "hospital": null
+      },
+      "exposure_cnt": 2,
+      "is_candidate": false
+    },
+    {
+      "cw_id": "SAMPLE-21090730-006",
+      "lat": 35.175883,
+      "lon": 129.152896,
+      "length_m": 19,
+      "green_s": 35.9,
+      "t_need_s": 30.8,
+      "gap_s": -5.1,
+      "flags": {
+        "senior_center": true,
+        "market": true,
+        "protect_zone": false,
+        "crash_zone_past": false,
+        "hospital": null
+      },
+      "exposure_cnt": 2,
+      "is_candidate": false
+    }
+  ]
+}

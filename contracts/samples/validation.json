@@ -1,0 +1,153 @@
+{
+  "_sample": true,
+  "v1": {
+    "n": 6,
+    "mean_diff_s": 0.8,
+    "flash_included_n": 4,
+    "points": [
+      {
+        "cw_id": "SAMPLE-V1-01",
+        "length_m": 18,
+        "recorded_green_s": 25,
+        "measured_green_s": 19,
+        "measured_flash_s": 6,
+        "diff_s": 0
+      },
+      {
+        "cw_id": "SAMPLE-V1-02",
+        "length_m": 24,
+        "recorded_green_s": 30,
+        "measured_green_s": 23,
+        "measured_flash_s": 7,
+        "diff_s": 0
+      },
+      {
+        "cw_id": "SAMPLE-V1-03",
+        "length_m": 12,
+        "recorded_green_s": 18,
+        "measured_green_s": 16,
+        "measured_flash_s": 0,
+        "diff_s": 2
+      },
+      {
+        "cw_id": "SAMPLE-V1-04",
+        "length_m": 30,
+        "recorded_green_s": 38,
+        "measured_green_s": 29,
+        "measured_flash_s": 8,
+        "diff_s": 1
+      },
+      {
+        "cw_id": "SAMPLE-V1-05",
+        "length_m": 20,
+        "recorded_green_s": 26,
+        "measured_green_s": 20,
+        "measured_flash_s": 6,
+        "diff_s": 0
+      },
+      {
+        "cw_id": "SAMPLE-V1-06",
+        "length_m": 15,
+        "recorded_green_s": 20,
+        "measured_green_s": 18,
+        "measured_flash_s": 0,
+        "diff_s": 2
+      }
+    ]
+  },
+  "v2": {
+    "top_n": 10,
+    "pairs": [
+      {
+        "a": 0.7,
+        "b": 0.8,
+        "spearman": 0.91,
+        "top_n_overlap": 8
+      },
+      {
+        "a": 0.7,
+        "b": 1,
+        "spearman": 0.78,
+        "top_n_overlap": 6
+      },
+      {
+        "a": 0.8,
+        "b": 1,
+        "spearman": 0.88,
+        "top_n_overlap": 7
+      }
+    ]
+  },
+  "v3": {
+    "speed": 0.8,
+    "recent_years": [
+      2023,
+      2024
+    ],
+    "overlap_ratio": 0.31,
+    "ratio_vs_random": 1.8,
+    "p_value": 0.02,
+    "n_permutations": 1000,
+    "random_distribution": [
+      0.203,
+      0.187,
+      0.206,
+      0.2,
+      0.138,
+      0.192,
+      0.215,
+      0.154,
+      0.106,
+      0.179,
+      0.185,
+      0.171,
+      0.102,
+      0.184,
+      0.165,
+      0.181,
+      0.163,
+      0.171,
+      0.128,
+      0.183
+    ]
+  },
+  "v4": {
+    "speed": 0.8,
+    "spearman": -0.12,
+    "by_group": [
+      {
+        "group": "부산광역시",
+        "spearman": -0.08,
+        "n": 205
+      },
+      {
+        "group": "도시",
+        "spearman": -0.1,
+        "n": 2100
+      },
+      {
+        "group": "농촌",
+        "spearman": -0.15,
+        "n": 1400
+      }
+    ],
+    "inside_outside": [
+      {
+        "facility": "senior_center",
+        "inside_short_ratio": 0.22,
+        "outside_short_ratio": 0.27
+      },
+      {
+        "facility": "market",
+        "inside_short_ratio": 0.21,
+        "outside_short_ratio": 0.26
+      },
+      {
+        "facility": "protect_zone",
+        "inside_short_ratio": 0.19,
+        "outside_short_ratio": 0.26
+      }
+    ]
+  },
+  "v5": null
+}

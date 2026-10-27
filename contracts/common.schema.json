@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "common.schema.json",
+  "title": "공통 정의",
+  "$defs": {
+    "adm_cd": {
+      "type": "string",
+      "pattern": "^[0-9]{8,10}$",
+      "description": "읍면동 코드. 항상 문자열(앞자리 0 보존)."
+    },
+    "speed": {
+      "type": "number",
+      "enum": [0.7, 0.8, 1.0],
+      "description": "보행 속도 가정(m/s). 0.7 노인, 0.8 보행약자, 1.0 일반."
+    },
+    "ratio": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "비율(0~1). 화면에서 %로 변환한다."
+    },
+    "seconds": {
+      "type": "number",
+      "description": "초 단위 시간."
+    },
+    "lat": { "type": "number", "minimum": -90, "maximum": 90, "description": "위도(EPSG:4326)" },
+    "lon": { "type": "number", "minimum": -180, "maximum": 180, "description": "경도(EPSG:4326)" },
+    "sample_flag": {
+      "type": "boolean",
+      "description": "가상 샘플 데이터면 true. 실제 응답에는 없다."
+    },
+    "exposure_flags": {
+      "type": "object",
+      "description": "횡단보도 반경 안 노출 여부.",
+      "required": ["senior_center", "market", "protect_zone", "crash_zone_past"],
+      "properties": {
+        "senior_center": { "type": "boolean", "description": "경로당·마을회관" },
+        "market": { "type": "boolean", "description": "전통시장" },
+        "protect_zone": { "type": "boolean", "description": "노인·장애인 보호구역" },
+        "crash_zone_past": { "type": "boolean", "description": "노인 보행사고 다발지역(과거 연도)" },
+        "hospital": { "type": ["boolean", "null"], "description": "병원(P2). 데이터가 없으면 null." }
+      }
+    }
+  }
+}

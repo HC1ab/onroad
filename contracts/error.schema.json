@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "error.schema.json",
+  "title": "오류 응답 (4xx, 5xx)",
+  "description": "내부 경로·쿼리·스택 트레이스는 담지 않는다.",
+  "type": "object",
+  "required": ["error"],
+  "properties": {
+    "error": {
+      "type": "object",
+      "required": ["code", "message"],
+      "properties": {
+        "code": { "type": "string", "enum": ["bad_request", "not_found", "method_not_allowed", "rate_limited", "internal_error"] },
+        "message": { "type": "string" }
+      }
+    }
+  }
+}

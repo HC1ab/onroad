@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "candidates.schema.json",
+  "title": "GET /api/crosswalks/candidates?bbox=&speed=&radius=",
+  "description": "후보 횡단보도 점 레이어(GeoJSON FeatureCollection). bbox 는 minLon,minLat,maxLon,maxLat. radius 는 노출 반경(m, 기본 300).",
+  "type": "object",
+  "required": ["type", "features"],
+  "properties": {
+    "_sample": { "$ref": "common.schema.json#/$defs/sample_flag" },
+    "type": { "const": "FeatureCollection" },
+    "speed": { "$ref": "common.schema.json#/$defs/speed" },
+    "radius_m": { "type": "integer", "enum": [200, 300, 500] },
+    "features": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "geometry", "properties"],
+        "properties": {
+          "type": { "const": "Feature" },
+          "geometry": {
+            "type": "object",
+            "required": ["type", "coordinates"],
+            "properties": {
+              "type": { "const": "Point" },
+              "coordinates": {
+                "type": "array",
+                "prefixItems": [
+                  { "$ref": "common.schema.json#/$defs/lon" },
+                  { "$ref": "common.schema.json#/$defs/lat" }
+                ],
+                "minItems": 2,
+                "maxItems": 2
+              }
+            }
+          },
+          "properties": {
+            "type": "object",
+            "required": ["cw_id", "adm_cd", "gap_s", "exposure_cnt"],
+            "properties": {
+              "cw_id": { "type": "string" },
+              "adm_cd": { "$ref": "common.schema.json#/$defs/adm_cd" },
+              "gap_s": { "$ref": "common.schema.json#/$defs/seconds" },
+              "exposure_cnt": { "type": "integer", "minimum": 1 }
+            }
+          }
+        }
+      }
+    }
+  }
+}
