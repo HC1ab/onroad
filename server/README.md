@@ -28,7 +28,36 @@ PR에서 `server/`가 바뀌면 GitHub Actions(`server.yml`)가 테스트와 `/h
 - 오류 응답에 내부 정보를 담지 않는다.
 - DB 포트는 외부에 열지 않는다. API 포트는 로컬호스트(127.0.0.1)에만 열린다.
 - 원본 데이터와 인증키는 서버에 두지 않는다.
-# B2 결과 적재
+# 서버 실행과 결과 적재
+
+## B3 읽기 전용 API
+
+적재 후 `docker compose up -d --build api`로 실행한다. Swagger: http://localhost:8000/api/docs
+
+| 요청 | 동작 |
+| --- | --- |
+| `/api/areas?speed=0.8&sido=부산광역시&sigungu=해운대구` | 읍면동 집계, 지역 필터. 사분면 기준은 저장된 전국 기준 유지 |
+| `/api/areas/21090730/crosswalks?speed=0.8` | gap_s 내림차순 상세 목록 |
+| `/api/crosswalks/candidates?speed=0.8&radius=300&bbox=129.05,35.13,129.22,35.23` | 저장된 후보 점을 지도 범위로 필터 |
+| `/api/validation` | V1~V5 결과 그대로 반환 |
+| `/api/meta` | 기준일·출처·한계 그대로 반환 |
+
+speed는 0.7/0.8/1.0(기본 0.8), radius는 200/300/500(기본 300). sigungu는 sido와 함께 사용한다. 잘못된 입력은 400, 없는 읍면동은 404다. 미적재 속도·반경·상세 또는 DB 오류는 기존 명세의 500 오류를 반환한다. 미적재 데이터를 0건으로 표시하지 않으며, 적재된 빈 목록은 200과 빈 배열로 반환한다. 현재 샘플은 0.8/300과 일부 상세만 제공한다.
+
+조회는 읽기 전용 트랜잭션이며 적재와 공유하는 잠금으로 한 응답에 서로 다른 적재 시점의 데이터가 섞이지 않게 한다. 요청 시 분석값은 계산하지 않는다. JSONResponse로 `_sample` 표시를 보존한다.
+
+`app/api_schemas.json`은 독립 Docker 이미지에서 Swagger를 제공하기 위한 contracts 스냅샷이다. 계약이 변경되면 함께 갱신하며, 통합 테스트가 원본과의 일치를 확인한다. 실제 응답도 원본 JSON Schema로 검사한다.
+
+전체 테스트 실행(저장소 루트, Docker만 필요):
+
+```sh
+docker compose -p onroad-server-tests -f server/compose.test.yml up --build --abort-on-container-exit --exit-code-from tests
+docker compose -p onroad-server-tests -f server/compose.test.yml down
+```
+
+테스트 DB는 내부 네트워크와 임시 메모리 저장소만 사용하며 운영 DB와 분리된다.
+
+## B2 결과 적재
 
 저장소 루트에서 실행한다. `.env`의 DB 설정과 실행 중인 Compose DB가 필요하다.
 

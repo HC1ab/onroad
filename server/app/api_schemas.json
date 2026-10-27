@@ -1,0 +1,878 @@
+{
+  "area_crosswalks.schema.json": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "area_crosswalks.schema.json",
+    "title": "GET /api/areas/{adm_cd}/crosswalks?speed=",
+    "description": "한 읍면동의 횡단보도 목록. 지역 상세 패널(F7)에 쓴다. 기본 정렬은 gap_s 내림차순.",
+    "type": "object",
+    "required": [
+      "adm_cd",
+      "speed",
+      "items"
+    ],
+    "properties": {
+      "_sample": {
+        "$ref": "common.schema.json#/$defs/sample_flag"
+      },
+      "adm_cd": {
+        "$ref": "common.schema.json#/$defs/adm_cd"
+      },
+      "speed": {
+        "$ref": "common.schema.json#/$defs/speed"
+      },
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "cw_id",
+            "lat",
+            "lon",
+            "length_m",
+            "green_s",
+            "t_need_s",
+            "gap_s",
+            "flags",
+            "exposure_cnt",
+            "is_candidate"
+          ],
+          "properties": {
+            "cw_id": {
+              "type": "string",
+              "description": "횡단보도 식별자(파이프라인이 부여)"
+            },
+            "lat": {
+              "$ref": "common.schema.json#/$defs/lat"
+            },
+            "lon": {
+              "$ref": "common.schema.json#/$defs/lon"
+            },
+            "length_m": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "횡단보도 연장(m)"
+            },
+            "green_s": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "기록된 녹색신호시간(초)"
+            },
+            "t_need_s": {
+              "$ref": "common.schema.json#/$defs/seconds",
+              "description": "7 + length_m / speed"
+            },
+            "gap_s": {
+              "$ref": "common.schema.json#/$defs/seconds",
+              "description": "t_need_s - green_s. 양수면 기록값이 기준식보다 짧음"
+            },
+            "flags": {
+              "$ref": "common.schema.json#/$defs/exposure_flags"
+            },
+            "exposure_cnt": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "is_candidate": {
+              "type": "boolean",
+              "description": "gap_s > 0 그리고 exposure_cnt >= 1"
+            }
+          }
+        }
+      }
+    }
+  },
+  "common.schema.json": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "common.schema.json",
+    "title": "공통 정의",
+    "$defs": {
+      "adm_cd": {
+        "type": "string",
+        "pattern": "^[0-9]{8,10}$",
+        "description": "읍면동 코드. 항상 문자열(앞자리 0 보존)."
+      },
+      "speed": {
+        "type": "number",
+        "enum": [
+          0.7,
+          0.8,
+          1.0
+        ],
+        "description": "보행 속도 가정(m/s). 0.7 노인, 0.8 보행약자, 1.0 일반."
+      },
+      "ratio": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1,
+        "description": "비율(0~1). 화면에서 %로 변환한다."
+      },
+      "seconds": {
+        "type": "number",
+        "description": "초 단위 시간."
+      },
+      "lat": {
+        "type": "number",
+        "minimum": -90,
+        "maximum": 90,
+        "description": "위도(EPSG:4326)"
+      },
+      "lon": {
+        "type": "number",
+        "minimum": -180,
+        "maximum": 180,
+        "description": "경도(EPSG:4326)"
+      },
+      "sample_flag": {
+        "type": "boolean",
+        "description": "가상 샘플 데이터면 true. 실제 응답에는 없다."
+      },
+      "exposure_flags": {
+        "type": "object",
+        "description": "횡단보도 반경 안 노출 여부.",
+        "required": [
+          "senior_center",
+          "market",
+          "protect_zone",
+          "crash_zone_past"
+        ],
+        "properties": {
+          "senior_center": {
+            "type": "boolean",
+            "description": "경로당·마을회관"
+          },
+          "market": {
+            "type": "boolean",
+            "description": "전통시장"
+          },
+          "protect_zone": {
+            "type": "boolean",
+            "description": "노인·장애인 보호구역"
+          },
+          "crash_zone_past": {
+            "type": "boolean",
+            "description": "노인 보행사고 다발지역(과거 연도)"
+          },
+          "hospital": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "병원(P2). 데이터가 없으면 null."
+          }
+        }
+      }
+    }
+  },
+  "boundaries.schema.json": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "boundaries.schema.json",
+    "title": "읍면동 경계 정적 파일 (GeoJSON)",
+    "description": "서버가 정적 파일로 제공한다(API 아님). 값은 담지 않고 /api/areas 의 adm_cd 로 붙인다. 출처: admdongkor(CC BY 4.0).",
+    "type": "object",
+    "required": [
+      "type",
+      "features"
+    ],
+    "properties": {
+      "type": {
+        "const": "FeatureCollection"
+      },
+      "features": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "type",
+            "geometry",
+            "properties"
+          ],
+          "properties": {
+            "type": {
+              "const": "Feature"
+            },
+            "geometry": {
+              "type": "object",
+              "required": [
+                "type",
+                "coordinates"
+              ],
+              "properties": {
+                "type": {
+                  "enum": [
+                    "Polygon",
+                    "MultiPolygon"
+                  ]
+                },
+                "coordinates": {
+                  "type": "array"
+                }
+              }
+            },
+            "properties": {
+              "type": "object",
+              "required": [
+                "adm_cd",
+                "adm_name",
+                "sido",
+                "sigungu"
+              ],
+              "properties": {
+                "adm_cd": {
+                  "$ref": "common.schema.json#/$defs/adm_cd"
+                },
+                "adm_name": {
+                  "type": "string"
+                },
+                "sido": {
+                  "type": "string"
+                },
+                "sigungu": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "areas.schema.json": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "areas.schema.json",
+    "title": "GET /api/areas?speed=&sido=&sigungu=",
+    "description": "읍면동별 집계. 속도 하나 기준. 지도 채색(F5), 사분면(F5), 상위 N(F7)에 쓴다.",
+    "type": "object",
+    "required": [
+      "speed",
+      "thresholds",
+      "items"
+    ],
+    "properties": {
+      "_sample": {
+        "$ref": "common.schema.json#/$defs/sample_flag"
+      },
+      "speed": {
+        "$ref": "common.schema.json#/$defs/speed"
+      },
+      "thresholds": {
+        "type": "object",
+        "description": "사분면 경계선 기본값(전국 중앙값). 화면에서 조절할 수 있다.",
+        "required": [
+          "short_ratio_median",
+          "ratio_65plus_median"
+        ],
+        "properties": {
+          "short_ratio_median": {
+            "$ref": "common.schema.json#/$defs/ratio"
+          },
+          "ratio_65plus_median": {
+            "$ref": "common.schema.json#/$defs/ratio"
+          }
+        }
+      },
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "adm_cd",
+            "adm_name",
+            "sido",
+            "sigungu",
+            "n_analyzed",
+            "n_short",
+            "short_ratio",
+            "mean_gap_s",
+            "ratio_65plus",
+            "quadrant",
+            "n_candidate",
+            "low_sample"
+          ],
+          "properties": {
+            "adm_cd": {
+              "$ref": "common.schema.json#/$defs/adm_cd"
+            },
+            "adm_name": {
+              "type": "string"
+            },
+            "sido": {
+              "type": "string"
+            },
+            "sigungu": {
+              "type": "string"
+            },
+            "n_analyzed": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "분석 가능한 횡단보도 수"
+            },
+            "n_short": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "gap > 0 인 횡단보도 수"
+            },
+            "short_ratio": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1,
+              "description": "n_short / n_analyzed. 분석 0건이면 null"
+            },
+            "mean_gap_s": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "description": "gap > 0 인 횡단보도의 평균 짧은 초. 없으면 null"
+            },
+            "ratio_65plus": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1,
+              "description": "65세 이상 인구 비율. 인구 미매칭이면 null"
+            },
+            "quadrant": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "enum": [
+                "high_high",
+                "high_low",
+                "low_high",
+                "low_low",
+                null
+              ],
+              "description": "짧음 비율_고령 비율 기준 사분면. high_high 가 점검 우선순위 후보. 값이 없으면 null"
+            },
+            "n_candidate": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "후보 횡단보도 수(gap > 0 그리고 노출 1개 이상)"
+            },
+            "low_sample": {
+              "type": "boolean",
+              "description": "n_analyzed 가 표본 하한(config.yaml) 미만이면 true. 회색 처리·순위 제외"
+            }
+          }
+        }
+      }
+    }
+  },
+  "candidates.schema.json": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "candidates.schema.json",
+    "title": "GET /api/crosswalks/candidates?bbox=&speed=&radius=",
+    "description": "후보 횡단보도 점 레이어(GeoJSON FeatureCollection). bbox 는 minLon,minLat,maxLon,maxLat. radius 는 노출 반경(m, 기본 300).",
+    "type": "object",
+    "required": [
+      "type",
+      "features"
+    ],
+    "properties": {
+      "_sample": {
+        "$ref": "common.schema.json#/$defs/sample_flag"
+      },
+      "type": {
+        "const": "FeatureCollection"
+      },
+      "speed": {
+        "$ref": "common.schema.json#/$defs/speed"
+      },
+      "radius_m": {
+        "type": "integer",
+        "enum": [
+          200,
+          300,
+          500
+        ]
+      },
+      "features": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "type",
+            "geometry",
+            "properties"
+          ],
+          "properties": {
+            "type": {
+              "const": "Feature"
+            },
+            "geometry": {
+              "type": "object",
+              "required": [
+                "type",
+                "coordinates"
+              ],
+              "properties": {
+                "type": {
+                  "const": "Point"
+                },
+                "coordinates": {
+                  "type": "array",
+                  "prefixItems": [
+                    {
+                      "$ref": "common.schema.json#/$defs/lon"
+                    },
+                    {
+                      "$ref": "common.schema.json#/$defs/lat"
+                    }
+                  ],
+                  "minItems": 2,
+                  "maxItems": 2
+                }
+              }
+            },
+            "properties": {
+              "type": "object",
+              "required": [
+                "cw_id",
+                "adm_cd",
+                "gap_s",
+                "exposure_cnt"
+              ],
+              "properties": {
+                "cw_id": {
+                  "type": "string"
+                },
+                "adm_cd": {
+                  "$ref": "common.schema.json#/$defs/adm_cd"
+                },
+                "gap_s": {
+                  "$ref": "common.schema.json#/$defs/seconds"
+                },
+                "exposure_cnt": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "validation.schema.json": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "validation.schema.json",
+    "title": "GET /api/validation",
+    "description": "검증 V1~V5 결과(F8). 아직 계산되지 않은 항목은 null. 결과가 기대와 달라도 그대로 담는다.",
+    "type": "object",
+    "required": [
+      "v1",
+      "v2",
+      "v3",
+      "v4",
+      "v5"
+    ],
+    "properties": {
+      "_sample": {
+        "$ref": "common.schema.json#/$defs/sample_flag"
+      },
+      "v1": {
+        "description": "현장 실측: 기록값 - 실측값(초)",
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "object",
+            "required": [
+              "n",
+              "mean_diff_s",
+              "flash_included_n",
+              "points"
+            ],
+            "properties": {
+              "n": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "mean_diff_s": {
+                "type": "number"
+              },
+              "flash_included_n": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "기록값이 점멸을 포함한 것으로 보이는 곳 수"
+              },
+              "points": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "cw_id",
+                    "length_m",
+                    "recorded_green_s",
+                    "measured_green_s",
+                    "measured_flash_s",
+                    "diff_s"
+                  ],
+                  "properties": {
+                    "cw_id": {
+                      "type": "string"
+                    },
+                    "length_m": {
+                      "type": "number"
+                    },
+                    "recorded_green_s": {
+                      "type": "number"
+                    },
+                    "measured_green_s": {
+                      "type": "number"
+                    },
+                    "measured_flash_s": {
+                      "type": "number"
+                    },
+                    "diff_s": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "v2": {
+        "description": "속도 민감도: 속도 쌍별 읍면동 순위 상관과 상위 N 중복",
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "object",
+            "required": [
+              "top_n",
+              "pairs"
+            ],
+            "properties": {
+              "top_n": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "pairs": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "a",
+                    "b",
+                    "spearman",
+                    "top_n_overlap"
+                  ],
+                  "properties": {
+                    "a": {
+                      "$ref": "common.schema.json#/$defs/speed"
+                    },
+                    "b": {
+                      "$ref": "common.schema.json#/$defs/speed"
+                    },
+                    "spearman": {
+                      "type": "number",
+                      "minimum": -1,
+                      "maximum": 1
+                    },
+                    "top_n_overlap": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "v3": {
+        "description": "사고다발지역 연관성(연도 분할, 무작위 비교)",
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "object",
+            "required": [
+              "speed",
+              "recent_years",
+              "overlap_ratio",
+              "ratio_vs_random",
+              "p_value",
+              "n_permutations",
+              "random_distribution"
+            ],
+            "properties": {
+              "speed": {
+                "$ref": "common.schema.json#/$defs/speed"
+              },
+              "recent_years": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                }
+              },
+              "overlap_ratio": {
+                "$ref": "common.schema.json#/$defs/ratio"
+              },
+              "ratio_vs_random": {
+                "type": "number",
+                "minimum": 0
+              },
+              "p_value": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "n_permutations": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "random_distribution": {
+                "type": "array",
+                "items": {
+                  "$ref": "common.schema.json#/$defs/ratio"
+                },
+                "description": "무작위 추출 겹침 비율들(히스토그램용)"
+              }
+            }
+          }
+        ]
+      },
+      "v4": {
+        "description": "축 독립성과 이미 조정됐는가",
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "object",
+            "required": [
+              "speed",
+              "spearman",
+              "by_group",
+              "inside_outside"
+            ],
+            "properties": {
+              "speed": {
+                "$ref": "common.schema.json#/$defs/speed"
+              },
+              "spearman": {
+                "type": "number",
+                "minimum": -1,
+                "maximum": 1,
+                "description": "읍면동 짧음 비율과 65세 이상 비율의 순위 상관"
+              },
+              "by_group": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "group",
+                    "spearman",
+                    "n"
+                  ],
+                  "properties": {
+                    "group": {
+                      "type": "string",
+                      "description": "시도명 또는 도시/농촌"
+                    },
+                    "spearman": {
+                      "type": "number",
+                      "minimum": -1,
+                      "maximum": 1
+                    },
+                    "n": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  }
+                }
+              },
+              "inside_outside": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "facility",
+                    "inside_short_ratio",
+                    "outside_short_ratio"
+                  ],
+                  "properties": {
+                    "facility": {
+                      "type": "string",
+                      "enum": [
+                        "senior_center",
+                        "market",
+                        "protect_zone"
+                      ]
+                    },
+                    "inside_short_ratio": {
+                      "$ref": "common.schema.json#/$defs/ratio"
+                    },
+                    "outside_short_ratio": {
+                      "$ref": "common.schema.json#/$defs/ratio"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "v5": {
+        "description": "(선택) 보정 연관성 로지스틱 회귀. 하지 않으면 null",
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "object",
+            "required": [
+              "coefficients"
+            ],
+            "properties": {
+              "coefficients": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "term",
+                    "estimate",
+                    "ci_low",
+                    "ci_high"
+                  ],
+                  "properties": {
+                    "term": {
+                      "type": "string"
+                    },
+                    "estimate": {
+                      "type": "number"
+                    },
+                    "ci_low": {
+                      "type": "number"
+                    },
+                    "ci_high": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "meta.schema.json": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "meta.schema.json",
+    "title": "GET /api/meta",
+    "description": "화면 하단 한계 고지·출처(F9)와 데이터 기준 정보.",
+    "type": "object",
+    "required": [
+      "ref_month",
+      "built_at",
+      "coverage_ratio",
+      "green_def_status",
+      "sources",
+      "limits_text"
+    ],
+    "properties": {
+      "_sample": {
+        "$ref": "common.schema.json#/$defs/sample_flag"
+      },
+      "ref_month": {
+        "type": "string",
+        "pattern": "^[0-9]{4}-[0-9]{2}$",
+        "description": "65세 이상 인구 기준 월"
+      },
+      "built_at": {
+        "type": "string",
+        "format": "date-time",
+        "description": "파이프라인 실행 시각"
+      },
+      "coverage_ratio": {
+        "$ref": "common.schema.json#/$defs/ratio",
+        "description": "좌표가 있어 분석 가능한 횡단보도 비율"
+      },
+      "green_def_status": {
+        "type": "string",
+        "enum": [
+          "unconfirmed",
+          "includes_flash",
+          "excludes_flash"
+        ],
+        "description": "녹색신호시간이 점멸을 포함하는지. unconfirmed 이면 화면에 '정의 확정 전'을 표시한다"
+      },
+      "sources": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "name",
+            "url"
+          ],
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "url": {
+              "type": "string"
+            },
+            "license": {
+              "type": "string"
+            },
+            "modified": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "limits_text": {
+        "type": "string",
+        "description": "모든 화면 하단에 그대로 표시하는 한계 문구"
+      }
+    }
+  },
+  "error.schema.json": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "error.schema.json",
+    "title": "오류 응답 (4xx, 5xx)",
+    "description": "내부 경로·쿼리·스택 트레이스는 담지 않는다.",
+    "type": "object",
+    "required": [
+      "error"
+    ],
+    "properties": {
+      "error": {
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "bad_request",
+              "not_found",
+              "method_not_allowed",
+              "rate_limited",
+              "internal_error"
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

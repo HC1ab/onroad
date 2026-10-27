@@ -1,13 +1,15 @@
 """한 박자 API (읽기 전용).
 
-엔드포인트 구현은 B3(#14)에서 /api 라우터에 붙인다. 응답 형식은 contracts/ 스키마를 따른다.
+미리 적재한 결과를 /api 라우터에서 조회한다. 응답 형식은 contracts/ 스키마를 따른다.
 """
-from fastapi import APIRouter, FastAPI, Request
+from fastapi import FastAPI, Request
+from fastapi.openapi.utils import get_openapi
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from . import db, errors
 from .settings import get_settings
+from .routes import api
 
 app = FastAPI(title="한 박자 API", version="0.1.0", docs_url="/api/docs", openapi_url="/api/openapi.json")
 errors.install(app)
@@ -36,6 +38,17 @@ def healthz():
     return JSONResponse(body, status_code=200 if db_ok else 503)
 
 
-api = APIRouter(prefix="/api")
-# B3(#14): areas, area_crosswalks, candidates, validation, meta 라우트를 여기에 추가한다.
 app.include_router(api)
+
+
+def openapi():
+    if app.openapi_schema is None:
+        schema = get_openapi(title=app.title, version=app.version, routes=app.routes)
+        for path in schema['paths'].values():
+            for operation in path.values():
+                operation.get('responses', {}).pop('422', None)
+        app.openapi_schema = schema
+    return app.openapi_schema
+
+
+app.openapi = openapi
