@@ -1,0 +1,57 @@
+import { api, API_MODE } from './api/client'
+import { AreaSummary } from './components/AreaSummary'
+import { Footer } from './components/Footer'
+import { Legend } from './components/Legend'
+import { LoadState } from './components/LoadState'
+import { MapView } from './components/MapView'
+import { SpeedSelector } from './components/SpeedSelector'
+import { useApi } from './hooks/useApi'
+import { AppStateProvider, useAppState } from './state/AppState'
+
+function Main() {
+  const { speed } = useAppState()
+  const boundaries = useApi((s) => api.boundaries(s), [])
+  const areas = useApi((s) => api.areas(speed, s), [speed])
+  const meta = useApi((s) => api.meta(s), [])
+
+  const error = boundaries.error ?? areas.error
+  const retry = () => {
+    if (boundaries.error) boundaries.reload()
+    if (areas.error) areas.reload()
+  }
+
+  return (
+    <div className="app">
+      <header className="header">
+        <div className="brand">
+          <h1>한 박자</h1>
+          <span className="muted">점검 우선순위 후보 지도</span>
+        </div>
+        <SpeedSelector />
+        {API_MODE === 'mock' && <span className="badge">샘플 데이터 (mock) · 실제 분석 결과 아님</span>}
+      </header>
+
+      <main className="body">
+        <section className="map-wrap">
+          <MapView boundaries={boundaries.data} areas={areas.data?.items ?? null} />
+          <Legend />
+          <LoadState loading={boundaries.loading || areas.loading} error={error} onRetry={retry} />
+        </section>
+        <aside className="side">
+          {/* W4(#20) 사분면, W5(#21) 상위 N·상세 패널이 이 영역에 들어간다. */}
+          <AreaSummary areas={areas.data?.items ?? null} />
+        </aside>
+      </main>
+
+      <Footer meta={meta.data} />
+    </div>
+  )
+}
+
+export default function App() {
+  return (
+    <AppStateProvider>
+      <Main />
+    </AppStateProvider>
+  )
+}
