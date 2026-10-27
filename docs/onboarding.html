@@ -238,9 +238,10 @@ gh auth login              # 이슈를 읽고 쓰려면 필요</code></pre>
   <p>Windows에서는 한글 파일명이 깨지지 않게 <code>git config --global core.quotepath false</code>도 권장합니다. 인증키가 필요하면 <code>.env</code>에만 넣습니다.</p>
 
   <h3>로컬 실행 (local 환경)</h3>
-<pre><code>docker compose up          # DB(:5432) + API(:8000)
-cd web &amp;&amp; npm run dev      # 프론트(:5173), /api 는 :8000 으로 프록시</code></pre>
-  <div class="note warn"><b>아직 준비 중:</b> <code>docker-compose.yml</code>, <code>server/</code> 코드, <code>web/</code> 프로젝트는 지금 저장소에 없습니다. E-server와 C-web 담당이 만들면 이 명령이 동작합니다.</div>
+<pre><code># .env 의 DB_PASSWORD 에 아무 값이나 넣은 뒤
+docker compose up --build  # DB + API(:8000) + nginx(:8080)
+cd web &amp;&amp; npm install &amp;&amp; npm run dev   # 프론트(:5173), /api 는 :8000 으로 프록시</code></pre>
+  <div class="note ok">서버 없이 화면만 볼 때는 <code>cd web &amp;&amp; npm run dev</code>만 실행하면 mock 모드로 뜹니다. 실행 방법 전체와 자주 막히는 곳은 <a href="https://github.com/HC1ab/onroad#readme">README</a>에 있습니다.</div>
   <ul>
     <li>서버가 없어도 프론트는 <b>mock 모드</b>(<code>VITE_API_MODE=mock</code>)로 <code>contracts/samples/</code>의 JSON을 읽어 개발할 수 있게 만들 예정입니다(P1).</li>
     <li>로컬과 서버는 같은 Docker 이미지를 쓰고, 차이는 <code>.env.local</code>/<code>.env.prod</code> 값으로만 둡니다.</li>
@@ -303,13 +304,13 @@ cd web &amp;&amp; npm run dev      # 프론트(:5173), /api 는 :8000 으로 프
   <div class="tablewrap"><table>
     <tr><th>항목</th><th>상태</th></tr>
     <tr><td>저장소, 훅, 이슈·PR 템플릿, 구역 폴더</td><td>완료</td></tr>
-    <tr><td>PRD 서버 구조 반영 (F15~F18, API, 환경)</td><td><code>docs</code> 브랜치에만 있음. main 병합 전</td></tr>
-    <tr><td>와이어프레임 (메인·상세·검증)</td><td><code>docs/wireframe/</code> (<code>docs</code> 브랜치)</td></tr>
+    <tr><td>PRD 서버 구조 반영 (F15~F18, API, 환경)</td><td>완료 (main)</td></tr>
+    <tr><td>와이어프레임 (메인·상세·검증)</td><td><code>docs/wireframe/</code></td></tr>
+    <tr><td>API 계약(C1), 서버 골격(B1), 프론트 골격(W1)</td><td>완료. mock 모드로 부산 일부 지도가 뜸</td></tr>
     <tr><td>게이트 A·B·C (데이터 확인)</td><td>미완료. 읍면동 경계만 받아서 속성 확인함</td></tr>
-    <tr><td>파이프라인, API, 웹 코드</td><td>시작 전</td></tr>
+    <tr><td>파이프라인, API 엔드포인트, 화면 기능</td><td>시작 전 (<a href="https://github.com/HC1ab/onroad/issues/29">작업 보드 #29</a>)</td></tr>
     <tr><td>학과 클라우드 서버</td><td>사양·접근 방법 미확인</td></tr>
   </table></div>
-  <div class="note warn"><code>docs</code> 브랜치가 main에 합쳐지기 전까지는 main의 PRD와 CLAUDE.md가 이전 버전(서버 없음)입니다. 서버 관련 작업은 <code>docs</code> 브랜치의 PRD를 보세요.</div>
 </section>
 
 <section id="first">
