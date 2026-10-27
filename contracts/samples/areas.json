@@ -1,6 +1,7 @@
 {
   "_sample": true,
   "speed": 0.8,
+  "radius_m": 300,
   "thresholds": {
     "short_ratio_median": 0.214,
     "ratio_65plus_median": 0.222

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "area_crosswalks.schema.json",
-  "title": "GET /api/areas/{adm_cd}/crosswalks?speed=",
+  "title": "GET /api/areas/{adm_cd}/crosswalks?speed=&radius=",
   "description": "한 읍면동의 횡단보도 목록. 지역 상세 패널(F7)에 쓴다. 기본 정렬은 gap_s 내림차순.",
   "type": "object",
   "required": ["adm_cd", "speed", "items"],
@@ -9,6 +9,7 @@
     "_sample": { "$ref": "common.schema.json#/$defs/sample_flag" },
     "adm_cd": { "$ref": "common.schema.json#/$defs/adm_cd" },
     "speed": { "$ref": "common.schema.json#/$defs/speed" },
+    "radius_m": { "type": "integer", "enum": [200, 300, 500], "description": "flags·exposure_cnt·is_candidate 를 계산한 노출 반경(m). 요청의 radius 와 같다." },
     "items": {
       "type": "array",
       "items": {

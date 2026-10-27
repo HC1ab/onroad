@@ -52,6 +52,7 @@ paths:
           description: 시군구명으로 거르기 (F10, P1). sido 와 함께 쓴다.
           schema: { type: string }
           example: 해운대구
+        - $ref: '#/components/parameters/radius'
       responses:
         '200':
           description: 성공
@@ -76,6 +77,7 @@ paths:
           schema: { $ref: './common.schema.json#/$defs/adm_cd' }
           example: '21090730'
         - $ref: '#/components/parameters/speed'
+        - $ref: '#/components/parameters/radius'
       responses:
         '200':
           description: 성공
@@ -104,10 +106,7 @@ paths:
             type: string
             pattern: '^-?\d+(\.\d+)?,-?\d+(\.\d+)?,-?\d+(\.\d+)?,-?\d+(\.\d+)?$'
           example: 129.05,35.13,129.22,35.23
-        - name: radius
-          in: query
-          description: 노출 반경(m). 기본 300, 민감도 200/500.
-          schema: { type: integer, enum: [200, 300, 500], default: 300 }
+        - $ref: '#/components/parameters/radius'
       responses:
         '200':
           description: 성공
@@ -225,6 +224,17 @@ components:
         type: number
         enum: [0.7, 0.8, 1.0]
         default: 0.8
+
+    radius:
+      name: radius
+      in: query
+      description: |
+        목적지 노출 반경(m). 기본 300(노인보호구역 지정 범위), 민감도 확인용 200/500.
+        후보 수(n_candidate)·노출 플래그·후보 점이 이 반경으로 계산된다. 파이프라인이 세 반경을 미리 계산해 둔다.
+      schema:
+        type: integer
+        enum: [200, 300, 500]
+        default: 300
 
   schemas:
     Health:
