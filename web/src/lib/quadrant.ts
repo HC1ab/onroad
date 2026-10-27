@@ -19,6 +19,16 @@ export interface PlotPoint {
   quadrant: Quadrant
 }
 
+/** 지금 쓰는 경계선: 사용자가 옮겼으면 그 값, 아니면 API 기본값(중앙값) */
+export function effectiveThresholds(
+  data: { thresholds: { short_ratio_median: number; ratio_65plus_median: number } } | null,
+  custom: Thresholds | null,
+): Thresholds | null {
+  if (custom) return custom
+  if (!data) return null
+  return { x: data.thresholds.short_ratio_median, y: data.thresholds.ratio_65plus_median }
+}
+
 /** 경계선과 같은 값은 high 로 본다(API 의 quadrant 계산과 같은 규칙). */
 export function classify(x: number, y: number, t: Thresholds): Quadrant {
   return `${x >= t.x ? 'high' : 'low'}_${y >= t.y ? 'high' : 'low'}` as Quadrant

@@ -113,3 +113,60 @@ a { color: var(--accent); }
 .quadrant-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 11px; margin-top: 4px; }
 .link-btn { border: none; background: none; color: var(--accent); cursor: pointer; padding: 0; font: inherit; text-decoration: underline; }
 .q-legend-low { display: inline-block; width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid #c9ccd1; vertical-align: middle; }
+
+/* 상위 N · 지역 상세 (W5) */
+.body { transition: grid-template-columns 0.2s ease; }
+.body.wide { grid-template-columns: 1fr 480px; }
+.toplist-controls { display: flex; gap: 12px; font-size: 12px; margin-bottom: 8px; }
+.toplist-controls label { display: flex; align-items: center; gap: 4px; color: var(--muted); }
+.toplist-controls select { font: inherit; padding: 2px 4px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); color: var(--text); }
+.toplist-rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.toplist-row {
+  width: 100%; display: grid; grid-template-columns: 22px 1fr 110px 28px; align-items: center; gap: 8px;
+  padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface);
+  font: inherit; text-align: left; cursor: pointer; color: var(--text);
+}
+.toplist-row:hover, .toplist-row:focus-visible { border-color: var(--accent); }
+.toplist-row .rank { font-weight: 700; color: var(--muted); }
+.toplist-row .name { display: flex; align-items: baseline; gap: 6px; min-width: 0; flex-wrap: wrap; }
+.toplist-row .name small { font-size: 11px; }
+.toplist-row .ratio { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+.toplist-row .bar { flex: 1; height: 8px; background: var(--accent-soft); border-radius: 2px; overflow: hidden; }
+.toplist-row .bar span { display: block; height: 100%; background: #e57a35; }
+.toplist-row .num { width: 40px; text-align: right; }
+.toplist-row .cand { text-align: right; font-size: 12px; font-weight: 700; }
+.tag { font-size: 10px; font-weight: 700; color: #fff; background: #b84f12; border-radius: 3px; padding: 0 4px; }
+.toplist-foot { font-size: 11px; margin: 8px 0 0; }
+
+.detail h2 { margin: 4px 0 0; font-size: 20px; }
+.detail-head { display: flex; justify-content: space-between; align-items: center; }
+.close-btn { border: 1px solid var(--border); background: var(--surface); border-radius: 6px; width: 28px; height: 28px; cursor: pointer; font: inherit; color: var(--text); }
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0; }
+.stats > div { border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; }
+.stats dt { font-size: 11px; color: var(--muted); }
+.stats dd { margin: 2px 0 0; font-weight: 700; }
+.stats dd.small { font-size: 12px; font-weight: 600; }
+.notes { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+.notes .note { margin: 0; font-size: 12px; }
+.note.warn { border: 1px solid #f3a36b; }
+.cw-head { display: flex; justify-content: space-between; align-items: baseline; }
+.cw-head h3 { margin: 0 0 6px; font-size: 15px; }
+.check { display: flex; align-items: center; gap: 4px; font-size: 12px; cursor: pointer; }
+.cw-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.cw-table th { text-align: left; font-weight: 600; color: var(--muted); border-bottom: 1px solid var(--border); padding: 4px 6px; }
+.cw-table td { border-bottom: 1px solid var(--border); padding: 6px; }
+.cw-table tbody tr { cursor: pointer; }
+.cw-table tbody tr:hover, .cw-table tbody tr:focus-visible { background: var(--accent-soft); outline: none; }
+.cw-table tbody tr.on { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
+.cw-table .gap.pos { color: #b84f12; font-weight: 700; }
+.flags { white-space: nowrap; }
+.flag { display: inline-block; width: 18px; text-align: center; font-size: 10px; border: 1px solid #e57a35; border-radius: 3px; margin-right: 2px; color: var(--muted); }
+.flag.on { background: #e57a35; color: #fff; }
+.small { font-size: 11px; }
+.load-inline { display: flex; gap: 8px; align-items: center; font-size: 12px; }
+.load-inline.error { color: var(--danger); }
+.load-inline button { font: inherit; border: 1px solid var(--danger); background: #fff; color: var(--danger); border-radius: 6px; padding: 2px 8px; cursor: pointer; }
+
+@media (max-width: 900px) {
+  .body.wide { grid-template-columns: 1fr; }
+}

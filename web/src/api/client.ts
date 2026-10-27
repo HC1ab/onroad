@@ -54,6 +54,9 @@ function delay<T>(value: T, signal?: AbortSignal): Promise<T> {
   })
 }
 
+// mock 전용: 기준식의 진입 시간(초). 실제 값은 파이프라인이 config.yaml 에서 읽어 계산한 결과로 온다.
+const MOCK_ENTRY_S = 7
+
 // 샘플은 0.8 m/s 하나뿐이라, 속도를 바꿔도 화면이 변하는지 보이도록 비율만 흉내 낸다.
 const MOCK_SPEED_FACTOR: Record<Speed, number> = { 0.7: 1.3, 0.8: 1, 1.0: 0.55 }
 
@@ -73,6 +76,20 @@ async function mockAreas(speed: Speed, signal?: AbortSignal): Promise<AreasRespo
   return delay({ ...sample, speed, thresholds, items }, signal)
 }
 
+// 횡단보도 샘플은 한 읍면동 것뿐이라, 다른 동을 고르면 점이 엉뚱한 곳에 찍힌다.
+// mock 에서는 샘플 점들을 고른 동의 중심으로 옮겨 보여준다(모양은 그대로).
+async function mockRecenter(items: AreaCrosswalksResponse['items'], admCd: string) {
+  const b = (await import('@contracts/samples/boundaries.json')).default as unknown as BoundariesResponse
+  const f = b.features.find((x) => x.properties.adm_cd === admCd)
+  if (!f || items.length === 0) return items
+  const ring = f.geometry.type === 'Polygon' ? f.geometry.coordinates[0] : f.geometry.coordinates[0][0]
+  const cx = ring.reduce((s, p) => s + p[0], 0) / ring.length
+  const cy = ring.reduce((s, p) => s + p[1], 0) / ring.length
+  const mx = items.reduce((s, c) => s + c.lon, 0) / items.length
+  const my = items.reduce((s, c) => s + c.lat, 0) / items.length
+  return items.map((c) => ({ ...c, lon: c.lon - mx + cx, lat: c.lat - my + cy }))
+}
+
 // ---- 공개 API ----
 
 export const api = {
@@ -84,7 +101,14 @@ export const api = {
   async areaCrosswalks(admCd: string, speed: Speed, signal?: AbortSignal): Promise<AreaCrosswalksResponse> {
     if (API_MODE === 'mock') {
       const sample = (await import('@contracts/samples/area_crosswalks.json')).default as AreaCrosswalksResponse
-      return delay({ ...sample, adm_cd: admCd, speed }, signal)
+      // 샘플은 0.8 m/s 값이라 속도에 맞게 필요시간·짧은 초를 기준식으로 다시 계산한다.
+      const r1 = (v: number) => Math.round(v * 10) / 10
+      const items = (await mockRecenter(sample.items, admCd)).map((c) => {
+        const t_need_s = r1(MOCK_ENTRY_S + c.length_m / speed)
+        const gap_s = r1(t_need_s - c.green_s)
+        return { ...c, t_need_s, gap_s, is_candidate: gap_s > 0 && c.exposure_cnt >= 1 }
+      })
+      return delay({ ...sample, adm_cd: admCd, speed, items }, signal)
     }
     return getJson(`/api/areas/${encodeURIComponent(admCd)}/crosswalks?speed=${speed}`, signal)
   },
