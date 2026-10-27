@@ -1,0 +1,50 @@
+# 로컬과 서버가 같은 구성을 쓴다. 값은 루트 .env 에서 읽는다(.env.example 참고).
+#   docker compose up --build
+#   http://localhost:8080        nginx (프론트 빌드 + /api 프록시)
+#   http://localhost:8000/healthz API 직접 (프론트 개발 서버가 프록시하는 대상)
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_DB: ${DB_NAME:-onroad}
+      POSTGRES_USER: ${DB_USER:-onroad}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD 를 .env 에 넣어주세요 (로컬은 아무 값이나)}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-onroad} -d ${DB_NAME:-onroad}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    # DB 포트는 외부에 열지 않는다. 적재는 컨테이너 네트워크 안에서 한다.
+
+  api:
+    build: ./server
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-onroad}
+      DB_USER: ${DB_USER:-onroad}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD 를 .env 에 넣어주세요}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:5173}
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${API_PORT:-8000}:8000"
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:1.27-alpine
+    depends_on:
+      - api
+    volumes:
+      - ./server/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./server/nginx/placeholder:/usr/share/nginx/placeholder:ro
+      - ./web/dist:/usr/share/nginx/html:ro
+    ports:
+      - "${WEB_PORT:-8080}:80"
+    restart: unless-stopped
+
+volumes:
+  db_data:
