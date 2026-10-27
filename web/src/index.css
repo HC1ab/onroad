@@ -53,6 +53,13 @@ a { color: var(--accent); }
 .legend-scale { display: flex; justify-content: space-between; color: var(--muted); margin: 2px 0 6px; }
 .legend-row { display: flex; align-items: center; gap: 6px; }
 .sw { display: inline-block; width: 14px; height: 12px; }
+.sw.hatch { background-image: repeating-linear-gradient(-45deg, #8b9099 0 1.5px, transparent 1.5px 5px); }
+.dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid #fff; box-shadow: 0 0 0 1px #c9ccd1; }
+.legend-toggle { display: flex; align-items: center; gap: 6px; font-weight: 700; cursor: pointer; margin-bottom: 6px; }
+.legend-toggle.sep { border-top: 1px solid var(--border); padding-top: 8px; margin-top: 8px; margin-bottom: 2px; }
+.legend-note { color: var(--muted); font-size: 11px; max-width: 220px; }
+.legend-row + .legend-row { margin-top: 3px; }
+.map-tip .maplibregl-popup-content { font-size: 12px; padding: 6px 10px; line-height: 1.5; }
 
 .load-state {
   position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
