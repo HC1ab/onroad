@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "area_crosswalks.schema.json",
+  "title": "GET /api/areas/{adm_cd}/crosswalks?speed=",
+  "description": "한 읍면동의 횡단보도 목록. 지역 상세 패널(F7)에 쓴다. 기본 정렬은 gap_s 내림차순.",
+  "type": "object",
+  "required": ["adm_cd", "speed", "items"],
+  "properties": {
+    "_sample": { "$ref": "common.schema.json#/$defs/sample_flag" },
+    "adm_cd": { "$ref": "common.schema.json#/$defs/adm_cd" },
+    "speed": { "$ref": "common.schema.json#/$defs/speed" },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["cw_id", "lat", "lon", "length_m", "green_s", "t_need_s", "gap_s", "flags", "exposure_cnt", "is_candidate"],
+        "properties": {
+          "cw_id": { "type": "string", "description": "횡단보도 식별자(파이프라인이 부여)" },
+          "lat": { "$ref": "common.schema.json#/$defs/lat" },
+          "lon": { "$ref": "common.schema.json#/$defs/lon" },
+          "length_m": { "type": "number", "exclusiveMinimum": 0, "description": "횡단보도 연장(m)" },
+          "green_s": { "type": "number", "exclusiveMinimum": 0, "description": "기록된 녹색신호시간(초)" },
+          "t_need_s": { "$ref": "common.schema.json#/$defs/seconds", "description": "7 + length_m / speed" },
+          "gap_s": { "$ref": "common.schema.json#/$defs/seconds", "description": "t_need_s - green_s. 양수면 기록값이 기준식보다 짧음" },
+          "flags": { "$ref": "common.schema.json#/$defs/exposure_flags" },
+          "exposure_cnt": { "type": "integer", "minimum": 0 },
+          "is_candidate": { "type": "boolean", "description": "gap_s > 0 그리고 exposure_cnt >= 1" }
+        }
+      }
+    }
+  }
+}

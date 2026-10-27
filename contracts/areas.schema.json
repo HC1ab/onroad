@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "areas.schema.json",
+  "title": "GET /api/areas?speed=&sido=&sigungu=",
+  "description": "읍면동별 집계. 속도 하나 기준. 지도 채색(F5), 사분면(F5), 상위 N(F7)에 쓴다.",
+  "type": "object",
+  "required": ["speed", "thresholds", "items"],
+  "properties": {
+    "_sample": { "$ref": "common.schema.json#/$defs/sample_flag" },
+    "speed": { "$ref": "common.schema.json#/$defs/speed" },
+    "thresholds": {
+      "type": "object",
+      "description": "사분면 경계선 기본값(전국 중앙값). 화면에서 조절할 수 있다.",
+      "required": ["short_ratio_median", "ratio_65plus_median"],
+      "properties": {
+        "short_ratio_median": { "$ref": "common.schema.json#/$defs/ratio" },
+        "ratio_65plus_median": { "$ref": "common.schema.json#/$defs/ratio" }
+      }
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["adm_cd", "adm_name", "sido", "sigungu", "n_analyzed", "n_short", "short_ratio", "mean_gap_s", "ratio_65plus", "quadrant", "n_candidate", "low_sample"],
+        "properties": {
+          "adm_cd": { "$ref": "common.schema.json#/$defs/adm_cd" },
+          "adm_name": { "type": "string" },
+          "sido": { "type": "string" },
+          "sigungu": { "type": "string" },
+          "n_analyzed": { "type": "integer", "minimum": 0, "description": "분석 가능한 횡단보도 수" },
+          "n_short": { "type": "integer", "minimum": 0, "description": "gap > 0 인 횡단보도 수" },
+          "short_ratio": { "type": ["number", "null"], "minimum": 0, "maximum": 1, "description": "n_short / n_analyzed. 분석 0건이면 null" },
+          "mean_gap_s": { "type": ["number", "null"], "description": "gap > 0 인 횡단보도의 평균 짧은 초. 없으면 null" },
+          "ratio_65plus": { "type": ["number", "null"], "minimum": 0, "maximum": 1, "description": "65세 이상 인구 비율. 인구 미매칭이면 null" },
+          "quadrant": {
+            "type": ["string", "null"],
+            "enum": ["high_high", "high_low", "low_high", "low_low", null],
+            "description": "짧음 비율_고령 비율 기준 사분면. high_high 가 점검 우선순위 후보. 값이 없으면 null"
+          },
+          "n_candidate": { "type": "integer", "minimum": 0, "description": "후보 횡단보도 수(gap > 0 그리고 노출 1개 이상)" },
+          "low_sample": { "type": "boolean", "description": "n_analyzed 가 표본 하한(config.yaml) 미만이면 true. 회색 처리·순위 제외" }
+        }
+      }
+    }
+  }
+}

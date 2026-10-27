@@ -1,0 +1,27 @@
+{
+  "_sample": true,
+  "ref_month": "2026-09",
+  "built_at": "2026-10-27T00:00:00+09:00",
+  "coverage_ratio": 0.976,
+  "green_def_status": "unconfirmed",
+  "sources": [
+    {
+      "name": "전국횡단보도표준데이터",
+      "url": "https://www.data.go.kr/data/15028201/standard.do",
+      "license": "확인 필요",
+      "modified": "2025-07-10"
+    },
+    {
+      "name": "admdongkor 읍면동 경계 ver20260701",
+      "url": "https://github.com/vuski/admdongkor",
+      "license": "CC BY 4.0",
+      "modified": "2026-07-01"
+    },
+    {
+      "name": "행정안전부 행정동별 고령 인구현황",
+      "url": "https://jumin.mois.go.kr/etcStatOldAge.do",
+      "license": "확인 필요"
+    }
+  ],
+  "limits_text": "한계: 녹색신호시간 정의(점멸 포함 여부) 확정 전 · 읍면동 평균은 개별 이용자 구성이 아님 · 인과 미검증 · \"점검 우선순위 후보\"이며 위험·위반 판정이 아님"
+}

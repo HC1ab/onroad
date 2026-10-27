@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "validation.schema.json",
+  "title": "GET /api/validation",
+  "description": "검증 V1~V5 결과(F8). 아직 계산되지 않은 항목은 null. 결과가 기대와 달라도 그대로 담는다.",
+  "type": "object",
+  "required": ["v1", "v2", "v3", "v4", "v5"],
+  "properties": {
+    "_sample": { "$ref": "common.schema.json#/$defs/sample_flag" },
+    "v1": {
+      "description": "현장 실측: 기록값 - 실측값(초)",
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "required": ["n", "mean_diff_s", "flash_included_n", "points"],
+          "properties": {
+            "n": { "type": "integer", "minimum": 0 },
+            "mean_diff_s": { "type": "number" },
+            "flash_included_n": { "type": "integer", "minimum": 0, "description": "기록값이 점멸을 포함한 것으로 보이는 곳 수" },
+            "points": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["cw_id", "length_m", "recorded_green_s", "measured_green_s", "measured_flash_s", "diff_s"],
+                "properties": {
+                  "cw_id": { "type": "string" },
+                  "length_m": { "type": "number" },
+                  "recorded_green_s": { "type": "number" },
+                  "measured_green_s": { "type": "number" },
+                  "measured_flash_s": { "type": "number" },
+                  "diff_s": { "type": "number" }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "v2": {
+      "description": "속도 민감도: 속도 쌍별 읍면동 순위 상관과 상위 N 중복",
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "required": ["top_n", "pairs"],
+          "properties": {
+            "top_n": { "type": "integer", "minimum": 1 },
+            "pairs": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["a", "b", "spearman", "top_n_overlap"],
+                "properties": {
+                  "a": { "$ref": "common.schema.json#/$defs/speed" },
+                  "b": { "$ref": "common.schema.json#/$defs/speed" },
+                  "spearman": { "type": "number", "minimum": -1, "maximum": 1 },
+                  "top_n_overlap": { "type": "integer", "minimum": 0 }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "v3": {
+      "description": "사고다발지역 연관성(연도 분할, 무작위 비교)",
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "required": ["speed", "recent_years", "overlap_ratio", "ratio_vs_random", "p_value", "n_permutations", "random_distribution"],
+          "properties": {
+            "speed": { "$ref": "common.schema.json#/$defs/speed" },
+            "recent_years": { "type": "array", "items": { "type": "integer" } },
+            "overlap_ratio": { "$ref": "common.schema.json#/$defs/ratio" },
+            "ratio_vs_random": { "type": "number", "minimum": 0 },
+            "p_value": { "type": "number", "minimum": 0, "maximum": 1 },
+            "n_permutations": { "type": "integer", "minimum": 1 },
+            "random_distribution": { "type": "array", "items": { "$ref": "common.schema.json#/$defs/ratio" }, "description": "무작위 추출 겹침 비율들(히스토그램용)" }
+          }
+        }
+      ]
+    },
+    "v4": {
+      "description": "축 독립성과 이미 조정됐는가",
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "required": ["speed", "spearman", "by_group", "inside_outside"],
+          "properties": {
+            "speed": { "$ref": "common.schema.json#/$defs/speed" },
+            "spearman": { "type": "number", "minimum": -1, "maximum": 1, "description": "읍면동 짧음 비율과 65세 이상 비율의 순위 상관" },
+            "by_group": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["group", "spearman", "n"],
+                "properties": {
+                  "group": { "type": "string", "description": "시도명 또는 도시/농촌" },
+                  "spearman": { "type": "number", "minimum": -1, "maximum": 1 },
+                  "n": { "type": "integer", "minimum": 0 }
+                }
+              }
+            },
+            "inside_outside": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["facility", "inside_short_ratio", "outside_short_ratio"],
+                "properties": {
+                  "facility": { "type": "string", "enum": ["senior_center", "market", "protect_zone"] },
+                  "inside_short_ratio": { "$ref": "common.schema.json#/$defs/ratio" },
+                  "outside_short_ratio": { "$ref": "common.schema.json#/$defs/ratio" }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "v5": {
+      "description": "(선택) 보정 연관성 로지스틱 회귀. 하지 않으면 null",
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "required": ["coefficients"],
+          "properties": {
+            "coefficients": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["term", "estimate", "ci_low", "ci_high"],
+                "properties": {
+                  "term": { "type": "string" },
+                  "estimate": { "type": "number" },
+                  "ci_low": { "type": "number" },
+                  "ci_high": { "type": "number" }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

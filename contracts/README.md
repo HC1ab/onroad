@@ -1,17 +1,39 @@
 # contracts — 구역 사이의 접점
 
-파이프라인(A)이 DB에 적재하는 결과 테이블, 서버(E)가 내려주는 API 응답, 웹(C)이 읽는 형태의 스키마와 샘플. 웹은 서버가 없어도 `samples/`로 먼저 개발한다(mock 모드, PRD F17).
+파이프라인(A)이 DB에 적재하는 결과, 서버(E)가 내려주는 API 응답, 웹(C)이 읽는 형태를 여기서 정한다. 웹은 서버가 없어도 `samples/`로 먼저 개발한다(mock 모드, PRD F17).
 
-| 응답 / 파일 | 만드는 곳 | 쓰는 곳 | 근거 |
+| 스키마 | 대상 | 샘플 | 기능 |
 | --- | --- | --- | --- |
-| `GET /api/areas` | server (pipeline 결과 조회) | web | PRD 8장 |
-| `GET /api/areas/{adm_cd}/crosswalks` | server | web | PRD 8장 |
-| `GET /api/crosswalks/candidates` | server | web | PRD 8장 |
-| `GET /api/validation` | server (validation 결과 조회) | web | PRD 8장 |
-| `GET /api/meta` | server | web | PRD 8장 |
-| 읍면동 경계 파일 (단순화·gzip) | pipeline | web (정적 제공) | PRD 8장 |
+| `areas.schema.json` | `GET /api/areas?speed=&sido=&sigungu=` | `samples/areas.json` | F5, F6, F7 |
+| `area_crosswalks.schema.json` | `GET /api/areas/{adm_cd}/crosswalks?speed=` | `samples/area_crosswalks.json` | F7 |
+| `candidates.schema.json` | `GET /api/crosswalks/candidates?bbox=&speed=&radius=` | `samples/candidates.json` | F5, F11 |
+| `validation.schema.json` | `GET /api/validation` | `samples/validation.json` | F8 |
+| `meta.schema.json` | `GET /api/meta` | `samples/meta.json` | F9 |
+| `error.schema.json` | 4xx·5xx 오류 응답 | `samples/error.json` | 공통 |
+| `boundaries.schema.json` | 읍면동 경계 정적 파일 (API 아님) | `samples/boundaries.json` | F5 |
+| `common.schema.json` | 공통 정의 (`adm_cd`, `speed`, 비율, 노출 플래그) | — | — |
 
-- 기준은 서버가 자동 생성하는 OpenAPI 스키마다. 응답 하나당 `<이름>.schema.json`과 `samples/<이름>.json`을 둔다.
-- 샘플은 실제 응답과 같은 형태여야 한다(mock 모드가 그대로 읽는다). 값은 가상이면 `_sample: true`를 붙인다.
-- **변경은 단독 PR + 팀 공지.** 필드 추가는 하위 호환으로, 이름 변경·삭제는 이슈로 합의 후.
-- 칼럼명은 실제 CSV 확인 후 확정한다(PRD 9장은 초안). `adm_cd`는 문자열, 좌표는 EPSG:4326.
+## 규칙
+- **기준은 이 폴더의 JSON Schema(2020-12)다.** 서버 응답과 파이프라인 결과는 이 스키마를 통과해야 한다. 서버의 OpenAPI 문서는 이 스키마에 맞춰 만든다.
+- 속도는 요청마다 하나(`speed=0.7|0.8|1.0`)이고, 응답에는 그 속도의 값만 담는다.
+- 경계 파일에는 값을 넣지 않는다. 값은 `/api/areas`에서 받아 `adm_cd`로 붙인다.
+- `adm_cd`는 문자열, 좌표는 EPSG:4326, 시간은 초(`_s`), 비율은 0~1.
+- 아직 계산하지 않은 검증 항목은 `null`이다.
+- **변경은 단독 PR + 팀 공지.** 필드 추가는 하위 호환으로, 이름 변경·삭제는 이슈로 합의한 뒤.
+- 칼럼명은 실제 CSV를 확인한 뒤 확정한다(PRD 9장은 초안).
+
+## 샘플
+- 값은 모두 가상이며 `"_sample": true`가 붙어 있다. 실제 분석 결과가 아니다.
+- `samples/boundaries.json`은 부산 해운대구·수영구 28개 읍면동 경계를 단순화한 것이다. 출처: [admdongkor](https://github.com/vuski/admdongkor) ver20260701, CC BY 4.0. 다른 샘플의 `adm_cd`는 이 경계와 맞춰져 있어 mock 모드에서 지도를 그대로 칠할 수 있다.
+- 3개 읍면동은 `low_sample: true`(표본 부족) 사례로 넣었다.
+
+## 검사
+```bash
+pip install "jsonschema>=4.18" referencing
+python contracts/check_samples.py
+```
+로컬에 Python이 없으면 Docker로 실행한다.
+```bash
+docker run --rm -v "$PWD/contracts:/c:ro" python:3.12-slim sh -c "pip install -q 'jsonschema>=4.18' referencing && python /c/check_samples.py"
+```
+PR에서 `contracts/`가 바뀌면 GitHub Actions(`.github/workflows/contracts.yml`)가 같은 검사를 자동으로 돌린다.

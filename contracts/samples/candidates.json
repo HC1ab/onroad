@@ -1,0 +1,1000 @@
+{
+  "_sample": true,
+  "type": "FeatureCollection",
+  "speed": 0.8,
+  "radius_m": 300,
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.133787,
+          35.169486
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21090740-C1",
+        "adm_cd": "21090740",
+        "gap_s": 6.7,
+        "exposure_cnt": 2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.134291,
+          35.164313
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21090740-C2",
+        "adm_cd": "21090740",
+        "gap_s": 3.8,
+        "exposure_cnt": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.133887,
+          35.168502
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21090740-C3",
+        "adm_cd": "21090740",
+        "gap_s": 2.7,
+        "exposure_cnt": 3
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.171354,
+          35.16144
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21090530-C1",
+        "adm_cd": "21090530",
+        "gap_s": 6.9,
+        "exposure_cnt": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.18208,
+          35.158827
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21090540-C1",
+        "adm_cd": "21090540",
+        "gap_s": 3.5,
+        "exposure_cnt": 3
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.184674,
+          35.162661
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21090540-C2",
+        "adm_cd": "21090540",
+        "gap_s": 2.6,
+        "exposure_cnt": 3
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.18358,
+          35.161559
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21090540-C3",
+        "adm_cd": "21090540",
+        "gap_s": 4.5,
+        "exposure_cnt": 3
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.134969,
+          35.19474
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21090580-C1",
+        "adm_cd": "21090580",
+        "gap_s": 4.7,
+        "exposure_cnt": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.133536,
+          35.193271
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21090580-C2",
+        "adm_cd": "21090580",
+        "gap_s": 4,
+        "exposure_cnt": 3
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.143143,
+          35.201745
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21090590-C1",
+        "adm_cd": "21090590",
+        "gap_s": 3.2,
+        "exposure_cnt": 3
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.142801,
+          35.199238
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21090590-C2",
+        "adm_cd": "21090590",
+        "gap_s": 4.6,
+        "exposure_cnt": 3
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.141184,
+          35.202262
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21090590-C3",
+        "adm_cd": "21090590",
+        "gap_s": 4.4,
+        "exposure_cnt": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.155207,
+          35.230378
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21090620-C1",
+        "adm_cd": "21090620",
+        "gap_s": 6.3,
+        "exposure_cnt": 3
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.153178,
+          35.232584
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21090620-C2",
+        "adm_cd": "21090620",
+        "gap_s": 1.9,
+        "exposure_cnt": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.15182,
+          35.232804
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21090620-C3",
+        "adm_cd": "21090620",
+        "gap_s": 2.1,
+        "exposure_cnt": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.128591,
+          35.185354
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21090640-C1",
+        "adm_cd": "21090640",
+        "gap_s": 5.8,
+        "exposure_cnt": 3
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.129703,
+          35.182255
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21090640-C2",
+        "adm_cd": "21090640",
+        "gap_s": 2.7,
+        "exposure_cnt": 2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.125174,
+          35.184324
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21090640-C3",
+        "adm_cd": "21090640",
+        "gap_s": 3.3,
+        "exposure_cnt": 2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.135196,
+          35.189057
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21090650-C1",
+        "adm_cd": "21090650",
+        "gap_s": 2.3,
+        "exposure_cnt": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.132691,
+          35.190747
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21090650-C2",
+        "adm_cd": "21090650",
+        "gap_s": 6.9,
+        "exposure_cnt": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.133117,
+          35.188965
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21090650-C3",
+        "adm_cd": "21090650",
+        "gap_s": 5.9,
+        "exposure_cnt": 2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.178539,
+          35.172831
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21090660-C1",
+        "adm_cd": "21090660",
+        "gap_s": 6.8,
+        "exposure_cnt": 3
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.174708,
+          35.171353
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21090660-C2",
+        "adm_cd": "21090660",
+        "gap_s": 3.9,
+        "exposure_cnt": 3
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.174743,
+          35.173874
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21090660-C3",
+        "adm_cd": "21090660",
+        "gap_s": 1.3,
+        "exposure_cnt": 2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.184051,
+          35.170426
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21090670-C1",
+        "adm_cd": "21090670",
+        "gap_s": 3.9,
+        "exposure_cnt": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.18356,
+          35.170086
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21090670-C2",
+        "adm_cd": "21090670",
+        "gap_s": 2.4,
+        "exposure_cnt": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.182889,
+          35.1692
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21090670-C3",
+        "adm_cd": "21090670",
+        "gap_s": 2,
+        "exposure_cnt": 3
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.167172,
+          35.174956
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21090680-C1",
+        "adm_cd": "21090680",
+        "gap_s": 5.9,
+        "exposure_cnt": 2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.169683,
+          35.173936
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21090680-C2",
+        "adm_cd": "21090680",
+        "gap_s": 6.9,
+        "exposure_cnt": 3
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.166725,
+          35.174626
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21090680-C3",
+        "adm_cd": "21090680",
+        "gap_s": 3,
+        "exposure_cnt": 3
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.133006,
+          35.205368
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21090700-C1",
+        "adm_cd": "21090700",
+        "gap_s": 4.4,
+        "exposure_cnt": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.130385,
+          35.201606
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21090700-C2",
+        "adm_cd": "21090700",
+        "gap_s": 5.7,
+        "exposure_cnt": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.132598,
+          35.206628
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21090700-C3",
+        "adm_cd": "21090700",
+        "gap_s": 6.1,
+        "exposure_cnt": 3
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.11381,
+          35.209751
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21090710-C1",
+        "adm_cd": "21090710",
+        "gap_s": 3.6,
+        "exposure_cnt": 3
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.113391,
+          35.209362
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21090710-C2",
+        "adm_cd": "21090710",
+        "gap_s": 5.9,
+        "exposure_cnt": 2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.142282,
+          35.219623
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21090720-C1",
+        "adm_cd": "21090720",
+        "gap_s": 3.9,
+        "exposure_cnt": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.144208,
+          35.218178
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21090720-C2",
+        "adm_cd": "21090720",
+        "gap_s": 6.5,
+        "exposure_cnt": 2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.141607,
+          35.221192
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21090720-C3",
+        "adm_cd": "21090720",
+        "gap_s": 5,
+        "exposure_cnt": 3
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.116873,
+          35.142929
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21140510-C1",
+        "adm_cd": "21140510",
+        "gap_s": 3.9,
+        "exposure_cnt": 3
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.116046,
+          35.141602
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21140510-C2",
+        "adm_cd": "21140510",
+        "gap_s": 5.4,
+        "exposure_cnt": 3
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.116133,
+          35.140994
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21140510-C3",
+        "adm_cd": "21140510",
+        "gap_s": 5.4,
+        "exposure_cnt": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.116185,
+          35.146817
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21140520-C1",
+        "adm_cd": "21140520",
+        "gap_s": 1.3,
+        "exposure_cnt": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.111419,
+          35.146566
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21140520-C2",
+        "adm_cd": "21140520",
+        "gap_s": 2.3,
+        "exposure_cnt": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.111656,
+          35.144462
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21140520-C3",
+        "adm_cd": "21140520",
+        "gap_s": 2.6,
+        "exposure_cnt": 3
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.116662,
+          35.171589
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21140530-C1",
+        "adm_cd": "21140530",
+        "gap_s": 4.1,
+        "exposure_cnt": 3
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.118335,
+          35.172187
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21140530-C2",
+        "adm_cd": "21140530",
+        "gap_s": 3.7,
+        "exposure_cnt": 2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.118991,
+          35.17177
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21140530-C3",
+        "adm_cd": "21140530",
+        "gap_s": 1.1,
+        "exposure_cnt": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.098906,
+          35.170011
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21140540-C1",
+        "adm_cd": "21140540",
+        "gap_s": 4.6,
+        "exposure_cnt": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.116335,
+          35.178942
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21140550-C1",
+        "adm_cd": "21140550",
+        "gap_s": 5.1,
+        "exposure_cnt": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.115672,
+          35.156375
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21140570-C1",
+        "adm_cd": "21140570",
+        "gap_s": 1.2,
+        "exposure_cnt": 3
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.115656,
+          35.15446
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21140570-C2",
+        "adm_cd": "21140570",
+        "gap_s": 5.7,
+        "exposure_cnt": 2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.116233,
+          35.154816
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21140570-C3",
+        "adm_cd": "21140570",
+        "gap_s": 1.1,
+        "exposure_cnt": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.111711,
+          35.16945
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21140580-C1",
+        "adm_cd": "21140580",
+        "gap_s": 4.1,
+        "exposure_cnt": 3
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.11323,
+          35.17006
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21140580-C2",
+        "adm_cd": "21140580",
+        "gap_s": 5.3,
+        "exposure_cnt": 3
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.114241,
+          35.171135
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21140580-C3",
+        "adm_cd": "21140580",
+        "gap_s": 2.2,
+        "exposure_cnt": 3
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.104284,
+          35.156474
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21140590-C1",
+        "adm_cd": "21140590",
+        "gap_s": 1.5,
+        "exposure_cnt": 2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.123423,
+          35.162936
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21140600-C1",
+        "adm_cd": "21140600",
+        "gap_s": 5.3,
+        "exposure_cnt": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.126736,
+          35.157761
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21140600-C2",
+        "adm_cd": "21140600",
+        "gap_s": 1.1,
+        "exposure_cnt": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.12263,
+          35.15885
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21140600-C3",
+        "adm_cd": "21140600",
+        "gap_s": 1.2,
+        "exposure_cnt": 1
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.144568,
+          35.15796
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21090750-C1",
+        "adm_cd": "21090750",
+        "gap_s": 3.1,
+        "exposure_cnt": 3
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.142537,
+          35.157239
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21090750-C2",
+        "adm_cd": "21090750",
+        "gap_s": 6.8,
+        "exposure_cnt": 3
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          129.145966,
+          35.158122
+        ]
+      },
+      "properties": {
+        "cw_id": "SAMPLE-21090750-C3",
+        "adm_cd": "21090750",
+        "gap_s": 5.1,
+        "exposure_cnt": 1
+      }
+    }
+  ]
+}
