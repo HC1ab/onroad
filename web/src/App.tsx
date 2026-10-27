@@ -7,12 +7,17 @@ import { LoadState } from './components/LoadState'
 import { MapView, type Bbox } from './components/MapView'
 import { QuadrantChart } from './components/QuadrantChart'
 import { SpeedSelector } from './components/SpeedSelector'
+import { Tabs } from './components/Tabs'
 import { TopList } from './components/TopList'
 import { useApi } from './hooks/useApi'
+import { useRoute } from './lib/route'
+import { ValidationPage } from './pages/ValidationPage'
 import { AppStateProvider, useAppState } from './state/AppState'
 
 function Main() {
   const { speed, layers, selectedAdmCd } = useAppState()
+  const route = useRoute()
+  const onMap = route === 'map'
   const [bbox, setBbox] = useState<Bbox | null>(null)
   const boundaries = useApi((s) => api.boundaries(s), [])
   const areas = useApi((s) => api.areas(speed, s), [speed])
@@ -40,17 +45,20 @@ function Main() {
           <h1>한 박자</h1>
           <span className="muted">점검 우선순위 후보 지도</span>
         </div>
-        <SpeedSelector />
+        <Tabs route={route} />
+        {onMap && <SpeedSelector />}
         {API_MODE === 'mock' && <span className="badge">샘플 데이터 (mock) · 실제 분석 결과 아님</span>}
       </header>
 
-      <main className={selectedArea ? "body wide" : "body"}>
+      {/* 검증 화면에서도 지도는 지우지 않고 숨긴다(돌아왔을 때 위치·선택 유지). */}
+      <main className={selectedArea ? "body wide" : "body"} hidden={!onMap}>
         <section className="map-wrap">
           <MapView
             boundaries={boundaries.data}
             areas={areas.data?.items ?? null}
             candidates={layers.candidates ? candidates.data : null}
             onBoundsChange={setBbox}
+            visible={onMap}
           />
           <Legend candidateCount={candidates.data?.features.length ?? null} />
           <LoadState loading={boundaries.loading || areas.loading} error={error} onRetry={retry} />
@@ -67,6 +75,12 @@ function Main() {
           )}
         </aside>
       </main>
+
+      {!onMap && (
+        <main className="body-page">
+          <ValidationPage meta={meta.data} />
+        </main>
+      )}
 
       <Footer meta={meta.data} />
     </div>

@@ -37,6 +37,8 @@ interface Props {
   areas: AreaItem[] | null
   candidates: CandidatesResponse | null
   onBoundsChange: (bbox: Bbox) => void
+  /** 숨겨졌다가 다시 보일 때 지도 크기를 다시 맞춘다 */
+  visible: boolean
 }
 
 function boundsOf(fc: BoundariesResponse): LngLatBoundsLike {
@@ -75,7 +77,7 @@ function currentBbox(map: maplibregl.Map): Bbox {
   return [r(b.getWest()), r(b.getSouth()), r(b.getEast()), r(b.getNorth())]
 }
 
-export function MapView({ boundaries, areas, candidates, onBoundsChange }: Props) {
+export function MapView({ boundaries, areas, candidates, onBoundsChange, visible }: Props) {
   const container = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
   const readyRef = useRef(false)
@@ -234,6 +236,11 @@ export function MapView({ boundaries, areas, candidates, onBoundsChange }: Props
       map.fitBounds(boundsOf({ type: 'FeatureCollection', features: [f] }), { padding, maxZoom: 14, duration: 600 })
     })
   }, [selection, boundaries])
+
+  // 숨김(검증 화면)에서 돌아오면 크기를 다시 맞춘다. 숨겨진 동안 크기가 0이었기 때문.
+  useEffect(() => {
+    if (visible) mapRef.current?.resize()
+  }, [visible])
 
   // 상세 표에서 고른 횡단보도로 이동해 표시한다.
   useEffect(() => {
