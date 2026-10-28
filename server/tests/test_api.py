@@ -1,3 +1,5 @@
+import csv
+import io
 import json
 import os
 from pathlib import Path
@@ -9,7 +11,7 @@ from fastapi.testclient import TestClient
 from jsonschema import Draft202012Validator
 from referencing import Registry, Resource
 
-from app import routes
+from app import routes, static_bundle
 from app.ingest import ingest, read_bundle
 from app.main import app
 from app.swagger import SCHEMAS
@@ -160,3 +162,48 @@ def test_swagger_response_schemas():
         assert response['200']['content']['application/json']['schema']['required']
     if ROOT.exists():
         assert SCHEMAS == {p.name: json.loads(p.read_text(encoding='utf-8')) for p in ROOT.glob('*.schema.json')}
+
+
+def test_csv_exports(database):
+    response = client.get('/api/export/areas.csv?speed=0.8&radius=300')
+    assert response.status_code == 200
+    assert response.headers['content-type'].startswith('text/csv')
+    assert 'areas_0.8_300_sample.csv' in response.headers['content-disposition']
+    assert response.content.startswith(b'\xef\xbb\xbf')
+    rows = list(csv.DictReader(io.StringIO(response.content.decode('utf-8-sig'))))
+    expected = json.loads((ROOT / 'samples' / 'areas.json').read_text(encoding='utf-8'))
+    assert [r['adm_cd'] for r in rows] == sorted(i['adm_cd'] for i in expected['items'])
+    assert rows[0]['low_sample'] in ('true', 'false')
+
+    response = client.get('/api/export/crosswalks.csv')
+    assert response.status_code == 200
+    rows = list(csv.DictReader(io.StringIO(response.content.decode('utf-8-sig'))))
+    detail = json.loads((ROOT / 'samples' / 'area_crosswalks.json').read_text(encoding='utf-8'))
+    candidates = [i for i in detail['items'] if i['is_candidate']]
+    assert len(rows) == len(candidates) and rows
+    assert all(r['adm_cd'] == detail['adm_cd'] and r['is_candidate'] == 'true' for r in rows)
+    assert 'flags.senior_center' in rows[0] and 'flags' not in rows[0]
+
+    for path in ('/api/export/areas.csv?speed=0.7', '/api/export/crosswalks.csv?radius=500'):
+        response = client.get(path)
+        assert response.status_code == 500
+        assert response.json()['error']['message'] == '요청한 속도·반경·지역의 결과가 아직 적재되지 않았습니다.'
+    assert client.get('/api/export/areas.csv?radius=400').status_code == 400
+
+
+def test_static_bundle_matches_api(database, tmp_path):
+    with routes.reader() as conn:
+        manifest = static_bundle.build(conn, tmp_path)
+    schemas = {p.name: json.loads(p.read_text(encoding='utf-8')) for p in ROOT.glob('*.schema.json')}
+    registry = Registry().with_resources((n, Resource.from_contents(s)) for n, s in schemas.items())
+    Draft202012Validator(schemas['static_manifest.schema.json'], registry=registry).validate(manifest)
+    assert manifest['_sample'] is True
+    assert manifest['results'] == [{'speed': 0.8, 'radius_m': 300, 'details': ['21090730']}]
+    for file, path in (('areas/0.8_300.json', '/api/areas'), ('candidates/0.8_300.json', '/api/crosswalks/candidates'),
+                       ('crosswalks/0.8_300/21090730.json', '/api/areas/21090730/crosswalks'),
+                       ('meta.json', '/api/meta'), ('validation.json', '/api/validation')):
+        assert json.loads((tmp_path / file).read_text(encoding='utf-8')) == client.get(path).json()
+    for name in ('areas', 'crosswalks'):
+        csv_file = (tmp_path / 'export' / f'{name}_0.8_300.csv').read_bytes()
+        assert csv_file == client.get(f'/api/export/{name}.csv').content
+    assert not (tmp_path / 'areas' / '0.7_300.json').exists()
