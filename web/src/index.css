@@ -219,3 +219,12 @@ a { color: var(--accent); }
 .v4-bar { display: block; min-width: 44px; font-size: 11px; padding: 1px 6px; border-radius: 2px; color: #3b1704; white-space: nowrap; }
 .v4-bar.in { color: #fff; }
 @media (max-width: 900px) { .v-grid { grid-template-columns: 1fr; } }
+
+/* 지역 필터 · 노출 반경 (W7) */
+.region { display: flex; align-items: center; gap: 6px; }
+.region select { font: inherit; font-size: 13px; padding: 4px 6px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); max-width: 150px; }
+.region select:disabled { opacity: 0.5; }
+.sep-title { border-top: 1px solid var(--border); padding-top: 8px; margin-top: 8px; }
+.seg { display: flex; gap: 4px; margin: 4px 0; }
+.seg-btn { flex: 1; font: inherit; font-size: 12px; padding: 3px 0; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); cursor: pointer; }
+.seg-btn.on { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 700; }

@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
-import type { Speed } from '../api/types'
+import type { Radius, Speed } from '../api/types'
 import type { Thresholds } from '../lib/quadrant'
+import type { Region } from '../lib/region'
 
 export interface LayerVisibility {
   choropleth: boolean
@@ -37,11 +38,18 @@ interface AppState {
   setCustomThresholds: (t: Thresholds | null) => void
   focus: FocusPoint | null
   setFocus: (f: FocusPoint | null) => void
+  /** 지역 필터. null 이면 전국 */
+  region: Region | null
+  setRegion: (r: Region | null) => void
+  /** 목적지 노출 반경(m) */
+  radius: Radius
+  setRadius: (r: Radius) => void
 }
 
 const Ctx = createContext<AppState | null>(null)
 
 export const DEFAULT_SPEED: Speed = 0.8
+export const DEFAULT_RADIUS: Radius = 300
 
 export function AppStateProvider({ children }: { children: ReactNode }) {
   const [speed, setSpeed] = useState<Speed>(DEFAULT_SPEED)
@@ -49,6 +57,8 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [layers, setLayers] = useState<LayerVisibility>({ choropleth: true, candidates: true })
   const [customThresholds, setCustomThresholds] = useState<Thresholds | null>(null)
   const [focus, setFocus] = useState<FocusPoint | null>(null)
+  const [region, setRegion] = useState<Region | null>(null)
+  const [radius, setRadius] = useState<Radius>(DEFAULT_RADIUS)
   const select = useCallback((admCd: string | null, source: SelectionSource) => {
     setSelection(admCd ? { admCd, source } : null)
     setFocus(null)
@@ -61,8 +71,10 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       layers, toggleLayer,
       customThresholds, setCustomThresholds,
       focus, setFocus,
+      region, setRegion,
+      radius, setRadius,
     }),
-    [speed, selection, select, layers, toggleLayer, customThresholds, focus],
+    [speed, selection, select, layers, toggleLayer, customThresholds, focus, region, radius],
   )
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }
