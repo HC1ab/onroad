@@ -14,6 +14,18 @@ npm run dev        # http://localhost:5173
 | mock (기본) | `VITE_API_MODE=mock` 또는 미설정 | `contracts/samples/` 가상 데이터. 화면 상단에 "샘플 데이터" 표시 |
 | real | `VITE_API_MODE=real` | 개발 서버가 `/api`를 `localhost:8000`(docker compose)으로 프록시 |
 
+### real 모드를 샘플 데이터로 확인하기 (통합 I1)
+서버에 샘플을 적재하고 프론트를 real 모드로 띄운다(저장소 루트에서).
+```bash
+docker compose up -d db
+docker compose run --rm -v "$PWD/contracts:/contracts:ro" api python -m app.ingest --source /contracts/samples --sample
+docker compose up -d api
+npm --prefix web run dev -- --mode real   # 루트 .env.real 에 VITE_API_MODE=real
+```
+- 샘플에는 0.8 m/s · 300m 와 우1동 상세만 있다. 다른 속도·반경·동을 고르면 "결과가 아직 적재되지 않았습니다" 안내가 정상이다.
+- 실제 경계 파일(`web/public/data/boundaries.json`, D6 #9)이 없으면 개발 서버가 샘플 경계(부산 일부)를 대신 내준다. 빌드·배포에는 적용되지 않는다.
+- 서버가 샘플을 내려주면 real 모드에서도 상단에 "샘플 데이터"가 표시된다.
+
 배경 지도를 바꾸려면 `VITE_BASEMAP_STYLE`에 MapLibre 스타일 URL을 넣는다.
 
 ## 빌드

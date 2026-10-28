@@ -2,6 +2,7 @@ import { useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } fro
 import type { AreasResponse } from '../api/types'
 import { pct0 as pct, pct1 } from '../lib/format'
 import { buildPoints, countPriority, effectiveThresholds, niceMax, ticks, type PlotPoint, type Thresholds } from '../lib/quadrant'
+import { regionLabel } from '../lib/region'
 import { useAppState } from '../state/AppState'
 import { LOW_SAMPLE_COLOR } from './mapStyle'
 
@@ -16,7 +17,7 @@ type Axis = 'x' | 'y'
 
 /** 읍면동 사분면 (F5). 가로 = 기준식보다 짧은 비율, 세로 = 65세 이상 비율. */
 export function QuadrantChart({ data }: { data: AreasResponse | null }) {
-  const { selectedAdmCd, select, customThresholds: custom, setCustomThresholds: setCustom } = useAppState()
+  const { selectedAdmCd, select, customThresholds: custom, setCustomThresholds: setCustom, region } = useAppState()
   const svgRef = useRef<SVGSVGElement>(null)
   const [drag, setDrag] = useState<Axis | null>(null)
   const [hover, setHover] = useState<PlotPoint | null>(null)
@@ -74,7 +75,7 @@ export function QuadrantChart({ data }: { data: AreasResponse | null }) {
   return (
     <section className="card quadrant">
       <div className="card-head">
-        <h3>읍면동 사분면</h3>
+        <h3>읍면동 사분면{region ? ` · ${regionLabel(region)}` : ''}</h3>
         <span className="priority-count">점검 우선순위 후보 {priority}곳</span>
       </div>
       <div className="quadrant-plot">
@@ -143,7 +144,7 @@ export function QuadrantChart({ data }: { data: AreasResponse | null }) {
       </div>
       <div className="quadrant-foot">
         <span>
-          경계선: {custom ? '직접 조절' : '중앙값'} (짧음 {pct1(t.x)} · 65세 {pct1(t.y)}) · 선을 끌어 조절
+          경계선: {custom ? '직접 조절' : '전국 중앙값'} (짧음 {pct1(t.x)} · 65세 {pct1(t.y)}) · 선을 끌어 조절
         </span>
         {custom && (
           <button type="button" className="link-btn" onClick={() => setCustom(null)}>중앙값으로</button>
