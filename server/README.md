@@ -1,6 +1,7 @@
 # server — 읽기 전용 API와 배포 구성
 
 구성: `db`(PostgreSQL 16 + PostGIS) · `api`(FastAPI) · `nginx`(프론트 빌드 + `/api` 프록시). 정의는 루트 `docker-compose.yml`.
+운영 서버 배포는 [`deploy/README.md`](deploy/README.md).
 
 ## 로컬 실행
 ```bash
