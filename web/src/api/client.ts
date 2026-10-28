@@ -8,38 +8,24 @@ import type {
   Speed,
   ValidationResponse,
 } from './types'
+import { ApiError, getJson } from './http'
+import { staticApi } from './static'
+
+export { ApiError }
 
 /**
  * real: 서버 API(/api)와 정적 경계 파일(/data)을 읽는다.
  * mock: contracts/samples 의 가상 데이터를 읽는다(서버 없이 화면 개발용, PRD F17).
+ * static: 서버가 내보낸 정적 묶음을 읽는다(서버 없이 데모, F18). `vite build --mode static`.
  * 값이 없으면 mock 으로 시작한다.
  */
-export type ApiMode = 'real' | 'mock'
-export const API_MODE: ApiMode = import.meta.env.VITE_API_MODE === 'real' ? 'real' : 'mock'
-
-export class ApiError extends Error {
-  status: number
-  constructor(message: string, status: number) {
-    super(message)
-    this.name = 'ApiError'
-    this.status = status
-  }
-}
-
-async function getJson<T>(url: string, signal?: AbortSignal): Promise<T> {
-  const res = await fetch(url, { signal, headers: { Accept: 'application/json' } })
-  if (!res.ok) {
-    let message = `요청에 실패했습니다 (${res.status}).`
-    try {
-      const body = await res.json()
-      if (body?.error?.message) message = body.error.message
-    } catch {
-      // 오류 본문이 JSON이 아니면 기본 문구를 쓴다.
-    }
-    throw new ApiError(message, res.status)
-  }
-  return res.json() as Promise<T>
-}
+export type ApiMode = 'real' | 'mock' | 'static'
+export const API_MODE: ApiMode =
+  import.meta.env.MODE === 'static' || import.meta.env.VITE_API_MODE === 'static'
+    ? 'static'
+    : import.meta.env.VITE_API_MODE === 'real'
+      ? 'real'
+      : 'mock'
 
 // ---- mock ----
 
@@ -102,6 +88,7 @@ export const api = {
   /** 전국 읍면동 값. 지역 거르기는 화면에서 한다(지도 색은 전국 유지). */
   areas(speed: Speed, radius: Radius, signal?: AbortSignal): Promise<AreasResponse> {
     if (API_MODE === 'mock') return mockAreas(speed, radius, signal)
+    if (API_MODE === 'static') return staticApi.areas(speed, radius, signal)
     return getJson(`/api/areas?speed=${speed}&radius=${radius}`, signal)
   },
 
@@ -117,6 +104,7 @@ export const api = {
       })
       return delay({ ...sample, adm_cd: admCd, speed, radius_m: radius, items }, signal)
     }
+    if (API_MODE === 'static') return staticApi.areaCrosswalks(admCd, speed, radius, signal)
     return getJson(`/api/areas/${encodeURIComponent(admCd)}/crosswalks?speed=${speed}&radius=${radius}`, signal)
   },
 
@@ -127,6 +115,7 @@ export const api = {
       const features = radius === 200 ? sample.features.filter((f) => f.properties.exposure_cnt >= 2) : sample.features
       return delay({ ...sample, radius_m: radius, features }, signal)
     }
+    if (API_MODE === 'static') return staticApi.candidates(speed, radius, bbox)
     const q = new URLSearchParams({ speed: String(speed), radius: String(radius) })
     if (bbox) q.set('bbox', bbox.join(','))
     return getJson(`/api/crosswalks/candidates?${q}`, signal)
@@ -134,15 +123,17 @@ export const api = {
 
   async validation(signal?: AbortSignal): Promise<ValidationResponse> {
     if (API_MODE === 'mock') return delay((await import('@contracts/samples/validation.json')).default as ValidationResponse, signal)
+    if (API_MODE === 'static') return staticApi.validation(signal)
     return getJson('/api/validation', signal)
   },
 
   async meta(signal?: AbortSignal): Promise<MetaResponse> {
     if (API_MODE === 'mock') return delay((await import('@contracts/samples/meta.json')).default as MetaResponse, signal)
+    if (API_MODE === 'static') return staticApi.meta(signal)
     return getJson('/api/meta', signal)
   },
 
-  /** 읍면동 경계. 값은 담지 않고 areas 의 adm_cd 로 붙인다. 실서비스는 nginx 정적 파일(/data). */
+  /** 읍면동 경계. 값은 담지 않고 areas 의 adm_cd 로 붙인다. 실서비스·static 모두 정적 파일(/data). */
   async boundaries(signal?: AbortSignal): Promise<BoundariesResponse> {
     if (API_MODE === 'mock') return (await import('@contracts/samples/boundaries.json')).default as unknown as BoundariesResponse
     return getJson('/data/boundaries.json', signal)

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { api, API_MODE } from './api/client'
+import { staticManifest } from './api/static'
 import { AreaDetail } from './components/AreaDetail'
 import { Footer } from './components/Footer'
 import { Legend } from './components/Legend'
@@ -30,6 +31,7 @@ function Main() {
     [speed, radius, bboxKey, layers.candidates],
   )
   const meta = useApi((s) => api.meta(s), [])
+  const bundle = useApi(() => (API_MODE === 'static' ? staticManifest() : Promise.resolve(null)), [])
 
   const selectedArea = areas.data?.items.find((a) => a.adm_cd === selectedAdmCd) ?? null
   // 지역 필터: 지도 색은 전국 그대로, 목록·사분면만 지역 안으로 좁힌다. 경계선은 전국 중앙값 유지.
@@ -39,7 +41,7 @@ function Main() {
   )
 
   // mock 이거나, 서버가 샘플을 적재해 내려준 경우(_sample) 모두 샘플임을 표시한다.
-  const isSample = API_MODE === 'mock' || !!areas.data?._sample || !!meta.data?._sample
+  const isSample = API_MODE === 'mock' || !!areas.data?._sample || !!meta.data?._sample || !!bundle.data?._sample
 
   const error = boundaries.error ?? areas.error ?? candidates.error
   const retry = () => {
@@ -58,9 +60,16 @@ function Main() {
         <Tabs route={route} />
         {onMap && <RegionFilter boundaries={boundaries.data} />}
         {onMap && <SpeedSelector />}
-        {isSample && (
-          <span className="badge">{API_MODE === 'mock' ? '샘플 데이터 (mock)' : '샘플 데이터'} · 실제 분석 결과 아님</span>
-        )}
+        <div className="badges">
+          {API_MODE === 'static' && (
+            <span className="badge offline" title="서버 없이 정적 묶음으로 보는 화면">
+              오프라인 묶음{bundle.data ? ` · ${bundle.data.built_at.slice(0, 10)} 내보냄` : ''}
+            </span>
+          )}
+          {isSample && (
+            <span className="badge">{API_MODE === 'mock' ? '샘플 데이터 (mock)' : '샘플 데이터'} · 실제 분석 결과 아님</span>
+          )}
+        </div>
       </header>
 
       {/* 검증 화면에서도 지도는 지우지 않고 숨긴다(돌아왔을 때 위치·선택 유지). */}

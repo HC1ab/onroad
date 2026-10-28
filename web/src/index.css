@@ -25,7 +25,9 @@ a { color: var(--accent); }
 }
 .brand { display: flex; align-items: baseline; gap: 10px; }
 .brand h1 { font-size: 20px; margin: 0; }
-.badge { margin-left: auto; background: var(--accent); color: #fff; font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 999px; }
+.badges { margin-left: auto; display: flex; gap: 6px; }
+.badge.offline { background: var(--text); }
+.badge { background: var(--accent); color: #fff; font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 999px; }
 
 .speed { display: flex; align-items: center; gap: 6px; }
 .speed-title { font-size: 13px; font-weight: 700; margin-right: 4px; }
@@ -117,6 +119,17 @@ a { color: var(--accent); }
 /* 상위 N · 지역 상세 (W5) */
 .body { transition: grid-template-columns 0.2s ease; }
 .body.wide { grid-template-columns: 1fr 480px; }
+/* CSV 내려받기 (W8) */
+.download { position: relative; font-size: 12px; }
+.download details { position: relative; }
+.download-btn { list-style: none; cursor: pointer; font: inherit; font-size: 12px; font-weight: 700; padding: 2px 10px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text); }
+.download-btn::-webkit-details-marker { display: none; }
+.download-btn:disabled { cursor: not-allowed; color: var(--muted); }
+.download-menu { position: absolute; right: 0; top: calc(100% + 4px); z-index: 5; display: flex; flex-direction: column; gap: 4px; min-width: 190px; padding: 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); box-shadow: 0 4px 12px rgb(0 0 0 / 0.12); }
+.download-menu p { margin: 0 0 2px; font-size: 11px; white-space: nowrap; }
+.download-menu button { font: inherit; text-align: left; padding: 4px 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); color: var(--text); cursor: pointer; }
+.download-menu button:hover:not(:disabled) { border-color: var(--accent); }
+.download-error { margin: 4px 0 0; color: #b84f12; font-size: 11px; max-width: 220px; }
 .toplist-controls { display: flex; gap: 12px; font-size: 12px; margin-bottom: 8px; }
 .toplist-controls label { display: flex; align-items: center; gap: 4px; color: var(--muted); }
 .toplist-controls select { font: inherit; padding: 2px 4px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); color: var(--text); }

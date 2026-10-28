@@ -10,6 +10,8 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+# 정적 묶음(F18)은 서버에서 내보내 받아 쓴다. 저장소에 올리지 않는다.
+public/static/
 *.local
 
 # Editor directories and files
