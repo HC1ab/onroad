@@ -1,0 +1,7 @@
+{
+  "_설명": "data.go.kr 활용신청 상세의 요청주소(End Point + 상세기능 경로). 주소는 비밀이 아니다. 인증키는 .env 에만 둔다.",
+  "R1": "https://api.data.go.kr/openapi/tn_pubr_public_crosswalk_api",
+  "O2": "https://api.data.go.kr/openapi/tn_pubr_public_vill_hall_sen_cent_api",
+  "R4": "https://apis.data.go.kr/B552061/frequentzoneOldman/getRestFrequentzoneOldman",
+  "O4": "https://apis.data.go.kr/B551182/hospInfoServicev2/getHospBasisList"
+}

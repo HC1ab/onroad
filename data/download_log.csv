@@ -1,1 +1,5 @@
 id,file,source_url,downloaded_at,source_modified,row_count,encoding,license,by
+R2,admin_boundary/HangJeongDong_ver20261001.geojson,https://github.com/vuski/admdongkor,2026-10-27,ver20261001,3559,utf-8,CC BY 4.0,
+R3,population_65/202609_202609_주민등록인구기타현황(고령 인구현황)_월간.csv,https://jumin.mois.go.kr/etcStatOldAge.do,2026-10-27,2026-09 기준,3919,cp949,,
+O1,protect_zone/전국노인장애인보호구역표준데이터.csv,https://www.data.go.kr/data/15034532/standard.do,2026-10-27,2026-06-16,4184,cp949,,
+O3,market/전국전통시장표준데이터.csv,https://www.data.go.kr/data/15012894/standard.do,2026-10-27,2025-11-26,1393,cp949,,
