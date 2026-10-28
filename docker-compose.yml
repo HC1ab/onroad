@@ -16,6 +16,7 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
+    restart: unless-stopped
     # DB 포트는 외부에 열지 않는다. 적재는 컨테이너 네트워크 안에서 한다.
 
   api:
