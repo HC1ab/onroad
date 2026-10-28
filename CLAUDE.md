@@ -59,10 +59,11 @@ main ─┬─ frontend ── web/18-choropleth        작업 PR → 트랙 (sq
 | `data` | `pipeline/`, `validation/`, `data/download_log.csv` | `db` |
 
 - **작업 PR은 자기 트랙 브랜치로**, squash merge. 작업 브랜치 수명은 1~2일.
-- **트랙 → main은 통합 단계(I1 10/30 등)마다 PR**, "Create a merge commit"으로 병합한다(squash 하면 트랙과 main의 이력이 갈라져 다음 동기화 때 충돌이 생긴다). 이 PR 본문에 완료된 이슈를 `Closes #번호`로 모두 적는다.
+- **트랙 → main은 통합 단계(I1 10/30 등)마다 PR**, "Create a merge commit"으로 병합한다(squash 하면 트랙과 main의 이력이 갈라져 다음 동기화 때 충돌이 생긴다). 이 PR 본문에 완료된 이슈를 `Closes #번호`로 모두 적는다. **GitHub 규칙으로 main은 merge commit 병합만 허용된다**(squash·rebase 버튼이 막힘). PR 제목은 `chore(merge): frontend → main (W7, I1 보완)`처럼 무엇이 들어가는지 적는다.
 - **동기화: main이 바뀌면 각 트랙에 바로 받는다.** `git checkout <트랙> && git pull origin <트랙> && git merge origin/main && git push`. rebase·force push 하지 않는다. 특히 `contracts/` 변경은 당일 반영한다.
 - **main 직행 예외:** 공유 파일(`contracts/`, `config.yaml`)과 공통 문서(`docs/`, `README.md`, `CLAUDE.md`)는 main으로 바로 PR하고, 병합 후 세 트랙이 동기화한다.
-- 보호 규칙은 main에만 있다(PR 필수, force push 금지). 트랙 브랜치는 보호가 없으니 직접 push하지 말고 PR로 넣는다.
+- 보호 규칙은 main에만 있다(PR 필수, force push 금지, merge commit만). 트랙 브랜치는 보호가 없으니 직접 push하지 말고 PR로 넣는다.
+- 병합 후 브랜치 자동 삭제는 꺼 둔다(트랙 → main 병합 때 트랙 브랜치가 지워지지 않게). 작업 PR은 병합할 때 작업 브랜치를 직접 지운다(`gh pr merge --squash --delete-branch`).
 - 트랙 이름과 같은 접두어(`frontend/…`, `backend/…`, `data/…`)의 브랜치는 만들 수 없다. 작업 브랜치는 구역 접두어(`web/`, `server/`, `pipeline/`, `validation/`)를 쓴다.
 
 ## Git 규칙

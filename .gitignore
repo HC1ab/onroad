@@ -25,6 +25,7 @@ venv/
 # --- Web ---
 node_modules/
 web/dist/
+web/.vite/
 
 # --- OS / 에디터 ---
 .DS_Store
