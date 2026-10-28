@@ -28,6 +28,8 @@ fi
 
 echo "[3/4] 컨테이너 재기동"
 docker compose up -d --build --remove-orphans
+# nginx 설정은 파일 마운트라 컨테이너가 그대로면 다시 읽게 한다
+docker compose exec -T nginx nginx -s reload >/dev/null
 
 echo "[4/4] 상태 확인"
 for i in $(seq 1 30); do
