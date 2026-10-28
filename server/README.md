@@ -58,6 +58,21 @@ docker compose -p onroad-server-tests -f server/compose.test.yml down
 
 테스트 DB는 내부 네트워크와 임시 메모리 저장소만 사용하며 운영 DB와 분리된다.
 
+## B5 CSV 내려받기와 정적 묶음
+
+| 요청 | 내용 |
+| --- | --- |
+| `/api/export/areas.csv?speed=0.8&radius=300` | 읍면동 집계. 칼럼은 areas 항목과 같다 |
+| `/api/export/crosswalks.csv?speed=0.8&radius=300` | 적재된 상세의 후보 횡단보도. `adm_cd` + 상세 항목, `flags.*`로 펼침 |
+
+UTF-8(BOM) CSV라 엑셀에서 바로 열린다. 참·거짓은 `true`/`false`, 값 없음은 빈칸. 샘플이면 파일 이름에 `_sample`이 붙는다. 미적재 조합은 API와 같은 500 안내 문구.
+
+정적 묶음(서버 없이 데모, F18)은 적재된 결과를 `contracts/README.md` "정적 묶음" 구성 그대로 파일로 쓴다. 한 읽기 트랜잭션에서 내보내 적재 중 결과가 섞이지 않는다.
+
+```bash
+bash server/deploy/export_static.sh /srv/onroad-static   # 비어 있는 폴더
+```
+
 ## B2 결과 적재
 
 저장소 루트에서 실행한다. `.env`의 DB 설정과 실행 중인 Compose DB가 필요하다.

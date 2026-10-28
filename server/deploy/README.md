@@ -45,6 +45,11 @@ bash server/deploy/load.sh /srv/onroad-results   # 파이프라인 결과 적재
 - `web/public/data/boundaries.json`(D6 결과)이 없으면 샘플 경계를 쓴다.
 - 적재는 전체 교체다. 실패하면 이전 결과가 남는다.
 
+정적 묶음(서버 없이 데모, F18)은 적재 후 비어 있는 폴더로 내보낸다.
+```bash
+bash server/deploy/export_static.sh /srv/onroad-static/$(date +%Y%m%d)
+```
+
 ## 재부팅
 Docker 서비스가 부팅 때 켜지고, 컨테이너는 `restart: unless-stopped`로 다시 뜬다.
 `docker compose down`으로 직접 내린 컨테이너는 재부팅 뒤에도 내려간 상태로 남는다.
