@@ -40,7 +40,8 @@ services:
     depends_on:
       - api
     volumes:
-      - ./server/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      # 파일이 아니라 폴더로 마운트한다. git pull 로 파일이 바뀌어도 컨테이너가 새 내용을 본다
+      - ./server/nginx:/etc/nginx/conf.d:ro
       - ./server/nginx/placeholder:/usr/share/nginx/placeholder:ro
       - ./web/dist:/usr/share/nginx/html:ro
     ports:
