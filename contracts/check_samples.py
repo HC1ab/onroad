@@ -22,6 +22,7 @@ PAIRS = {
     "meta.json": "meta.schema.json",
     "error.json": "error.schema.json",
     "boundaries.json": "boundaries.schema.json",
+    "static_manifest.json": "static_manifest.schema.json",
 }
 
 
