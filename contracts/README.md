@@ -4,13 +4,14 @@
 
 | 스키마 | 대상 | 샘플 | 기능 |
 | --- | --- | --- | --- |
-| `areas.schema.json` | `GET /api/areas?speed=&sido=&sigungu=` | `samples/areas.json` | F5, F6, F7 |
-| `area_crosswalks.schema.json` | `GET /api/areas/{adm_cd}/crosswalks?speed=` | `samples/area_crosswalks.json` | F7 |
+| `areas.schema.json` | `GET /api/areas?speed=&radius=&sido=&sigungu=` | `samples/areas.json` | F5, F6, F7 |
+| `area_crosswalks.schema.json` | `GET /api/areas/{adm_cd}/crosswalks?speed=&radius=` | `samples/area_crosswalks.json` | F7 |
 | `candidates.schema.json` | `GET /api/crosswalks/candidates?bbox=&speed=&radius=` | `samples/candidates.json` | F5, F11 |
 | `validation.schema.json` | `GET /api/validation` | `samples/validation.json` | F8 |
 | `meta.schema.json` | `GET /api/meta` | `samples/meta.json` | F9 |
 | `error.schema.json` | 4xx·5xx 오류 응답 | `samples/error.json` | 공통 |
 | `boundaries.schema.json` | 읍면동 경계 정적 파일 (API 아님) | `samples/boundaries.json` | F5 |
+| `static_manifest.schema.json` | 정적 묶음의 목차 `manifest.json` (API 아님) | `samples/static_manifest.json` | F18 |
 | `common.schema.json` | 공통 정의 (`adm_cd`, `speed`, 비율, 노출 플래그) | — | — |
 
 ## API 명세 (Swagger)
@@ -18,6 +19,24 @@
 - 보기: https://hc1ab.github.io/onroad/api/ (main 기준). 다른 브랜치는 `?url=<raw 주소>`를 붙인다.
 - 로컬 서버를 띄우면 http://localhost:8000/api/docs 에서도 볼 수 있다(B3 #14에서 이 명세와 맞춘다).
 - 엔드포인트나 파라미터를 바꿀 때는 이 파일과 스키마를 같은 PR에서 함께 고친다.
+
+## 정적 묶음 (F18)
+서버 없이 데모하기 위해 서버가 DB 결과를 그대로 파일로 내보낸 것. 각 파일 내용은 같은 API 응답과 같고 같은 스키마를 통과한다. 웹은 `VITE_API_MODE=static`에서 `/api` 대신 이 파일을 읽는다(놓는 위치는 웹이 정한다).
+
+```text
+manifest.json                              목차 (static_manifest.schema.json)
+meta.json                                  GET /api/meta
+validation.json                            GET /api/validation
+areas/{speed}_{radius}.json                GET /api/areas?speed=&radius=  (전국. 지역 필터는 화면에서)
+candidates/{speed}_{radius}.json           GET /api/crosswalks/candidates?speed=&radius=  (전국. bbox 필터는 화면에서)
+crosswalks/{speed}_{radius}/{adm_cd}.json  GET /api/areas/{adm_cd}/crosswalks?speed=&radius=
+export/areas_{speed}_{radius}.csv          GET /api/export/areas.csv?speed=&radius=
+export/crosswalks_{speed}_{radius}.csv     GET /api/export/crosswalks.csv?speed=&radius=
+```
+- `{speed}`는 소수 한 자리 문자열(`0.7`, `0.8`, `1.0`), `{radius}`는 `200`, `300`, `500`. 예: `areas/1.0_300.json`
+- 묶음에 있는 조합과 상세는 `manifest.json`에 적는다. 없는 조합은 API의 미적재(500 `not_loaded` 안내)와 같게 보여준다(빈 결과로 보이지 않게).
+- 경계는 묶음에 넣지 않는다. 웹 빌드의 `/data/boundaries.json`을 그대로 쓴다.
+- 원본 데이터·인증키·전화번호 칼럼은 넣지 않는다(R4). 결과 테이블만 내보낸다.
 
 ## 규칙
 - **기준은 이 폴더의 JSON Schema(2020-12)다.** 서버 응답과 파이프라인 결과는 이 스키마를 통과해야 한다. 서버의 OpenAPI 문서는 이 스키마에 맞춰 만든다.

@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "static_manifest.schema.json",
+  "title": "정적 묶음 manifest.json",
+  "description": "서버 없이 데모하는 정적 묶음(F18)의 목차. 묶음에 들어 있는 속도·반경 조합과 상세가 있는 읍면동을 적는다. 여기 없는 조합은 '아직 적재되지 않음'으로 보여준다(빈 결과로 보이지 않게). 파일 구성은 README '정적 묶음'.",
+  "type": "object",
+  "required": ["built_at", "results"],
+  "additionalProperties": false,
+  "properties": {
+    "_sample": { "$ref": "common.schema.json#/$defs/sample_flag" },
+    "built_at": { "type": "string", "format": "date-time", "description": "묶음을 내보낸 시각" },
+    "results": {
+      "type": "array",
+      "description": "묶음에 들어 있는 속도·반경 조합. 조합마다 areas·candidates 파일이 있다.",
+      "items": {
+        "type": "object",
+        "required": ["speed", "radius_m", "details"],
+        "additionalProperties": false,
+        "properties": {
+          "speed": { "$ref": "common.schema.json#/$defs/speed" },
+          "radius_m": { "type": "integer", "enum": [200, 300, 500] },
+          "details": {
+            "type": "array",
+            "description": "이 조합에서 상세(crosswalks) 파일이 있는 읍면동 코드",
+            "items": { "$ref": "common.schema.json#/$defs/adm_cd" },
+            "uniqueItems": true
+          }
+        }
+      }
+    }
+  }
+}

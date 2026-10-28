@@ -154,9 +154,10 @@ paths:
       summary: 읍면동 집계 CSV (F12, P1)
       parameters:
         - $ref: '#/components/parameters/speed'
+        - $ref: '#/components/parameters/radius'
       responses:
         '200':
-          description: UTF-8(BOM) CSV. 칼럼은 areas 응답의 items 필드와 같다.
+          description: UTF-8(BOM) CSV. 칼럼은 areas 응답의 items 필드와 같다. 미적재 속도·반경은 500(not_loaded 안내).
           content:
             text/csv:
               schema: { type: string }
@@ -170,9 +171,10 @@ paths:
       summary: 후보 횡단보도 목록 CSV (F12, P1)
       parameters:
         - $ref: '#/components/parameters/speed'
+        - $ref: '#/components/parameters/radius'
       responses:
         '200':
-          description: UTF-8(BOM) CSV. 칼럼은 area_crosswalks 응답의 items 필드(flags 는 펼침)와 같다.
+          description: UTF-8(BOM) CSV. 칼럼은 adm_cd 와 area_crosswalks 응답의 items 필드(flags 는 펼침)다. 적재된 상세의 후보(is_candidate) 행만 담는다. 미적재 속도·반경은 500.
           content:
             text/csv:
               schema: { type: string }
