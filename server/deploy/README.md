@@ -37,9 +37,9 @@ cp .env.example .env && chmod 600 .env
 ## 배포·적재
 ```bash
 cd /srv/onroad
-sh server/deploy/deploy.sh                 # git pull → 프론트 빌드 → compose up → /healthz 확인
-sh server/deploy/load.sh --sample          # 샘플 적재 (실데이터 전까지)
-sh server/deploy/load.sh /srv/onroad-results   # 파이프라인 결과 적재 (scp 로 결과 JSON만 올린다)
+bash server/deploy/deploy.sh                 # git pull → 프론트 빌드 → compose up → /healthz 확인
+bash server/deploy/load.sh --sample          # 샘플 적재 (실데이터 전까지)
+bash server/deploy/load.sh /srv/onroad-results   # 파이프라인 결과 적재 (scp 로 결과 JSON만 올린다)
 ```
 - 프론트는 Node 컨테이너로 빌드하므로 서버에 Node를 설치하지 않는다.
 - `web/public/data/boundaries.json`(D6 결과)이 없으면 샘플 경계를 쓴다.
@@ -53,6 +53,6 @@ Docker 서비스가 부팅 때 켜지고, 컨테이너는 `restart: unless-stopp
 ```bash
 docker compose ps
 docker compose logs --tail 50 api
-git checkout <이전 커밋> && sh server/deploy/deploy.sh --no-pull   # 되돌리기
-git checkout main && sh server/deploy/deploy.sh                       # 다시 최신으로
+git checkout <이전 커밋> && bash server/deploy/deploy.sh --no-pull   # 되돌리기
+git checkout main && bash server/deploy/deploy.sh                       # 다시 최신으로
 ```

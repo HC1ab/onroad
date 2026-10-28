@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # 운영 서버 배포: 코드 갱신 → 프론트 빌드 → 컨테이너 재기동 → 상태 확인.
-# 저장소 루트(/srv/onroad)에서 실행한다: sh server/deploy/deploy.sh [--no-pull]
+# 저장소 루트(/srv/onroad)에서 실행한다: bash server/deploy/deploy.sh [--no-pull]
 # --no-pull: 지금 체크아웃된 커밋 그대로 배포(되돌리기용)
 # 값은 루트 .env 에서 읽는다(WEB_PORT=80 등). .env 는 서버에만 둔다.
 set -euo pipefail
