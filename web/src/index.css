@@ -318,3 +318,8 @@ a { color: var(--accent); }
 .about-dl { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px; margin: 4px 0; }
 .about-dl dt { color: #6b7280; }
 .about-dl dd { margin: 0; font-weight: 600; }
+/* 횡단보도 우선순위(3단계 기준): 이름 칸을 넓히고 시간은 한 줄로 */
+.toplist-row.cw { grid-template-columns: 22px minmax(0, 1fr) auto 44px; }
+.toplist-row.cw .num { width: auto; white-space: nowrap; font-size: 12px; }
+.toplist-row.cw .name small { display: block; width: 100%; }
+.toplist-row.on { border-color: var(--accent); background: var(--accent-soft); }

@@ -6,6 +6,8 @@ import { V2Card } from '../components/validation/V2Card'
 import { V3Card } from '../components/validation/V3Card'
 import { V4Card } from '../components/validation/V4Card'
 import { V5Card } from '../components/validation/V5Card'
+import { V6Card } from '../components/validation/V6Card'
+import { V7Card } from '../components/validation/V7Card'
 import { useApi } from '../hooks/useApi'
 
 const DEF_LABEL: Record<MetaResponse['green_def_status'], string> = {
@@ -59,6 +61,8 @@ export function ValidationPage({ meta }: { meta: MetaResponse | null }) {
           <V2Card v2={v.data.v2} />
           <V3Card v3={v.data.v3} />
           <V4Card v4={v.data.v4} />
+          <V6Card v6={v.data.v6} />
+          <V7Card v7={v.data.v7} />
           <div className="v-wide"><V5Card v5={v.data.v5} /></div>
         </div>
       )}

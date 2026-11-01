@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { api, API_MODE } from './api/client'
 import { staticManifest } from './api/static'
 import { AreaDetail } from './components/AreaDetail'
+import { CrosswalkTopList } from './components/CrosswalkTopList'
 import { Legend } from './components/Legend'
 import { LoadState } from './components/LoadState'
 import { MapView, type Bbox } from './components/MapView'
@@ -41,6 +42,8 @@ function Main() {
     (s) => (layers.points && bbox ? (isV2 ? api.pointsV2(target, radius, bbox, s) : api.points(speed, radius, bbox, s)) : Promise.resolve(null)),
     [isV2, target, speed, radius, bboxKey, layers.points],
   )
+  // 횡단보도 우선순위 목록(#82)은 지도 범위와 관계없이 전체 점을 쓴다.
+  const allV2 = useApi((s) => (isV2 ? api.pointsV2(target, radius, undefined, s) : Promise.resolve(null)), [isV2, target, radius])
   const meta = useApi((s) => api.meta(s), [])
   const bundle = useApi(() => (API_MODE === 'static' ? staticManifest() : Promise.resolve(null)), [])
 
@@ -126,7 +129,11 @@ function Main() {
               ) : (
                 <>
                   <QuadrantChart data={scoped} metric={metric} />
-                  <TopList data={scoped} />
+                  {isV2 ? (
+                    <CrosswalkTopList points={allV2.data} areas={scoped?.items ?? null} error={allV2.error} onRetry={allV2.reload} />
+                  ) : (
+                    <TopList data={scoped} />
+                  )}
                 </>
               )}
             </>
