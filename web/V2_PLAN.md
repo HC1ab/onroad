@@ -29,7 +29,7 @@
 - `data_check`: 샘플에 없으므로 기록값 < 7 + L/1.0 − 0.5 인 점을 `data_check` 로 바꿔 1건 이상 만든다
 
 ## 체크리스트
-- [ ] S1 타입·계산·mock: `api/types.ts` v2 타입, `lib/recommend.ts`(+테스트), `lib/mockV2.ts`, `api/client.ts` `areasV2`·`pointsV2`·`validation` V6·V7·`meta.coefficients`
+- [x] S1 타입·계산·mock: `api/types.ts` v2 타입, `lib/recommend.ts`(+테스트), `lib/mockV2.ts`, `api/client.ts` `areasV2`·`pointsV2`·`validation` V6·V7·`meta.coefficients`
 - [ ] S2 상단 전환(#80): `AppState` basis·target, `BasisSelector`(기록값/3단계 + 85·90·95), recorded 일 때만 속도 선택
 - [ ] S3 점 레이어 v2(#81): 단계 색·`add_s` 크기, data_check·excluded 속 빈 회색, `PointCard` v2(기록 → 기준 적용 +초, reason, 고령 커버리지, 정의 미확정 고지), 추가 초 2초 이상 필터, `AreaDetail` 같은 필드
 - [ ] S4 채색·사분면(#80): `mean_add_s` 채색·범례, 툴팁 `n_add2`, 사분면 가로 `mean_add_s`·경계 중앙값
