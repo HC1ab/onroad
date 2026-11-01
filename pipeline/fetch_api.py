@@ -142,7 +142,9 @@ def parse(body: bytes) -> dict:
     if text.startswith("{") or text.startswith("["):
         d = json.loads(text)
         resp = d.get("response", d)
-        header, body_ = resp.get("header", {}), resp.get("body", {})
+        # 감싼 구조(response→header/body)와 평평한 구조(R4: resultCode·items 가 최상위) 둘 다 읽는다
+        header = resp.get("header", resp)
+        body_ = resp.get("body", resp)
         items = body_.get("items", [])
         if isinstance(items, dict):           # {"item": [...]} 또는 {"item": {...}}
             items = items.get("item", [])
@@ -159,8 +161,9 @@ def parse(body: bytes) -> dict:
 
 
 def ok_code(code: str) -> bool:
-    # 표준 API 는 '00', 기관 API 는 '0000' 또는 'INFO-000' 형태가 정상
-    return code in ("", "0", "00", "0000", "INFO-000", "NORMAL_SERVICE")
+    # 표준 API 는 '00', 기관 API 는 '0000' 또는 'INFO-000' 형태가 정상.
+    # '03'(NODATA_ERROR)은 오류가 아니라 '해당 조건의 데이터 0건'으로 본다 (R4 2023년 등).
+    return code in ("", "0", "00", "0000", "INFO-000", "NORMAL_SERVICE", "03", "NODATA_ERROR")
 
 
 def page_params(ds: str, page: int, size: int) -> dict:

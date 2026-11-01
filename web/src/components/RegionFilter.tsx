@@ -18,7 +18,7 @@ export function RegionFilter({ boundaries }: { boundaries: BoundariesResponse | 
         value={region?.sido ?? ''}
         onChange={(e) => setRegion(e.target.value ? { sido: e.target.value, sigungu: null } : null)}
       >
-        <option value="">전국</option>
+        <option value="">전체</option>
         {opts.sidos.map((s) => <option key={s} value={s}>{s}</option>)}
       </select>
       <select

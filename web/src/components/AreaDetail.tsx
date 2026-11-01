@@ -10,8 +10,7 @@ import { useAppState } from '../state/AppState'
 const FLAGS: { key: keyof ExposureFlags; short: string; label: string }[] = [
   { key: 'senior_center', short: '경', label: '경로당' },
   { key: 'market', short: '시', label: '전통시장' },
-  { key: 'protect_zone', short: '보', label: '노인·장애인 보호구역' },
-  { key: 'crash_zone_past', short: '사', label: '노인 보행사고 다발지역(과거 연도)' },
+  { key: 'protect_zone', short: '보', label: '노인 보호구역' },
 ]
 
 const QUADRANT_LABEL = {

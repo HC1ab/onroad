@@ -132,10 +132,24 @@ def _dedupe(cols: list[str]) -> list[str]:
     return out
 
 
+# data.go.kr API 응답의 영문 칼럼명 (probe 로 확인한 실제 이름). 정확히 일치할 때만 쓴다.
+API_ALIASES = {
+    "sido": ["ctprvnNm"], "sigungu": ["signguNm"],
+    "length": ["et"],                       # 횡단보도연장 (bt 는 횡단보도폭)
+    "green": ["greenSgngnrTime"], "red": ["redSgngnrTime"],
+    "lat": ["latitude", "lat", "YPos"], "lon": ["longitude", "lot", "XPos"],
+    "type": ["flctTyp"], "status": ["busiCodNm"],
+}
+SIGNAL_COLS = ["보행자신호등유무", "tfclghtYn"]   # 보행자 신호등 유무
+
+
 def find_col(ds: str, role: str, cols: list[str]) -> str | None:
-    """역할(role)에 맞는 칼럼을 찾는다. 공백을 무시하고 키워드 포함 여부로 판단."""
+    """역할(role)에 맞는 칼럼을 찾는다. 순서: 사용자 지정 → API 영문명(정확히 일치) → 한글 키워드(포함)."""
     if role in COLUMN_OVERRIDES.get(ds, {}):
         return COLUMN_OVERRIDES[ds][role]
+    for alias in API_ALIASES.get(role, []):
+        if alias in cols:
+            return alias
     inc, exc = KEYWORDS[role]
     norm = {c: c.replace(" ", "") for c in cols}
     for kw in inc:
@@ -237,7 +251,7 @@ def check_r1(out: list[str]):
         out.append(f"  - {k}: {fill_rate(rows, c[k], positive)}")
 
     # 녹색신호시간 빈칸이 '신호등 없는 횡단보도'라서인지, 신호 횡단보도의 입력 누락인지 나눠 본다
-    sig_col = next((x for x in cols if "보행자신호등" in x), None)
+    sig_col = next((x for x in cols if x in SIGNAL_COLS or "보행자신호등" in x), None)
     if sig_col and c["green"]:
         out.append(f"- 녹색신호시간 입력률 (`{sig_col}`별):")
         for val, grp in sorted(Counter(r.get(sig_col, "") or "(빈칸)" for r in rows).items()):

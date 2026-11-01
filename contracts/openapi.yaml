@@ -4,7 +4,7 @@ info:
   version: 0.1.0
   summary: 횡단보도 초록불 시간 전수 점검 — 읽기 전용 API
   description: |
-    전국 횡단보도의 기록된 녹색신호시간을 기준식 `7 + L/v`와 비교한 결과를 제공하는 **읽기 전용** API입니다.
+    부산 횡단보도의 기록된 보행시간을 기준식 `7 + L/v`와 비교한 결과를 제공하는 **읽기 전용** API입니다.
     계산은 파이프라인이 미리 끝내 두고, API는 결과를 조회만 합니다.
 
     - 모든 엔드포인트는 `GET`입니다. 다른 메서드는 `405`로 거부합니다.
@@ -96,7 +96,7 @@ paths:
       summary: 후보 횡단보도 점 레이어
       description: |
         gap > 0 이면서 노출 플래그가 1개 이상인 횡단보도(GeoJSON 점). 지도 점 레이어(F5)와 노출 반경 슬라이더(F11).
-        bbox 없이 전국을 요청하면 응답이 커지므로 지도 화면 범위를 넘긴다.
+        bbox 없이 부산 전체를 요청하면 응답이 커지므로 지도 화면 범위를 넘긴다.
       parameters:
         - $ref: '#/components/parameters/speed'
         - name: bbox
@@ -188,7 +188,7 @@ paths:
       summary: 읍면동 경계 (정적 파일)
       description: |
         API가 아니라 nginx가 제공하는 정적 파일입니다. 값은 담지 않으며 `/api/areas`의 `adm_cd`로 붙입니다.
-        단순화·gzip 처리(전국 약 350KB). 출처: admdongkor(CC BY 4.0).
+        단순화·gzip 처리(부산 206개 동 기준으로 다시 만든다). 출처: admdongkor(CC BY 4.0).
       responses:
         '200':
           description: 성공

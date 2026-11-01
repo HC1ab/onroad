@@ -61,7 +61,7 @@ describe('rankAreas', () => {
 describe('sortCrosswalks', () => {
   const cw = (cw_id: string, gap_s: number): CrosswalkItem => ({
     cw_id, lat: 35, lon: 129, length_m: 20, green_s: 30, t_need_s: 32, gap_s,
-    flags: { senior_center: false, market: false, protect_zone: false, crash_zone_past: false },
+    flags: { senior_center: false, market: false, protect_zone: false },
     exposure_cnt: 0, is_candidate: false,
   })
   const list = [cw('a', 1), cw('b', -2), cw('c', 5), cw('d', 0)]

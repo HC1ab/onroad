@@ -32,12 +32,11 @@
     "exposure_flags": {
       "type": "object",
       "description": "횡단보도 반경 안 노출 여부.",
-      "required": ["senior_center", "market", "protect_zone", "crash_zone_past"],
+      "required": ["senior_center", "market", "protect_zone"],
       "properties": {
-        "senior_center": { "type": "boolean", "description": "경로당·마을회관" },
+        "senior_center": { "type": "boolean", "description": "경로당 밀집: 반경 안 경로당(마을회관및경로당 포함) 수가 부산 상위 25% 이상(config.yaml senior_center_density_quantile)" },
         "market": { "type": "boolean", "description": "전통시장" },
-        "protect_zone": { "type": "boolean", "description": "노인·장애인 보호구역" },
-        "crash_zone_past": { "type": "boolean", "description": "노인 보행사고 다발지역(과거 연도)" },
+        "protect_zone": { "type": "boolean", "description": "노인 보호구역(장애인 보호구역 제외)" },
         "hospital": { "type": ["boolean", "null"], "description": "병원(P2). 데이터가 없으면 null." }
       }
     }

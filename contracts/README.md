@@ -27,8 +27,8 @@
 manifest.json                              목차 (static_manifest.schema.json)
 meta.json                                  GET /api/meta
 validation.json                            GET /api/validation
-areas/{speed}_{radius}.json                GET /api/areas?speed=&radius=  (전국. 지역 필터는 화면에서)
-candidates/{speed}_{radius}.json           GET /api/crosswalks/candidates?speed=&radius=  (전국. bbox 필터는 화면에서)
+areas/{speed}_{radius}.json                GET /api/areas?speed=&radius=  (부산. 지역 필터는 화면에서)
+candidates/{speed}_{radius}.json           GET /api/crosswalks/candidates?speed=&radius=  (부산. bbox 필터는 화면에서)
 crosswalks/{speed}_{radius}/{adm_cd}.json  GET /api/areas/{adm_cd}/crosswalks?speed=&radius=
 export/areas_{speed}_{radius}.csv          GET /api/export/areas.csv?speed=&radius=
 export/crosswalks_{speed}_{radius}.csv     GET /api/export/crosswalks.csv?speed=&radius=

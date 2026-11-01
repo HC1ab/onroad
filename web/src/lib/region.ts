@@ -39,7 +39,7 @@ export function filterAreas(items: AreaItem[], r: Region | null): AreaItem[] {
 }
 
 export function regionLabel(r: Region | null): string {
-  if (!r) return '전국'
+  if (!r) return '부산 전체'
   return r.sigungu ? `${r.sido} ${r.sigungu}` : r.sido
 }
 

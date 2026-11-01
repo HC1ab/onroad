@@ -37,7 +37,7 @@ PR에서 `server/`가 바뀌면 GitHub Actions(`server.yml`)가 테스트와 `/h
 
 | 요청 | 동작 |
 | --- | --- |
-| `/api/areas?speed=0.8&radius=300&sido=부산광역시&sigungu=해운대구` | 읍면동 집계, 지역 필터. 사분면 기준은 저장된 전국 기준 유지 |
+| `/api/areas?speed=0.8&radius=300&sido=부산광역시&sigungu=해운대구` | 읍면동 집계, 지역 필터. 사분면 기준은 저장된 부산 중앙값 유지 |
 | `/api/areas/21090730/crosswalks?speed=0.8&radius=300` | gap_s 내림차순 상세 목록 |
 | `/api/crosswalks/candidates?speed=0.8&radius=300&bbox=129.05,35.13,129.22,35.23` | 저장된 후보 점을 지도 범위로 필터 |
 | `/api/validation` | V1~V5 결과 그대로 반환 |

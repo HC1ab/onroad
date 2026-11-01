@@ -18,7 +18,7 @@ export function Footer({ meta }: { meta: MetaResponse | null }) {
                 {s.license && s.license !== '확인 필요' ? ` (${s.license})` : ''}
               </span>
             ))
-          : '전국횡단보도표준데이터, admdongkor(CC BY 4.0), 행정안전부 등'}
+          : '부산광역시 횡단보도 현황(엑셀), admdongkor(CC BY 4.0), 행정안전부 등'}
       </div>
     </footer>
   )

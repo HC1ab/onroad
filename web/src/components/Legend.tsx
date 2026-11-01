@@ -33,7 +33,7 @@ export function Legend({ candidateCount }: { candidateCount: number | null }) {
         <i className="dot" style={{ background: CANDIDATE_COLOR }} />
         후보 횡단보도{candidateCount !== null && layers.candidates ? ` ${candidateCount}곳` : ''}
       </label>
-      <div className="legend-note">기준식보다 짧고 반경 안 노출(경로당·시장·보호구역·사고다발)이 1개 이상</div>
+      <div className="legend-note">기준식보다 짧고 반경 안 노출(경로당 밀집·시장·노인 보호구역)이 1개 이상</div>
 
       <div className="legend-title sep-title">노출 반경</div>
       <div className="seg" role="radiogroup" aria-label="노출 반경">

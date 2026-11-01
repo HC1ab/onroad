@@ -36,7 +36,6 @@ export interface ExposureFlags {
   senior_center: boolean
   market: boolean
   protect_zone: boolean
-  crash_zone_past: boolean
   hospital?: boolean | null
 }
 

@@ -144,7 +144,7 @@ export function QuadrantChart({ data }: { data: AreasResponse | null }) {
       </div>
       <div className="quadrant-foot">
         <span>
-          경계선: {custom ? '직접 조절' : '전국 중앙값'} (짧음 {pct1(t.x)} · 65세 {pct1(t.y)}) · 선을 끌어 조절
+          경계선: {custom ? '직접 조절' : '부산 중앙값'} (짧음 {pct1(t.x)} · 65세 {pct1(t.y)}) · 선을 끌어 조절
         </span>
         {custom && (
           <button type="button" className="link-btn" onClick={() => setCustom(null)}>중앙값으로</button>

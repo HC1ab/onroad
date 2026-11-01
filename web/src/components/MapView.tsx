@@ -243,7 +243,7 @@ export function MapView({ boundaries, areas, candidates, onBoundsChange, visible
     })
   }, [selection, boundaries])
 
-  // 지역 필터: 고르면 그 지역 전체가 보이게, 전국으로 돌리면 전체가 보이게 이동 (첫 렌더는 경계 추가 때 이미 맞춤)
+  // 지역 필터: 고르면 그 지역 전체가 보이게, 전체로 돌리면 전체가 보이게 이동 (첫 렌더는 경계 추가 때 이미 맞춤)
   useEffect(() => {
     if (regionInit.current) {
       regionInit.current = false

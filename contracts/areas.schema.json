@@ -11,7 +11,7 @@
     "radius_m": { "type": "integer", "enum": [200, 300, 500], "description": "n_candidate 를 계산한 노출 반경(m). 요청의 radius 와 같다." },
     "thresholds": {
       "type": "object",
-      "description": "사분면 경계선 기본값(전국 중앙값). 화면에서 조절할 수 있다.",
+      "description": "사분면 경계선 기본값(부산 읍면동 중앙값). 화면에서 조절할 수 있다.",
       "required": ["short_ratio_median", "ratio_65plus_median"],
       "properties": {
         "short_ratio_median": { "$ref": "common.schema.json#/$defs/ratio" },

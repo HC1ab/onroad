@@ -99,7 +99,7 @@ async function mockRecenter(items: AreaCrosswalksResponse['items'], admCd: strin
 // ---- 공개 API ----
 
 export const api = {
-  /** 전국 읍면동 값. 지역 거르기는 화면에서 한다(지도 색은 전국 유지). */
+  /** 부산 읍면동 값. 지역 거르기는 화면에서 한다(지도 색은 부산 전체 유지). */
   areas(speed: Speed, radius: Radius, signal?: AbortSignal): Promise<AreasResponse> {
     if (API_MODE === 'mock') return mockAreas(speed, radius, signal)
     return getJson(`/api/areas?speed=${speed}&radius=${radius}`, signal)

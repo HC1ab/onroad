@@ -55,7 +55,7 @@ describe('regionBounds', () => {
 
 describe('regionLabel', () => {
   it('표시 이름', () => {
-    expect(regionLabel(null)).toBe('전국')
+    expect(regionLabel(null)).toBe('부산 전체')
     expect(regionLabel({ sido: '부산광역시', sigungu: null })).toBe('부산광역시')
     expect(regionLabel({ sido: '부산광역시', sigungu: '해운대구' })).toBe('부산광역시 해운대구')
   })

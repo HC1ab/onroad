@@ -38,7 +38,7 @@ interface AppState {
   setCustomThresholds: (t: Thresholds | null) => void
   focus: FocusPoint | null
   setFocus: (f: FocusPoint | null) => void
-  /** 지역 필터. null 이면 전국 */
+  /** 지역 필터. null 이면 부산 전체 */
   region: Region | null
   setRegion: (r: Region | null) => void
   /** 목적지 노출 반경(m) */

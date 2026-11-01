@@ -16,7 +16,6 @@
         "senior_center": true,
         "market": false,
         "protect_zone": true,
-        "crash_zone_past": false,
         "hospital": null
       },
       "exposure_cnt": 2,
@@ -34,7 +33,6 @@
         "senior_center": true,
         "market": true,
         "protect_zone": true,
-        "crash_zone_past": true,
         "hospital": null
       },
       "exposure_cnt": 4,
@@ -52,7 +50,6 @@
         "senior_center": true,
         "market": false,
         "protect_zone": false,
-        "crash_zone_past": false,
         "hospital": null
       },
       "exposure_cnt": 1,
@@ -70,7 +67,6 @@
         "senior_center": false,
         "market": false,
         "protect_zone": false,
-        "crash_zone_past": false,
         "hospital": null
       },
       "exposure_cnt": 0,
@@ -88,7 +84,6 @@
         "senior_center": true,
         "market": false,
         "protect_zone": false,
-        "crash_zone_past": false,
         "hospital": null
       },
       "exposure_cnt": 1,
@@ -106,7 +101,6 @@
         "senior_center": true,
         "market": false,
         "protect_zone": false,
-        "crash_zone_past": false,
         "hospital": null
       },
       "exposure_cnt": 1,
@@ -124,7 +118,6 @@
         "senior_center": true,
         "market": true,
         "protect_zone": false,
-        "crash_zone_past": false,
         "hospital": null
       },
       "exposure_cnt": 2,
@@ -142,7 +135,6 @@
         "senior_center": true,
         "market": true,
         "protect_zone": false,
-        "crash_zone_past": false,
         "hospital": null
       },
       "exposure_cnt": 2,

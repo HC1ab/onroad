@@ -10,3 +10,7 @@ exposure_radius_m: 300
 exposure_radius_sensitivity_m: [200, 500]
 crs_storage: "EPSG:4326"
 crs_compute: "EPSG:5179"
+# 경로당 밀집 플래그: 반경 안 경로당 수가 부산 횡단보도 분포의 이 분위수 이상이면 true
+senior_center_density_quantile: 0.75
+# 사고다발지역(R4)은 후보 선정에 쓰지 않고 검증(V3)에만 쓴다. 이 연도 범위(포함)의 다발지역 전체를 쓴다
+crash_validation_years: [2021, 2025]

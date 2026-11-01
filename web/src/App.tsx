@@ -32,7 +32,7 @@ function Main() {
   const meta = useApi((s) => api.meta(s), [])
 
   const selectedArea = areas.data?.items.find((a) => a.adm_cd === selectedAdmCd) ?? null
-  // 지역 필터: 지도 색은 전국 그대로, 목록·사분면만 지역 안으로 좁힌다. 경계선은 전국 중앙값 유지.
+  // 지역 필터: 지도 색은 부산 전체 그대로, 목록·사분면만 지역 안으로 좁힌다. 경계선은 부산 중앙값 유지.
   const scoped = useMemo(
     () => (areas.data ? { ...areas.data, items: filterAreas(areas.data.items, region) } : null),
     [areas.data, region],
