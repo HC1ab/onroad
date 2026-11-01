@@ -1,11 +1,13 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
-import type { Radius, Speed } from '../api/types'
+import type { PointProps, Radius, Speed } from '../api/types'
+import { DEFAULT_POINT_FILTER, type PointFilter } from '../lib/points'
 import type { Thresholds } from '../lib/quadrant'
 import type { Region } from '../lib/region'
 
 export interface LayerVisibility {
   choropleth: boolean
-  candidates: boolean
+  /** 횡단보도 점(분석한 점, 후보 포함) */
+  points: boolean
 }
 
 /** 어디서 선택했는지. 지도 밖(사분면·목록)에서 선택하면 지도가 그 지역으로 이동한다. */
@@ -16,12 +18,14 @@ export interface Selection {
   source: SelectionSource
 }
 
-/** 상세 표에서 고른 횡단보도. 지도가 그 위치로 이동해 표시한다. */
-export interface FocusPoint {
+/** 선택한 횡단보도. 지도 점이나 상세 표에서 고른다. 정보 카드와 표 강조가 함께 쓴다. */
+export interface PointSelection {
   cwId: string
-  lat: number
   lon: number
-  label: string
+  lat: number
+  props: PointProps
+  /** 상세 표에서 고르면 지도가 그 위치로 이동한다(지도에서 고르면 그대로) */
+  source: 'map' | 'list'
 }
 
 // 화면 전체가 함께 쓰는 선택 상태. 지도·사분면·목록·상세가 같은 값을 보고 동시에 바뀐다.
@@ -36,8 +40,10 @@ interface AppState {
   /** 사용자가 옮긴 사분면 경계선. null 이면 API 기본값(중앙값) */
   customThresholds: Thresholds | null
   setCustomThresholds: (t: Thresholds | null) => void
-  focus: FocusPoint | null
-  setFocus: (f: FocusPoint | null) => void
+  point: PointSelection | null
+  setPoint: (p: PointSelection | null) => void
+  pointFilter: PointFilter
+  setPointFilter: (f: PointFilter) => void
   /** 지역 필터. null 이면 전국 */
   region: Region | null
   setRegion: (r: Region | null) => void
@@ -54,14 +60,16 @@ export const DEFAULT_RADIUS: Radius = 300
 export function AppStateProvider({ children }: { children: ReactNode }) {
   const [speed, setSpeed] = useState<Speed>(DEFAULT_SPEED)
   const [selection, setSelection] = useState<Selection | null>(null)
-  const [layers, setLayers] = useState<LayerVisibility>({ choropleth: true, candidates: true })
+  const [layers, setLayers] = useState<LayerVisibility>({ choropleth: true, points: true })
   const [customThresholds, setCustomThresholds] = useState<Thresholds | null>(null)
-  const [focus, setFocus] = useState<FocusPoint | null>(null)
+  const [point, setPoint] = useState<PointSelection | null>(null)
+  const [pointFilter, setPointFilter] = useState<PointFilter>(DEFAULT_POINT_FILTER)
   const [region, setRegion] = useState<Region | null>(null)
   const [radius, setRadius] = useState<Radius>(DEFAULT_RADIUS)
   const select = useCallback((admCd: string | null, source: SelectionSource) => {
     setSelection(admCd ? { admCd, source } : null)
-    setFocus(null)
+    // 다른 동을 고르면 그 동 밖의 횡단보도 선택은 푼다.
+    setPoint((p) => (p && p.props.adm_cd === admCd ? p : null))
   }, [])
   const toggleLayer = useCallback((key: keyof LayerVisibility) => setLayers((l) => ({ ...l, [key]: !l[key] })), [])
   const value = useMemo(
@@ -70,11 +78,12 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       selection, selectedAdmCd: selection?.admCd ?? null, select,
       layers, toggleLayer,
       customThresholds, setCustomThresholds,
-      focus, setFocus,
+      point, setPoint,
+      pointFilter, setPointFilter,
       region, setRegion,
       radius, setRadius,
     }),
-    [speed, selection, select, layers, toggleLayer, customThresholds, focus, region, radius],
+    [speed, selection, select, layers, toggleLayer, customThresholds, point, pointFilter, region, radius],
   )
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }

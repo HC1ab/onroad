@@ -23,12 +23,12 @@ const QUADRANT_LABEL = {
 
 interface Props {
   area: AreaItem
-  thresholdsData: { thresholds: { short_ratio_median: number; ratio_65plus_median: number } } | null
+  thresholdsData: { min_sample?: number; thresholds: { short_ratio_median: number; ratio_65plus_median: number } } | null
 }
 
 /** 지역 상세 패널 (F7). 오른쪽 패널을 넓혀서 보여준다. */
 export function AreaDetail({ area, thresholdsData }: Props) {
-  const { speed, radius, select, customThresholds, focus, setFocus } = useAppState()
+  const { speed, radius, select, customThresholds, point, setPoint } = useAppState()
   const [onlyShort, setOnlyShort] = useState(true)
   const cws = useApi((s) => api.areaCrosswalks(area.adm_cd, speed, radius, s), [area.adm_cd, speed, radius])
 
@@ -37,7 +37,11 @@ export function AreaDetail({ area, thresholdsData }: Props) {
   const rows = cws.data ? sortCrosswalks(cws.data.items, onlyShort) : []
 
   const onRow = (c: CrosswalkItem) =>
-    setFocus({ cwId: c.cw_id, lat: c.lat, lon: c.lon, label: `${meter(c.length_m)} · 기록 ${sec1(c.green_s)} · ${c.gap_s > 0 ? `기준식보다 ${sec1(c.gap_s)} 짧음` : '기준식 이상'}` })
+    // 표에서 고르면 지도가 그 횡단보도로 이동하고 정보 카드가 열린다(지도에서 고르면 이 행이 강조된다).
+    setPoint({
+      cwId: c.cw_id, lat: c.lat, lon: c.lon, source: 'list',
+      props: { ...c, adm_cd: area.adm_cd, status: 'analyzed', exclude_reason: null },
+    })
 
   return (
     <section className="detail" aria-label={`${area.adm_name} 상세`}>
@@ -60,7 +64,7 @@ export function AreaDetail({ area, thresholdsData }: Props) {
       <div className="notes">
         {area.low_sample && (
           <p className="note warn">
-            분석 횡단보도가 {area.n_analyzed}곳으로 표본 하한 미만입니다. 지도에서 회색으로 표시하고 순위에서 뺍니다.
+            분석 횡단보도가 {area.n_analyzed}곳으로 표본 하한{thresholdsData?.min_sample ? `(${thresholdsData.min_sample}곳)` : ''} 미만입니다. 지도에서 회색으로 표시하고 순위에서 뺍니다.
           </p>
         )}
         <p className="note">읍면동 평균은 그 동의 개별 횡단보도 이용자 구성을 뜻하지 않습니다.</p>
@@ -92,7 +96,7 @@ export function AreaDetail({ area, thresholdsData }: Props) {
             {rows.map((c) => (
               <tr
                 key={c.cw_id}
-                className={focus?.cwId === c.cw_id ? 'on' : undefined}
+                className={point?.cwId === c.cw_id ? 'on' : undefined}
                 tabIndex={0}
                 onClick={() => onRow(c)}
                 onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onRow(c)}

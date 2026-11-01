@@ -2,33 +2,37 @@ import { useMemo, useState } from 'react'
 import { api, API_MODE } from './api/client'
 import { staticManifest } from './api/static'
 import { AreaDetail } from './components/AreaDetail'
-import { Footer } from './components/Footer'
 import { Legend } from './components/Legend'
 import { LoadState } from './components/LoadState'
 import { MapView, type Bbox } from './components/MapView'
+import { PointCard } from './components/PointCard'
 import { RegionFilter } from './components/RegionFilter'
 import { QuadrantChart } from './components/QuadrantChart'
 import { SpeedSelector } from './components/SpeedSelector'
 import { Tabs } from './components/Tabs'
 import { TopList } from './components/TopList'
 import { useApi } from './hooks/useApi'
+import { countPoints, filterPoints } from './lib/points'
 import { filterAreas } from './lib/region'
 import { useRoute } from './lib/route'
+import { AboutPage } from './pages/AboutPage'
 import { ValidationPage } from './pages/ValidationPage'
 import { AppStateProvider, useAppState } from './state/AppState'
+import { UserInputsProvider, useUserInputs } from './state/UserInputs'
 
 function Main() {
-  const { speed, layers, selectedAdmCd, region, radius } = useAppState()
+  const { speed, layers, selectedAdmCd, region, radius, point, pointFilter } = useAppState()
+  const { inputs } = useUserInputs()
   const route = useRoute()
   const onMap = route === 'map'
   const [bbox, setBbox] = useState<Bbox | null>(null)
   const boundaries = useApi((s) => api.boundaries(s), [])
   const areas = useApi((s) => api.areas(speed, radius, s), [speed, radius])
-  // 후보 점은 켜져 있고 지도 범위를 알 때만 요청한다. 지도를 움직이거나 속도를 바꾸면 다시 요청.
+  // 횡단보도 점은 켜져 있고 지도 범위를 알 때만 요청한다. 지도를 움직이거나 속도·반경을 바꾸면 다시 요청.
   const bboxKey = bbox?.join(',') ?? ''
-  const candidates = useApi(
-    (s) => (layers.candidates && bbox ? api.candidates(speed, radius, bbox, s) : Promise.resolve(null)),
-    [speed, radius, bboxKey, layers.candidates],
+  const points = useApi(
+    (s) => (layers.points && bbox ? api.points(speed, radius, bbox, s) : Promise.resolve(null)),
+    [speed, radius, bboxKey, layers.points],
   )
   const meta = useApi((s) => api.meta(s), [])
   const bundle = useApi(() => (API_MODE === 'static' ? staticManifest() : Promise.resolve(null)), [])
@@ -39,15 +43,26 @@ function Main() {
     () => (areas.data ? { ...areas.data, items: filterAreas(areas.data.items, region) } : null),
     [areas.data, region],
   )
+  // 점 필터(범위·짧은 초·분석 제외). 클러스터 개수와 범례 개수도 이 결과로 센다.
+  const shownPoints = useMemo(() => (points.data ? filterPoints(points.data, pointFilter) : null), [points.data, pointFilter])
+  const shownCount = useMemo(() => (shownPoints ? countPoints(shownPoints) : null), [shownPoints])
+  // 서버에 전체 점이 없으면 후보 점으로 대신 그린다(연장이 없는 점만 있음).
+  const candidatesOnly = !!points.data?.features.length && points.data.features.every((f) => f.properties.length_m === null)
+  const myInputIds = useMemo(
+    () => [...new Set([...Object.keys(inputs.greens), ...inputs.measurements.map((m) => m.cw_id)])],
+    [inputs],
+  )
+  const minSample = areas.data?.min_sample ?? null
+  const pointArea = point ? areas.data?.items.find((a) => a.adm_cd === point.props.adm_cd) : null
 
   // mock 이거나, 서버가 샘플을 적재해 내려준 경우(_sample) 모두 샘플임을 표시한다.
   const isSample = API_MODE === 'mock' || !!areas.data?._sample || !!meta.data?._sample || !!bundle.data?._sample
 
-  const error = boundaries.error ?? areas.error ?? candidates.error
+  const error = boundaries.error ?? areas.error ?? points.error
   const retry = () => {
     if (boundaries.error) boundaries.reload()
     if (areas.error) areas.reload()
-    if (candidates.error) candidates.reload()
+    if (points.error) points.reload()
   }
 
   return (
@@ -72,17 +87,20 @@ function Main() {
         </div>
       </header>
 
-      {/* 검증 화면에서도 지도는 지우지 않고 숨긴다(돌아왔을 때 위치·선택 유지). */}
-      <main className={selectedArea ? "body wide" : "body"} hidden={!onMap}>
+      {/* 검증·About 화면에서도 지도는 지우지 않고 숨긴다(돌아왔을 때 위치·선택 유지). */}
+      <main className={selectedArea ? 'body wide' : 'body'} hidden={!onMap}>
         <section className="map-wrap">
           <MapView
             boundaries={boundaries.data}
             areas={areas.data?.items ?? null}
-            candidates={layers.candidates ? candidates.data : null}
+            minSample={minSample}
+            points={layers.points ? shownPoints : null}
+            myInputIds={myInputIds}
             onBoundsChange={setBbox}
             visible={onMap}
           />
-          <Legend candidateCount={candidates.data?.features.length ?? null} />
+          <Legend minSample={minSample} shown={shownCount} candidatesOnly={candidatesOnly} />
+          {point && <PointCard key={point.cwId} areaName={pointArea ? `${pointArea.sigungu} ${pointArea.adm_name}` : null} />}
           <LoadState loading={boundaries.loading || areas.loading} error={error} onRetry={retry} />
         </section>
         {/* 지역을 고르면 오른쪽 패널을 넓혀 상세를 보여주고, 닫으면 사분면·상위 N 으로 돌아간다. */}
@@ -107,13 +125,16 @@ function Main() {
         </aside>
       </main>
 
-      {!onMap && (
+      {route === 'validation' && (
         <main className="body-page">
           <ValidationPage meta={meta.data} />
         </main>
       )}
-
-      <Footer meta={meta.data} />
+      {route === 'about' && (
+        <main className="body-page">
+          <AboutPage meta={meta.data} minSample={minSample} />
+        </main>
+      )}
     </div>
   )
 }
@@ -121,7 +142,9 @@ function Main() {
 export default function App() {
   return (
     <AppStateProvider>
-      <Main />
+      <UserInputsProvider>
+        <Main />
+      </UserInputsProvider>
     </AppStateProvider>
   )
 }

@@ -1,5 +1,6 @@
 import type { V5Result } from '../../api/types'
 import { ValidationCard } from './ValidationCard'
+import { BASIS } from './basis'
 
 const n2 = (v: number) => `${v < 0 ? '−' : ''}${Math.abs(v).toFixed(2)}`
 
@@ -8,6 +9,7 @@ export function V5Card({ v5 }: { v5: V5Result | null }) {
   return (
     <ValidationCard
       id="v5"
+      basis={BASIS.v5}
       title="V5 (선택) 보정 연관성 · 로지스틱 회귀"
       question="다른 요인(65세 이상 비율, 평균 연장, 시도)을 통제해도 짧음 비율과 사고다발지역이 함께 움직이는가"
       caution="통제한 연관성까지입니다. 보행량 데이터가 없어 인과는 아닙니다."

@@ -1,23 +1,31 @@
 import { useEffect, useRef } from 'react'
 import maplibregl, { type ExpressionSpecification, type LngLatBoundsLike } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
-import type { AreaItem, BoundariesResponse, CandidatesResponse } from '../api/types'
+import type { AreaItem, BoundariesResponse, PointsResponse } from '../api/types'
 import { regionBounds } from '../lib/region'
 import { useAppState } from '../state/AppState'
 import {
-  CANDIDATE_COLOR,
   CANDIDATE_STROKE,
+  CLUSTER_STROKE,
+  EXCLUDED_STROKE,
+  GAP_STOPS,
   HATCH_LINE_COLOR,
   LOW_SAMPLE_COLOR,
+  MY_INPUT_STROKE,
   NO_VALUE_COLOR,
+  POINT_STROKE,
   RATIO_STEPS,
 } from './mapStyle'
 
 // 배경 지도: OpenFreeMap(키 없음). 출처 표기는 스타일이 자동으로 넣는다.
 const BASEMAP_STYLE = import.meta.env.VITE_BASEMAP_STYLE || 'https://tiles.openfreemap.org/styles/positron'
 const AREAS = 'areas'
-const CANDIDATES = 'candidates'
+const POINTS = 'points'
 const HATCH = 'hatch'
+// 하단 바 대신 지도 출처 표시에 데이터 출처를 남긴다(CC BY 4.0 표기 조건). 자세한 출처는 About.
+const DATA_ATTRIBUTION = '읍면동 경계: admdongkor (CC BY 4.0) · 자료: 전국횡단보도표준데이터 외 · <a href="#/about">출처·한계</a>'
+// 이 줌보다 가까우면 점을 묶지 않는다(상세 표에서 고른 점은 이보다 가깝게 이동)
+const CLUSTER_MAX_ZOOM = 14
 
 export type Bbox = [number, number, number, number]
 
@@ -31,12 +39,20 @@ const FILL_COLOR: ExpressionSpecification = [
   ['step', ['to-number', ['coalesce', ['feature-state', 'short_ratio'], 0]], RATIO_STEPS[0][1], ...RATIO_STEPS.slice(1).flat()],
 ]
 
+const gapColor = (value: ExpressionSpecification): ExpressionSpecification =>
+  ['interpolate', ['linear'], value, ...GAP_STOPS.flat()] as ExpressionSpecification
+
 const EMPTY: GeoJSON.FeatureCollection = { type: 'FeatureCollection', features: [] }
 
 interface Props {
   boundaries: BoundariesResponse | null
   areas: AreaItem[] | null
-  candidates: CandidatesResponse | null
+  /** 표본 하한(응답의 min_sample). 없으면 null */
+  minSample: number | null
+  /** 필터를 적용한 횡단보도 점 */
+  points: PointsResponse | null
+  /** 내가 실측·녹색시간을 입력한 횡단보도 */
+  myInputIds: string[]
   onBoundsChange: (bbox: Bbox) => void
   /** 숨겨졌다가 다시 보일 때 지도 크기를 다시 맞춘다 */
   visible: boolean
@@ -78,16 +94,20 @@ function currentBbox(map: maplibregl.Map): Bbox {
   return [r(b.getWest()), r(b.getSouth()), r(b.getEast()), r(b.getNorth())]
 }
 
-export function MapView({ boundaries, areas, candidates, onBoundsChange, visible }: Props) {
+export function MapView({ boundaries, areas, minSample, points, myInputIds, onBoundsChange, visible }: Props) {
   const container = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
   const readyRef = useRef(false)
-  const pointPopup = useRef<maplibregl.Popup | null>(null)
-  const focusPopup = useRef<maplibregl.Popup | null>(null)
   const boundsCb = useRef(onBoundsChange)
   boundsCb.current = onBoundsChange
-  const { selection, select, layers, focus, region } = useAppState()
+  const minSampleRef = useRef(minSample)
+  minSampleRef.current = minSample
+  const { selection, select, layers, point, setPoint, region } = useAppState()
   const regionInit = useRef(true)
+  // 지도 이벤트 안에서 최신 점 데이터를 찾는다(지도 속성은 중첩 객체를 문자열로 바꾸므로 원래 값을 쓴다).
+  const pointsById = useRef(new Map<string, GeoJSON.Feature<GeoJSON.Point, PointsResponse['features'][number]['properties']>>())
+  const actions = useRef({ select, setPoint })
+  actions.current = { select, setPoint }
 
   // 레이어가 준비된 뒤 실행 (준비 전이면 준비 이벤트를 기다린다)
   const whenLayers = (fn: (map: maplibregl.Map) => void) => {
@@ -105,7 +125,7 @@ export function MapView({ boundaries, areas, candidates, onBoundsChange, visible
       style: BASEMAP_STYLE,
       center: [129.13, 35.17],
       zoom: 11,
-      attributionControl: { customAttribution: '읍면동 경계: admdongkor (CC BY 4.0)' },
+      attributionControl: { customAttribution: DATA_ATTRIBUTION, compact: false },
     })
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
     map.on('load', () => {
@@ -122,7 +142,7 @@ export function MapView({ boundaries, areas, candidates, onBoundsChange, visible
     }
   }, [])
 
-  // 경계·후보 점 레이어 (경계를 받은 뒤 한 번)
+  // 경계·횡단보도 점 레이어 (경계를 받은 뒤 한 번)
   useEffect(() => {
     const map = mapRef.current
     if (!map || !boundaries) return
@@ -142,31 +162,84 @@ export function MapView({ boundaries, areas, candidates, onBoundsChange, visible
         paint: { 'line-color': '#111827', 'line-width': 3 },
       })
 
-      map.addSource(CANDIDATES, { type: 'geojson', data: EMPTY })
-      map.addLayer({
-        id: 'candidates-pt', type: 'circle', source: CANDIDATES,
-        paint: {
-          'circle-color': CANDIDATE_COLOR,
-          'circle-stroke-color': CANDIDATE_STROKE,
-          'circle-stroke-width': 1.5,
-          // 노출 개수가 많을수록 조금 크게
-          'circle-radius': ['interpolate', ['linear'], ['get', 'exposure_cnt'], 1, 4, 4, 7],
+      // 횡단보도 점: 많이 겹치면 묶는다(피드백 3번). 묶음 색은 묶인 점 중 가장 짧은 쪽(최대 짧은 초).
+      map.addSource(POINTS, {
+        type: 'geojson',
+        data: EMPTY,
+        cluster: true,
+        clusterMaxZoom: CLUSTER_MAX_ZOOM,
+        clusterRadius: 36,
+        clusterProperties: {
+          max_gap: ['max', ['case', ['==', ['get', 'status'], 'analyzed'], ['to-number', ['get', 'gap_s']], -999]],
+          n_analyzed: ['+', ['case', ['==', ['get', 'status'], 'analyzed'], 1, 0]],
         },
+      })
+      map.addLayer({
+        id: 'points-cluster', type: 'circle', source: POINTS,
+        filter: ['has', 'point_count'],
+        paint: {
+          'circle-color': ['case', ['==', ['get', 'n_analyzed'], 0], 'rgba(255,255,255,0.6)', gapColor(['get', 'max_gap'])],
+          'circle-stroke-color': CLUSTER_STROKE,
+          'circle-stroke-width': 2,
+          'circle-radius': ['step', ['get', 'point_count'], 12, 10, 15, 50, 19, 200, 24],
+          'circle-opacity': 0.9,
+        },
+      })
+      map.addLayer({
+        id: 'points-count', type: 'symbol', source: POINTS,
+        filter: ['has', 'point_count'],
+        layout: { 'text-field': ['get', 'point_count_abbreviated'], 'text-size': 11, 'text-font': ['Noto Sans Regular'] },
+        paint: { 'text-color': '#111827', 'text-halo-color': '#ffffff', 'text-halo-width': 1.2 },
+      })
+      map.addLayer({
+        id: 'points-excluded', type: 'circle', source: POINTS,
+        filter: ['all', ['!', ['has', 'point_count']], ['==', ['get', 'status'], 'excluded']],
+        paint: {
+          'circle-color': 'rgba(0,0,0,0)',
+          'circle-radius': 5,
+          'circle-stroke-color': ['case', ['boolean', ['get', 'mine'], false], MY_INPUT_STROKE, EXCLUDED_STROKE],
+          'circle-stroke-width': ['case', ['boolean', ['get', 'mine'], false], 2.5, 1.5],
+        },
+      })
+      map.addLayer({
+        id: 'points-analyzed', type: 'circle', source: POINTS,
+        filter: ['all', ['!', ['has', 'point_count']], ['==', ['get', 'status'], 'analyzed']],
+        paint: {
+          'circle-color': gapColor(['to-number', ['get', 'gap_s']]),
+          'circle-radius': ['case', ['boolean', ['get', 'is_candidate'], false], 6, 4.5],
+          'circle-stroke-color': [
+            'case',
+            ['boolean', ['get', 'mine'], false], MY_INPUT_STROKE,
+            ['boolean', ['get', 'is_candidate'], false], CANDIDATE_STROKE,
+            POINT_STROKE,
+          ],
+          'circle-stroke-width': ['case', ['any', ['boolean', ['get', 'mine'], false], ['boolean', ['get', 'is_candidate'], false]], 2, 0.8],
+        },
+      })
+      map.addLayer({
+        id: 'points-selected', type: 'circle', source: POINTS,
+        filter: ['==', ['get', 'cw_id'], ''],
+        paint: { 'circle-color': 'rgba(0,0,0,0)', 'circle-radius': 10, 'circle-stroke-color': '#111827', 'circle-stroke-width': 2.5 },
       })
 
       // 읍면동: 클릭 선택, 마우스 올림 안내
       const hover = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 12, className: 'map-tip' })
       map.on('click', 'areas-fill', (e) => {
+        // 점을 누른 경우는 점 처리에 맡긴다.
+        if (map.queryRenderedFeatures(e.point, { layers: ['points-analyzed', 'points-excluded', 'points-cluster'] }).length) return
         const adm = e.features?.[0]?.properties?.adm_cd as string | undefined
-        if (adm) select(adm, 'map')
+        if (adm) actions.current.select(adm, 'map')
       })
       map.on('mousemove', 'areas-fill', (e) => {
         const f = e.features?.[0]
         if (!f) return
         map.getCanvas().style.cursor = 'pointer'
         const name = esc(String(f.properties?.adm_name ?? ''))
-        const st = f.state as { short_ratio?: number | null; low_sample?: boolean }
-        const value = st.low_sample ? '표본 부족 (순위 제외)' : `기준식보다 짧음 ${pct(st.short_ratio)}`
+        const st = f.state as { short_ratio?: number | null; low_sample?: boolean; n_analyzed?: number }
+        const min = minSampleRef.current
+        const value = st.low_sample
+          ? `표본 부족 · 분석 ${st.n_analyzed ?? 0}곳${min ? ` (${min}곳 미만)` : ''} · 순위 제외`
+          : `기준식보다 짧음 ${pct(st.short_ratio)}`
         hover.setLngLat(e.lngLat).setHTML(`<b>${name}</b><br>${value}`).addTo(map)
       })
       map.on('mouseleave', 'areas-fill', () => {
@@ -174,18 +247,27 @@ export function MapView({ boundaries, areas, candidates, onBoundsChange, visible
         hover.remove()
       })
 
-      // 후보 점: 클릭하면 짧은 초와 노출 개수
-      map.on('click', 'candidates-pt', (e) => {
-        const p = e.features?.[0]?.properties as { gap_s?: number; exposure_cnt?: number } | undefined
-        if (!p) return
-        pointPopup.current?.remove()
-        pointPopup.current = new maplibregl.Popup({ offset: 8, className: 'map-tip' })
-          .setLngLat(e.lngLat)
-          .setHTML(`<b>점검 우선순위 후보</b><br>기준식보다 ${Number(p.gap_s).toFixed(1)}초 짧음<br>노출 ${p.exposure_cnt}개`)
-          .addTo(map)
+      // 묶음: 누르면 풀리는 줌까지 확대
+      map.on('click', 'points-cluster', async (e) => {
+        const f = e.features?.[0]
+        if (!f) return
+        const zoom = await (map.getSource(POINTS) as maplibregl.GeoJSONSource).getClusterExpansionZoom(f.properties?.cluster_id as number)
+        map.easeTo({ center: (f.geometry as GeoJSON.Point).coordinates as [number, number], zoom })
       })
-      map.on('mouseenter', 'candidates-pt', () => { map.getCanvas().style.cursor = 'pointer' })
-      map.on('mouseleave', 'candidates-pt', () => { map.getCanvas().style.cursor = '' })
+      // 점: 누르면 정보 카드(피드백 11번)와 그 동의 상세를 연다.
+      const onPoint = (e: maplibregl.MapLayerMouseEvent) => {
+        const id = e.features?.[0]?.properties?.cw_id as string | undefined
+        const f = id ? pointsById.current.get(id) : undefined
+        if (!f) return
+        const [lon, lat] = f.geometry.coordinates
+        actions.current.select(f.properties.adm_cd, 'map')
+        actions.current.setPoint({ cwId: f.properties.cw_id, lon, lat, props: f.properties, source: 'map' })
+      }
+      for (const id of ['points-analyzed', 'points-excluded', 'points-cluster']) {
+        if (id !== 'points-cluster') map.on('click', id, onPoint)
+        map.on('mouseenter', id, () => { map.getCanvas().style.cursor = 'pointer' })
+        map.on('mouseleave', id, () => { map.getCanvas().style.cursor = '' })
+      }
 
       map.fitBounds(boundsOf(boundaries), { padding: 40, duration: 0 })
       boundsCb.current(currentBbox(map))
@@ -193,7 +275,7 @@ export function MapView({ boundaries, areas, candidates, onBoundsChange, visible
     }
     if (readyRef.current) add()
     else map.once('onroad:ready', add)
-  }, [boundaries, select])
+  }, [boundaries])
 
   // 값 → feature-state (속도를 바꾸면 경계는 그대로 두고 값만 바꾼다)
   // 표본 부족 빗금은 패턴이 feature-state 를 못 쓰므로 adm_cd 목록 필터로 건다.
@@ -206,17 +288,29 @@ export function MapView({ boundaries, areas, candidates, onBoundsChange, visible
         return
       }
       for (const a of areas) {
-        map.setFeatureState({ source: AREAS, id: a.adm_cd }, { short_ratio: a.short_ratio, low_sample: a.low_sample })
+        map.setFeatureState({ source: AREAS, id: a.adm_cd }, { short_ratio: a.short_ratio, low_sample: a.low_sample, n_analyzed: a.n_analyzed })
       }
       const low = areas.filter((a) => a.low_sample).map((a) => a.adm_cd)
       map.setFilter('areas-hatch', ['in', ['get', 'adm_cd'], ['literal', low]])
     })
   }, [areas])
 
-  // 후보 점 데이터
+  // 횡단보도 점 데이터 (내 입력 표시를 속성으로 붙인다)
   useEffect(() => {
-    whenLayers((map) => (map.getSource(CANDIDATES) as maplibregl.GeoJSONSource).setData(candidates ?? EMPTY))
-  }, [candidates])
+    const mine = new Set(myInputIds)
+    const byId = new Map<string, GeoJSON.Feature<GeoJSON.Point, PointsResponse['features'][number]['properties']>>()
+    const data: GeoJSON.FeatureCollection = points
+      ? {
+          type: 'FeatureCollection',
+          features: points.features.map((f) => {
+            byId.set(f.properties.cw_id, f)
+            return { ...f, properties: { ...f.properties, mine: mine.has(f.properties.cw_id) } }
+          }),
+        }
+      : EMPTY
+    pointsById.current = byId
+    whenLayers((map) => (map.getSource(POINTS) as maplibregl.GeoJSONSource).setData(data))
+  }, [points, myInputIds])
 
   // 레이어 켜기/끄기
   useEffect(() => {
@@ -224,8 +318,9 @@ export function MapView({ boundaries, areas, candidates, onBoundsChange, visible
       const vis = (on: boolean) => (on ? 'visible' : 'none')
       map.setLayoutProperty('areas-fill', 'visibility', vis(layers.choropleth))
       map.setLayoutProperty('areas-hatch', 'visibility', vis(layers.choropleth))
-      map.setLayoutProperty('candidates-pt', 'visibility', vis(layers.candidates))
-      if (!layers.candidates) pointPopup.current?.remove()
+      for (const id of ['points-cluster', 'points-count', 'points-analyzed', 'points-excluded', 'points-selected']) {
+        map.setLayoutProperty(id, 'visibility', vis(layers.points))
+      }
     })
   }, [layers])
 
@@ -263,19 +358,15 @@ export function MapView({ boundaries, areas, candidates, onBoundsChange, visible
     if (visible) mapRef.current?.resize()
   }, [visible])
 
-  // 상세 표에서 고른 횡단보도로 이동해 표시한다.
+  // 선택한 횡단보도: 강조하고, 상세 표에서 골랐으면 그 위치로 이동(묶음이 풀리는 줌까지)
   useEffect(() => {
-    focusPopup.current?.remove()
-    focusPopup.current = null
-    if (!focus) return
     whenLayers((map) => {
-      map.flyTo({ center: [focus.lon, focus.lat], zoom: Math.max(map.getZoom(), 16), duration: 600 })
-      focusPopup.current = new maplibregl.Popup({ offset: 10, className: 'map-tip', closeOnClick: false })
-        .setLngLat([focus.lon, focus.lat])
-        .setHTML(`<b>선택한 횡단보도</b><br>${esc(focus.label)}`)
-        .addTo(map)
+      map.setFilter('points-selected', ['==', ['get', 'cw_id'], point?.cwId ?? ''])
+      if (point?.source === 'list') {
+        map.flyTo({ center: [point.lon, point.lat], zoom: Math.max(map.getZoom(), CLUSTER_MAX_ZOOM + 2), duration: 600 })
+      }
     })
-  }, [focus])
+  }, [point])
 
   return <div ref={container} className="map" aria-label="읍면동 지도" />
 }

@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import areas from '@contracts/samples/areas.json'
 import candidates from '@contracts/samples/candidates.json'
 import manifest from '@contracts/samples/static_manifest.json'
+import points from '@contracts/samples/points.json'
 import { NOT_LOADED_MESSAGE } from './http'
 import { comboKey, resetStaticCache, staticApi } from './static'
 
@@ -55,6 +56,15 @@ describe('정적 묶음 (static 모드)', () => {
       expect(x >= 129.13 && x <= 129.16 && y >= 35.17 && y <= 35.19).toBe(true)
     }
     expect(fetchMock.mock.calls.filter((c) => String(c[0]).includes('candidates'))).toHaveLength(1)
+  })
+
+  it('전체 점: manifest 에 points 가 있는 조합만 읽고 bbox 로 거른다', async () => {
+    FILES['/static/points/0.8_300.json'] = points
+    const bbox: [number, number, number, number] = [129.13, 35.17, 129.16, 35.19]
+    const data = await staticApi.points(0.8, 300, bbox)
+    expect(data.features.length).toBeGreaterThan(0)
+    expect(data.features.length).toBeLessThan(points.features.length)
+    await expect(staticApi.points(1.0, 300)).rejects.toMatchObject({ message: NOT_LOADED_MESSAGE })
   })
 
   it('CSV 는 묶음 안의 파일이고, 샘플이면 이름에 _sample 이 붙는다', async () => {
