@@ -34,7 +34,7 @@ def database(monkeypatch):
 @pytest.mark.parametrize('path,kind', [
     ('/api/areas', 'areas'), ('/api/areas/21090730/crosswalks', 'area_crosswalks'),
     ('/api/crosswalks/candidates', 'candidates'), ('/api/meta', 'meta'),
-    ('/api/validation', 'validation'),
+    ('/api/validation', 'validation'), ('/api/crosswalks', 'points'),
 ])
 def test_response_contract_and_source_values(database, path, kind):
     response = client.get(path)
@@ -48,7 +48,7 @@ def test_response_contract_and_source_values(database, path, kind):
         expected['items'].sort(key=lambda x: x['adm_cd'])
     elif kind == 'area_crosswalks':
         expected['items'].sort(key=lambda x: (-x['gap_s'], x['cw_id']))
-    elif kind == 'candidates':
+    elif kind in ('candidates', 'points'):
         expected['features'].sort(key=lambda x: x['properties']['cw_id'])
     assert actual == expected
 
@@ -63,6 +63,7 @@ def test_response_contract_and_source_values(database, path, kind):
     '/api/crosswalks/candidates?bbox=-181,0,1,1',
     '/api/crosswalks/candidates?bbox=0,0,1,91',
     '/api/crosswalks/candidates?bbox=0,0,1',
+    '/api/crosswalks?bbox=10,0,1,1', '/api/crosswalks?radius=250',
 ])
 def test_invalid_parameters_without_database(path):
     response = client.get(path)
@@ -156,7 +157,7 @@ def test_database_errors_are_sanitized(monkeypatch):
 
 def test_swagger_response_schemas():
     schema = client.get('/api/openapi.json').json()
-    for path in ['/api/areas', '/api/areas/{adm_cd}/crosswalks', '/api/crosswalks/candidates', '/api/meta', '/api/validation']:
+    for path in ['/api/areas', '/api/areas/{adm_cd}/crosswalks', '/api/crosswalks/candidates', '/api/crosswalks', '/api/meta', '/api/validation']:
         response = schema['paths'][path]['get']['responses']
         assert '422' not in response
         assert response['200']['content']['application/json']['schema']['required']
@@ -198,12 +199,40 @@ def test_static_bundle_matches_api(database, tmp_path):
     registry = Registry().with_resources((n, Resource.from_contents(s)) for n, s in schemas.items())
     Draft202012Validator(schemas['static_manifest.schema.json'], registry=registry).validate(manifest)
     assert manifest['_sample'] is True
-    assert manifest['results'] == [{'speed': 0.8, 'radius_m': 300, 'details': ['21090730']}]
+    assert manifest['results'] == [{'speed': 0.8, 'radius_m': 300, 'points': True, 'details': ['21090730']}]
     for file, path in (('areas/0.8_300.json', '/api/areas'), ('candidates/0.8_300.json', '/api/crosswalks/candidates'),
                        ('crosswalks/0.8_300/21090730.json', '/api/areas/21090730/crosswalks'),
+                       ('points/0.8_300.json', '/api/crosswalks'),
                        ('meta.json', '/api/meta'), ('validation.json', '/api/validation')):
         assert json.loads((tmp_path / file).read_text(encoding='utf-8')) == client.get(path).json()
     for name in ('areas', 'crosswalks'):
         csv_file = (tmp_path / 'export' / f'{name}_0.8_300.csv').read_bytes()
         assert csv_file == client.get(f'/api/export/{name}.csv').content
     assert not (tmp_path / 'areas' / '0.7_300.json').exists()
+
+
+def test_points_layer(database):
+    """전체 점: 분석·분석 제외를 함께 주고, bbox 로 거르고, 미적재 조합은 빈 결과가 아니라 안내."""
+    data = client.get('/api/crosswalks').json()
+    statuses = {f['properties']['status'] for f in data['features']}
+    assert statuses == {'analyzed', 'excluded'}
+    excluded = [f['properties'] for f in data['features'] if f['properties']['status'] == 'excluded']
+    assert all(p['gap_s'] is None and p['exclude_reason'] for p in excluded)
+    inside = client.get('/api/crosswalks?bbox=129.13,35.17,129.16,35.19').json()['features']
+    assert 0 < len(inside) < len(data['features'])
+    for f in inside:
+        x, y = f['geometry']['coordinates']
+        assert 129.13 <= x <= 129.16 and 35.17 <= y <= 35.19
+    response = client.get('/api/crosswalks?radius=500')
+    assert response.status_code == 500
+    assert response.json()['error']['message'] == '요청한 속도·반경·지역의 결과가 아직 적재되지 않았습니다.'
+
+
+def test_min_sample_and_points_optional(database):
+    assert client.get('/api/areas').json()['min_sample'] == 5
+    # 점 파일이 없는 묶음도 적재된다(선택 항목). 그때 전체 점은 미적재 안내.
+    bundle = [(k, d) for k, d in read_bundle(ROOT / 'samples', ROOT, True) if k != 'points']
+    with psycopg.connect(database) as conn:
+        ingest(conn, bundle, True)
+    assert client.get('/api/crosswalks').status_code == 500
+    assert client.get('/api/areas').status_code == 200

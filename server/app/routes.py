@@ -52,7 +52,7 @@ def sample_flag(conn):
 # 조회 함수는 API와 정적 묶음 내보내기(export.py)가 함께 쓴다. 응답 본문을 그대로 돌려준다.
 def load_areas(conn, speed, radius, sido=None, sigungu=None):
     flag = sample_flag(conn)
-    summary = conn.execute('SELECT thresholds FROM area_summary WHERE speed=%s AND radius_m=%s',
+    summary = conn.execute('SELECT thresholds, min_sample FROM area_summary WHERE speed=%s AND radius_m=%s',
                            (speed, radius)).fetchone()
     if summary is None:
         raise not_loaded()
@@ -63,7 +63,9 @@ def load_areas(conn, speed, radius, sido=None, sigungu=None):
             params.append(value)
     rows = conn.execute('SELECT v.payload FROM area_vulnerability v JOIN admin_area a USING(adm_cd) WHERE '
                         + ' AND '.join(clauses) + ' ORDER BY v.adm_cd', params).fetchall()
-    return {**flag, 'speed': speed, 'radius_m': radius, 'thresholds': summary[0], 'items': [r[0] for r in rows]}
+    extra = {'min_sample': summary[1]} if summary[1] is not None else {}
+    return {**flag, 'speed': speed, 'radius_m': radius, **extra, 'thresholds': summary[0],
+            'items': [r[0] for r in rows]}
 
 
 def load_crosswalks(conn, adm_cd, speed, radius):
@@ -88,6 +90,21 @@ def load_candidates(conn, speed, radius, bounds=None):
         sql += ' AND geom && ST_MakeEnvelope(%s,%s,%s,%s,4326)'
         params.extend(bounds)
     rows = conn.execute(sql + ' ORDER BY cw_id', params).fetchall()
+    return {**flag, 'type': 'FeatureCollection', 'speed': speed, 'radius_m': radius,
+            'features': [r[0] for r in rows]}
+
+
+def load_points(conn, speed, radius, bounds=None):
+    """전체 횡단보도 점(분석·분석 제외). 점 파일이 적재되지 않은 조합은 미적재로 본다."""
+    flag = sample_flag(conn)
+    if not conn.execute('SELECT 1 FROM point_layer WHERE speed=%s AND radius_m=%s', (speed, radius)).fetchone():
+        raise not_loaded()
+    sql = 'SELECT payload FROM crosswalk_point WHERE speed=%s AND radius_m=%s'
+    params = [speed, radius]
+    if bounds:
+        sql += ' AND geom && ST_MakeEnvelope(%s,%s,%s,%s,4326)'
+        params.extend(bounds)
+    rows = conn.execute(sql + ' ORDER BY cw_id COLLATE "C"', params).fetchall()
     return {**flag, 'type': 'FeatureCollection', 'speed': speed, 'radius_m': radius,
             'features': [r[0] for r in rows]}
 
@@ -138,16 +155,31 @@ def crosswalks(adm_cd: Annotated[str, Path(pattern=r'^[0-9]{8,10}$')], speed: Sp
 def candidates(speed: Speed = 0.8, radius: Radius = 300, bbox: str | None = None):
     check_speed(speed)
     check_radius(radius)
-    bounds = None
-    if bbox is not None:
-        if not re.fullmatch(r'-?\d+(\.\d+)?(,-?\d+(\.\d+)?){3}', bbox):
-            raise HTTPException(400)
-        bounds = [float(v) for v in bbox.split(',')]
-        x1, y1, x2, y2 = bounds
-        if not (-180 <= x1 < x2 <= 180 and -90 <= y1 < y2 <= 90):
-            raise HTTPException(400)
+    bounds = parse_bbox(bbox)
     with reader() as conn:
         return JSONResponse(load_candidates(conn, speed, radius, bounds))
+
+
+@api.get('/crosswalks', summary='전체 횡단보도 점', operation_id='listCrosswalkPoints',
+         responses=responses('points'))
+def points(speed: Speed = 0.8, radius: Radius = 300, bbox: str | None = None):
+    check_speed(speed)
+    check_radius(radius)
+    bounds = parse_bbox(bbox)
+    with reader() as conn:
+        return JSONResponse(load_points(conn, speed, radius, bounds))
+
+
+def parse_bbox(bbox):
+    if bbox is None:
+        return None
+    if not re.fullmatch(r'-?\d+(\.\d+)?(,-?\d+(\.\d+)?){3}', bbox):
+        raise HTTPException(400)
+    bounds = [float(v) for v in bbox.split(',')]
+    x1, y1, x2, y2 = bounds
+    if not (-180 <= x1 < x2 <= 180 and -90 <= y1 < y2 <= 90):
+        raise HTTPException(400)
+    return bounds
 
 
 def document(kind):

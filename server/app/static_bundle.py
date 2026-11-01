@@ -64,7 +64,11 @@ def build(conn, out):
             if details:
                 _write(out / 'export' / export.csv_name('crosswalks', speed, radius),
                        export.to_csv(export.CROSSWALK_COLUMNS, routes.load_candidate_rows(conn, speed, radius)))
-            results.append({'speed': speed, 'radius_m': radius, 'details': details})
+            points = _loaded(routes.load_points, conn, speed, radius)
+            if points is not None:
+                _write(out / 'points' / f'{key}.json', points)
+            results.append({'speed': speed, 'radius_m': radius, **({'points': True} if points else {}),
+                            'details': details})
     manifest = {**({'_sample': True} if sample else {}),
                 'built_at': datetime.now(timezone.utc).isoformat(timespec='seconds'), 'results': results}
     _write(out / 'manifest.json', manifest)
