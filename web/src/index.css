@@ -31,6 +31,9 @@ a { color: var(--accent); }
 
 .speed { display: flex; align-items: center; gap: 6px; }
 .speed-title { font-size: 13px; font-weight: 700; margin-right: 4px; }
+.basis { display: flex; align-items: center; gap: 10px; }
+.basis .seg { margin: 0; }
+.basis .seg-btn { white-space: nowrap; }
 .speed-btn {
   display: flex; flex-direction: column; align-items: center; min-width: 76px;
   padding: 4px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); cursor: pointer; font: inherit;
@@ -310,3 +313,13 @@ a { color: var(--accent); }
 .legend-fold { float: right; border: none; background: none; color: var(--accent); cursor: pointer; font: inherit; font-size: 11px; padding: 0; }
 .legend.collapsed { min-width: 0; padding: 6px 10px; }
 .legend.collapsed .legend-fold { float: none; }
+.coef-table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 6px 0; }
+.coef-table th, .coef-table td { text-align: left; padding: 4px 6px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+.about-dl { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px; margin: 4px 0; }
+.about-dl dt { color: #6b7280; }
+.about-dl dd { margin: 0; font-weight: 600; }
+/* 횡단보도 우선순위(3단계 기준): 이름 칸을 넓히고 시간은 한 줄로 */
+.toplist-row.cw { grid-template-columns: 22px minmax(0, 1fr) auto 44px; }
+.toplist-row.cw .num { width: auto; white-space: nowrap; font-size: 12px; }
+.toplist-row.cw .name small { display: block; width: 100%; }
+.toplist-row.on { border-color: var(--accent); background: var(--accent-soft); }

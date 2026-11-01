@@ -1,4 +1,4 @@
-import type { CandidatesResponse, ExcludeReason, PointsResponse, Radius, Speed } from '../api/types'
+import type { CandidatesResponse, ExcludeReason, PointProps, PointsResponse, Radius, Speed } from '../api/types'
 
 // 전체 횡단보도 점(지도 점 레이어, 정보 카드)에 쓰는 순수 함수. 화면 코드와 테스트가 함께 쓴다.
 
@@ -28,27 +28,40 @@ export function inBbox([x, y]: number[], [x1, y1, x2, y2]: Bbox): boolean {
   return x >= x1 && x <= x2 && y >= y1 && y <= y2
 }
 
+/** 3단계 기준 화면에서 '추가가 큰 점'으로 보는 추가 초 (config add_seconds_threshold) */
+export const ADD_THRESHOLD_S = 2
+
+/** 분석 제외·기록 방식 확인(data_check)은 시간 값이 없어 속 빈 점으로 그린다 */
+export const isHollow = (p: PointProps) => p.status !== 'analyzed'
+
+/** 강조 대상: 기록값 화면은 점검 우선순위 후보, 3단계 기준 화면은 2초 이상 추가 */
+export const isHighlighted = (p: PointProps, v2: boolean) => (v2 ? (p.add_s ?? 0) >= ADD_THRESHOLD_S : p.is_candidate)
+
+/** 필터 기준 값: 기록값 화면은 짧은 초(gap_s), 3단계 기준 화면은 추가 초(add_s) */
+export const filterValue = (p: PointProps, v2: boolean) => (v2 ? (p.add_s ?? null) : p.gap_s)
+
 /** 필터를 적용한 점만 남긴다. 클러스터 개수도 이 결과로 센다. */
-export function filterPoints(data: PointsResponse, f: PointFilter): PointsResponse {
+export function filterPoints(data: PointsResponse, f: PointFilter, v2 = false): PointsResponse {
   const features = data.features.filter(({ properties: p }) => {
-    if (p.status === 'excluded') return f.showExcluded
-    if (f.scope === 'candidates' && !p.is_candidate) return false
-    if (f.gapOp && p.gap_s !== null) {
-      if (f.gapOp === 'gte' && p.gap_s < f.gapValue) return false
-      if (f.gapOp === 'lte' && p.gap_s > f.gapValue) return false
+    if (isHollow(p)) return f.showExcluded
+    if (f.scope === 'candidates' && !isHighlighted(p, v2)) return false
+    const v = filterValue(p, v2)
+    if (f.gapOp && v !== null) {
+      if (f.gapOp === 'gte' && v < f.gapValue) return false
+      if (f.gapOp === 'lte' && v > f.gapValue) return false
     }
     return true
   })
   return { ...data, features }
 }
 
-export function countPoints(data: PointsResponse | null) {
+export function countPoints(data: PointsResponse | null, v2 = false) {
   const c = { analyzed: 0, candidates: 0, excluded: 0 }
   for (const { properties: p } of data?.features ?? []) {
-    if (p.status === 'excluded') c.excluded++
+    if (isHollow(p)) c.excluded++
     else {
       c.analyzed++
-      if (p.is_candidate) c.candidates++
+      if (isHighlighted(p, v2)) c.candidates++
     }
   }
   return c

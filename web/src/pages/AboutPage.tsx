@@ -66,6 +66,38 @@ export function AboutPage({ meta, minSample }: { meta: MetaResponse | null; minS
       </section>
 
       <section className="card">
+        <h3>3단계 기준의 계수와 근거</h3>
+        <p className="muted small">
+          결정 009: 기준식 7 + 연장/v 는 그대로 두고, 속도 v 를 그 횡단보도를 누가 건너는가로 정합니다. 1단계 노인보호구역 0.7m/s, 2단계 대형 전통시장(주민 고령 비율 + 보정),
+          3단계 주민 고령 비율. 기준 적용 시간은 기록값보다 줄이지 않습니다. 고령 커버리지는 정답 확률이 아닙니다.
+        </p>
+        {meta?.coefficients?.length ? (
+          <table className="coef-table">
+            <thead>
+              <tr><th>계수</th><th>값</th><th>근거</th><th>확인 수준</th></tr>
+            </thead>
+            <tbody>
+              {meta.coefficients.map((c) => (
+                <tr key={c.key}><td>{c.label}</td><td>{c.value}</td><td>{c.source}</td><td>{c.level}</td></tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <p className="muted">계수 정보를 아직 받지 못했습니다.</p>
+        )}
+        {meta?.sensitivity?.length ? (
+          <>
+            <h4>민감도</h4>
+            <dl className="about-dl">
+              {meta.sensitivity.map((s) => (
+                <div key={s.label}><dt>{s.label}</dt><dd>{s.value}</dd></div>
+              ))}
+            </dl>
+          </>
+        ) : null}
+      </section>
+
+      <section className="card">
         <h3>데이터 기준</h3>
         {meta ? (
           <dl className="about-terms">

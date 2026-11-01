@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
-import type { PointProps, Radius, Speed } from '../api/types'
+import { API_MODE } from '../api/client'
+import type { PointProps, Radius, Speed, Target } from '../api/types'
 import { DEFAULT_POINT_FILTER, type PointFilter } from '../lib/points'
 import type { Thresholds } from '../lib/quadrant'
 import type { Region } from '../lib/region'
@@ -28,8 +29,16 @@ export interface PointSelection {
   source: 'map' | 'list'
 }
 
+/** 화면 기준. recorded: 기록값을 속도별 기준식과 비교(v1), v2: 3단계 기준 적용(결정 009) */
+export type Basis = 'recorded' | 'v2'
+
 // 화면 전체가 함께 쓰는 선택 상태. 지도·사분면·목록·상세가 같은 값을 보고 동시에 바뀐다.
 interface AppState {
+  basis: Basis
+  setBasis: (b: Basis) => void
+  /** v2 목표 커버리지 */
+  target: Target
+  setTarget: (t: Target) => void
   speed: Speed
   setSpeed: (s: Speed) => void
   selection: Selection | null
@@ -56,8 +65,13 @@ const Ctx = createContext<AppState | null>(null)
 
 export const DEFAULT_SPEED: Speed = 0.8
 export const DEFAULT_RADIUS: Radius = 300
+export const DEFAULT_TARGET: Target = 0.85
+/** v2 결과는 계약 C3(#73) 전이라 mock 에만 있다. 서버·묶음이 v2 를 내보내면 v2 를 기본으로 바꾼다. */
+const DEFAULT_BASIS: Basis = API_MODE === 'mock' ? 'v2' : 'recorded'
 
 export function AppStateProvider({ children }: { children: ReactNode }) {
+  const [basis, setBasisState] = useState<Basis>(DEFAULT_BASIS)
+  const [target, setTarget] = useState<Target>(DEFAULT_TARGET)
   const [speed, setSpeed] = useState<Speed>(DEFAULT_SPEED)
   const [selection, setSelection] = useState<Selection | null>(null)
   const [layers, setLayers] = useState<LayerVisibility>({ choropleth: true, points: true })
@@ -71,9 +85,17 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     // 다른 동을 고르면 그 동 밖의 횡단보도 선택은 푼다.
     setPoint((p) => (p && p.props.adm_cd === admCd ? p : null))
   }, [])
+  // 기준을 바꾸면 가로축 단위(비율 ↔ 초)가 달라지므로 직접 옮긴 경계선과 점 선택을 푼다.
+  const setBasis = useCallback((b: Basis) => {
+    setBasisState(b)
+    setCustomThresholds(null)
+    setPoint(null)
+  }, [])
   const toggleLayer = useCallback((key: keyof LayerVisibility) => setLayers((l) => ({ ...l, [key]: !l[key] })), [])
   const value = useMemo(
     () => ({
+      basis, setBasis,
+      target, setTarget,
       speed, setSpeed,
       selection, selectedAdmCd: selection?.admCd ?? null, select,
       layers, toggleLayer,
@@ -83,7 +105,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       region, setRegion,
       radius, setRadius,
     }),
-    [speed, selection, select, layers, toggleLayer, customThresholds, point, pointFilter, region, radius],
+    [basis, setBasis, target, speed, selection, select, layers, toggleLayer, customThresholds, point, pointFilter, region, radius],
   )
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }

@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import maplibregl, { type ExpressionSpecification, type LngLatBoundsLike } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import type { AreaItem, BoundariesResponse, PointsResponse } from '../api/types'
+import type { AreaMetric } from '../lib/areaMetric'
 import { regionBounds } from '../lib/region'
 import { useAppState } from '../state/AppState'
 import {
@@ -13,8 +14,10 @@ import {
   LOW_SAMPLE_COLOR,
   MY_INPUT_STROKE,
   NO_VALUE_COLOR,
+  ADD_SIZE,
+  ADD_STEPS,
   POINT_STROKE,
-  RATIO_STEPS,
+  TIER_COLORS,
 } from './mapStyle'
 
 // 배경 지도: OpenFreeMap(키 없음). 출처 표기는 스타일이 자동으로 넣는다.
@@ -29,24 +32,57 @@ const CLUSTER_MAX_ZOOM = 14
 
 export type Bbox = [number, number, number, number]
 
-// 표본 부족은 회색(+빗금 레이어), 값 없음은 연회색, 나머지는 짧음 비율 단계 색
-const FILL_COLOR: ExpressionSpecification = [
+// 표본 부족은 회색(+빗금 레이어), 값 없음은 연회색, 나머지는 지표(짧음 비율 또는 평균 추가 초) 단계 색
+const fillColor = (steps: [number, string][]): ExpressionSpecification => [
   'case',
   ['boolean', ['feature-state', 'low_sample'], false],
   LOW_SAMPLE_COLOR,
-  ['==', ['feature-state', 'short_ratio'], null],
+  ['==', ['feature-state', 'value'], null],
   NO_VALUE_COLOR,
-  ['step', ['to-number', ['coalesce', ['feature-state', 'short_ratio'], 0]], RATIO_STEPS[0][1], ...RATIO_STEPS.slice(1).flat()],
+  ['step', ['to-number', ['coalesce', ['feature-state', 'value'], 0]], steps[0][1], ...steps.slice(1).flat()],
 ]
 
 const gapColor = (value: ExpressionSpecification): ExpressionSpecification =>
   ['interpolate', ['linear'], value, ...GAP_STOPS.flat()] as ExpressionSpecification
+
+const MINE: ExpressionSpecification = ['boolean', ['get', 'mine'], false]
+
+/** 점 색·크기·테두리. 기록값 화면: 짧은 초 발산 색, 후보 굵은 테두리. 3단계 기준 화면: 단계 색, 추가 초 크기 */
+function pointPaint(v2: boolean): Record<string, unknown> {
+  if (!v2) {
+    const cand: ExpressionSpecification = ['boolean', ['get', 'is_candidate'], false]
+    return {
+      'circle-color': gapColor(['to-number', ['get', 'gap_s']]),
+      'circle-radius': ['case', cand, 6, 4.5],
+      'circle-stroke-color': ['case', MINE, MY_INPUT_STROKE, cand, CANDIDATE_STROKE, POINT_STROKE],
+      'circle-stroke-width': ['case', ['any', MINE, cand], 2, 0.8],
+    }
+  }
+  const add: ExpressionSpecification = ['to-number', ['coalesce', ['get', 'add_s'], 0]]
+  const big: ExpressionSpecification = ['>=', add, 2]
+  return {
+    'circle-color': ['match', ['get', 'tier'], 1, TIER_COLORS[1], 2, TIER_COLORS[2], TIER_COLORS[3]],
+    'circle-radius': ['interpolate', ['linear'], add, 0, ADD_SIZE.min, ADD_SIZE.maxS, ADD_SIZE.max],
+    'circle-stroke-color': ['case', MINE, MY_INPUT_STROKE, big, CANDIDATE_STROKE, '#ffffff'],
+    'circle-stroke-width': ['case', ['any', MINE, big], 1.8, 0.8],
+  }
+}
+
+/** 묶음 색: 묶인 점 중 가장 큰 값(기록값: 짧은 초, 3단계: 추가 초) */
+const clusterColor = (v2: boolean): ExpressionSpecification =>
+  v2
+    ? ['case', ['==', ['get', 'n_analyzed'], 0], 'rgba(255,255,255,0.6)', ['step', ['get', 'max_add'], ADD_STEPS[0][1], ...ADD_STEPS.slice(1).flat()]] as ExpressionSpecification
+    : ['case', ['==', ['get', 'n_analyzed'], 0], 'rgba(255,255,255,0.6)', gapColor(['get', 'max_gap'])]
 
 const EMPTY: GeoJSON.FeatureCollection = { type: 'FeatureCollection', features: [] }
 
 interface Props {
   boundaries: BoundariesResponse | null
   areas: AreaItem[] | null
+  /** 채색 지표 (기록값: 짧음 비율, 3단계 기준: 평균 추가 초) */
+  metric: AreaMetric
+  /** 3단계 기준 화면이면 점을 단계 색·추가 초 크기로 그린다 */
+  v2: boolean
   /** 표본 하한(응답의 min_sample). 없으면 null */
   minSample: number | null
   /** 필터를 적용한 횡단보도 점 */
@@ -85,7 +121,6 @@ function hatchImage(size = 8): ImageData {
   return g.getImageData(0, 0, size, size)
 }
 
-const pct = (v: unknown) => (typeof v === 'number' ? `${(v * 100).toFixed(1)}%` : '값 없음')
 const esc = (s: string) => s.replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[ch]!)
 
 function currentBbox(map: maplibregl.Map): Bbox {
@@ -94,7 +129,7 @@ function currentBbox(map: maplibregl.Map): Bbox {
   return [r(b.getWest()), r(b.getSouth()), r(b.getEast()), r(b.getNorth())]
 }
 
-export function MapView({ boundaries, areas, minSample, points, myInputIds, onBoundsChange, visible }: Props) {
+export function MapView({ boundaries, areas, metric, v2, minSample, points, myInputIds, onBoundsChange, visible }: Props) {
   const container = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
   const readyRef = useRef(false)
@@ -102,6 +137,10 @@ export function MapView({ boundaries, areas, minSample, points, myInputIds, onBo
   boundsCb.current = onBoundsChange
   const minSampleRef = useRef(minSample)
   minSampleRef.current = minSample
+  const v2Ref = useRef(v2)
+  v2Ref.current = v2
+  const metricRef = useRef(metric)
+  metricRef.current = metric
   const { selection, select, layers, point, setPoint, region } = useAppState()
   const regionInit = useRef(true)
   // 지도 이벤트 안에서 최신 점 데이터를 찾는다(지도 속성은 중첩 객체를 문자열로 바꾸므로 원래 값을 쓴다).
@@ -149,7 +188,7 @@ export function MapView({ boundaries, areas, minSample, points, myInputIds, onBo
     const add = () => {
       if (map.getSource(AREAS)) return
       map.addSource(AREAS, { type: 'geojson', data: boundaries, promoteId: 'adm_cd' })
-      map.addLayer({ id: 'areas-fill', type: 'fill', source: AREAS, paint: { 'fill-color': FILL_COLOR, 'fill-opacity': 0.8 } })
+      map.addLayer({ id: 'areas-fill', type: 'fill', source: AREAS, paint: { 'fill-color': fillColor(metricRef.current.steps), 'fill-opacity': 0.8 } })
       map.addLayer({
         id: 'areas-hatch', type: 'fill', source: AREAS,
         filter: ['in', ['get', 'adm_cd'], ['literal', []]],
@@ -171,6 +210,7 @@ export function MapView({ boundaries, areas, minSample, points, myInputIds, onBo
         clusterRadius: 36,
         clusterProperties: {
           max_gap: ['max', ['case', ['==', ['get', 'status'], 'analyzed'], ['to-number', ['get', 'gap_s']], -999]],
+          max_add: ['max', ['case', ['==', ['get', 'status'], 'analyzed'], ['to-number', ['coalesce', ['get', 'add_s'], 0]], -999]],
           n_analyzed: ['+', ['case', ['==', ['get', 'status'], 'analyzed'], 1, 0]],
         },
       })
@@ -178,7 +218,7 @@ export function MapView({ boundaries, areas, minSample, points, myInputIds, onBo
         id: 'points-cluster', type: 'circle', source: POINTS,
         filter: ['has', 'point_count'],
         paint: {
-          'circle-color': ['case', ['==', ['get', 'n_analyzed'], 0], 'rgba(255,255,255,0.6)', gapColor(['get', 'max_gap'])],
+          'circle-color': clusterColor(v2Ref.current),
           'circle-stroke-color': CLUSTER_STROKE,
           'circle-stroke-width': 2,
           'circle-radius': ['step', ['get', 'point_count'], 12, 10, 15, 50, 19, 200, 24],
@@ -193,7 +233,7 @@ export function MapView({ boundaries, areas, minSample, points, myInputIds, onBo
       })
       map.addLayer({
         id: 'points-excluded', type: 'circle', source: POINTS,
-        filter: ['all', ['!', ['has', 'point_count']], ['==', ['get', 'status'], 'excluded']],
+        filter: ['all', ['!', ['has', 'point_count']], ['!=', ['get', 'status'], 'analyzed']],
         paint: {
           'circle-color': 'rgba(0,0,0,0)',
           'circle-radius': 5,
@@ -204,17 +244,7 @@ export function MapView({ boundaries, areas, minSample, points, myInputIds, onBo
       map.addLayer({
         id: 'points-analyzed', type: 'circle', source: POINTS,
         filter: ['all', ['!', ['has', 'point_count']], ['==', ['get', 'status'], 'analyzed']],
-        paint: {
-          'circle-color': gapColor(['to-number', ['get', 'gap_s']]),
-          'circle-radius': ['case', ['boolean', ['get', 'is_candidate'], false], 6, 4.5],
-          'circle-stroke-color': [
-            'case',
-            ['boolean', ['get', 'mine'], false], MY_INPUT_STROKE,
-            ['boolean', ['get', 'is_candidate'], false], CANDIDATE_STROKE,
-            POINT_STROKE,
-          ],
-          'circle-stroke-width': ['case', ['any', ['boolean', ['get', 'mine'], false], ['boolean', ['get', 'is_candidate'], false]], 2, 0.8],
-        },
+        paint: pointPaint(v2Ref.current) as maplibregl.CircleLayerSpecification['paint'],
       })
       map.addLayer({
         id: 'points-selected', type: 'circle', source: POINTS,
@@ -235,11 +265,11 @@ export function MapView({ boundaries, areas, minSample, points, myInputIds, onBo
         if (!f) return
         map.getCanvas().style.cursor = 'pointer'
         const name = esc(String(f.properties?.adm_name ?? ''))
-        const st = f.state as { short_ratio?: number | null; low_sample?: boolean; n_analyzed?: number }
+        const st = f.state as { value?: number | null; n_add2?: number; low_sample?: boolean; n_analyzed?: number }
         const min = minSampleRef.current
         const value = st.low_sample
           ? `표본 부족 · 분석 ${st.n_analyzed ?? 0}곳${min ? ` (${min}곳 미만)` : ''} · 순위 제외`
-          : `기준식보다 짧음 ${pct(st.short_ratio)}`
+          : metricRef.current.tooltip({ value: st.value ?? null, n_add2: st.n_add2 })
         hover.setLngLat(e.lngLat).setHTML(`<b>${name}</b><br>${value}`).addTo(map)
       })
       map.on('mouseleave', 'areas-fill', () => {
@@ -288,12 +318,21 @@ export function MapView({ boundaries, areas, minSample, points, myInputIds, onBo
         return
       }
       for (const a of areas) {
-        map.setFeatureState({ source: AREAS, id: a.adm_cd }, { short_ratio: a.short_ratio, low_sample: a.low_sample, n_analyzed: a.n_analyzed })
+        map.setFeatureState({ source: AREAS, id: a.adm_cd }, { value: metric.value(a), n_add2: a.n_add2, low_sample: a.low_sample, n_analyzed: a.n_analyzed })
       }
       const low = areas.filter((a) => a.low_sample).map((a) => a.adm_cd)
       map.setFilter('areas-hatch', ['in', ['get', 'adm_cd'], ['literal', low]])
+      map.setPaintProperty('areas-fill', 'fill-color', fillColor(metric.steps))
     })
-  }, [areas])
+  }, [areas, metric])
+
+  // 기준 전환: 점·묶음 색을 바꾼다
+  useEffect(() => {
+    whenLayers((map) => {
+      for (const [k, v] of Object.entries(pointPaint(v2))) map.setPaintProperty('points-analyzed', k, v)
+      map.setPaintProperty('points-cluster', 'circle-color', clusterColor(v2))
+    })
+  }, [v2])
 
   // 횡단보도 점 데이터 (내 입력 표시를 속성으로 붙인다)
   useEffect(() => {

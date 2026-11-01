@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import type { ExposureFlags } from '../api/types'
 import { meter, sec1 } from '../lib/format'
 import { EXCLUDE_REASON_LABEL, gapWithGreen, needSeconds } from '../lib/points'
+import { fmtPct, TIER_LABEL } from '../lib/recommend'
 import { averageByCrosswalk, checkSeconds, INPUT_LIMITS } from '../lib/userInputs'
 import { useAppState } from '../state/AppState'
 import { useUserInputs } from '../state/UserInputs'
@@ -28,7 +29,8 @@ const nowLocal = () => {
 
 /** 선택한 횡단보도 정보(피드백 11번)와 사용자 입력(13~15번). 지도 위에 띄운다. */
 export function PointCard({ areaName }: { areaName: string | null }) {
-  const { point, setPoint, speed } = useAppState()
+  const { point, setPoint, speed, basis, target } = useAppState()
+  const v2 = basis === 'v2'
   const { inputs, setGreen, removeGreen, addMeasurement, removeMeasurement } = useUserInputs()
   const [greenText, setGreenText] = useState('')
   const [measured, setMeasured] = useState({ green: '', flash: '0', at: nowLocal() })
@@ -71,12 +73,23 @@ export function PointCard({ areaName }: { areaName: string | null }) {
         <h3>횡단보도 정보</h3>
         <button type="button" className="close-btn" aria-label="횡단보도 정보 닫기" onClick={() => setPoint(null)}>✕</button>
       </div>
-      <p className="muted small">{areaName ?? p.adm_cd} · {p.status === 'excluded' ? '분석 제외' : p.is_candidate ? '점검 우선순위 후보' : '분석함'}</p>
+      <p className="muted small">
+        {areaName ?? p.adm_cd} ·{' '}
+        {p.status === 'excluded' ? '분석 제외' : p.status === 'data_check' ? '기록 방식 확인 중' : v2 && p.tier ? TIER_LABEL[p.tier] : p.is_candidate ? '점검 우선순위 후보' : '분석함'}
+      </p>
 
       {p.status === 'excluded' ? (
         <p className="note warn">분석 제외 · {p.exclude_reason ? EXCLUDE_REASON_LABEL[p.exclude_reason] : '사유 미상'}</p>
-      ) : p.gap_s !== null && <p className={p.gap_s > 0 ? 'point-gap pos' : 'point-gap'}>{gapText(p.gap_s)}</p>}
+      ) : p.status === 'data_check' ? (
+        <p className="note warn">{p.check_reason ?? '기록 방식 확인 중'}</p>
+      ) : v2 && p.t_required_s != null ? (
+        <V2Summary p={p} target={target} />
+      ) : (
+        p.gap_s !== null && <p className={p.gap_s > 0 ? 'point-gap pos' : 'point-gap'}>{gapText(p.gap_s)}</p>
+      )}
 
+      {!(v2 && p.t_required_s != null) && (
+      <>
       <dl className="point-stats">
         <div><dt>연장</dt><dd>{p.length_m !== null ? meter(p.length_m) : '—'}</dd></div>
         <div><dt>기록 녹색신호시간</dt><dd>{sec1(p.green_s)}</dd></div>
@@ -96,6 +109,8 @@ export function PointCard({ areaName }: { areaName: string | null }) {
       ) : p.status === 'analyzed' && p.length_m === null ? (
         <p className="muted small">전체 횡단보도 점이 적재되면 연장·기록값·노출 종류가 표시됩니다.</p>
       ) : null}
+      </>
+      )}
 
       <div className="point-input">
         <h4>내 입력 <span className="muted small">(이 브라우저에만 저장 · 검토 전)</span></h4>
@@ -154,5 +169,32 @@ export function PointCard({ areaName }: { areaName: string | null }) {
         <p className="muted small">실측은 검증 화면 V1의 "내 입력"에 바로 반영되고, 그곳에서 CSV로 내보낼 수 있습니다. 사진은 받지 않습니다.</p>
       </div>
     </section>
+  )
+}
+
+type Props = NonNullable<ReturnType<typeof useAppState>['point']>['props']
+
+/** 3단계 기준 요약(#81): 현재 기록 → 기준 적용 시간(+초), 이유, 고령 커버리지 */
+function V2Summary({ p, target }: { p: Props; target: number }) {
+  const add = p.add_s ?? 0
+  return (
+    <>
+      <p className={add > 0 ? 'point-gap pos' : 'point-gap'}>
+        {add > 0 ? `기준 적용 시 ${sec1(p.t_required_s)}(+${add.toFixed(1)}초)` : '현재 기록이 기준 적용 시간 이상'}
+      </p>
+      {p.reason && <p className="small">{p.reason}</p>}
+      <dl className="point-stats">
+        <div><dt>연장</dt><dd>{p.length_m !== null ? meter(p.length_m) : '—'}</dd></div>
+        <div><dt>현재 기록</dt><dd>{sec1(p.green_s)}</dd></div>
+        <div><dt>기준 적용 시간</dt><dd>{sec1(p.t_required_s)}</dd></div>
+        <div><dt>적용 속도</dt><dd>{p.v_applied_mps != null ? `${p.v_applied_mps.toFixed(2)} m/s` : '—'}</dd></div>
+        <div><dt>고령 커버리지</dt><dd>{fmtPct(p.coverage_now)} → {fmtPct(p.coverage_required)}</dd></div>
+        <div><dt>주민 고령 비율</dt><dd>{fmtPct(p.resident_elderly_ratio)}</dd></div>
+      </dl>
+      <p className="muted small">
+        기준 적용 시간 = max(기록값, 7초 + 연장 ÷ 적용 속도), 목표 커버리지 {Math.round(target * 100)}%. 고령 커버리지는 고령 보행자 중 그 시간 안에 건너는 비율로, 정답 확률이 아닙니다.
+        보행시간 정의(점멸 포함 여부) 확정 전.
+      </p>
+    </>
   )
 }
