@@ -22,6 +22,11 @@ export interface AreaItem {
   quadrant: Quadrant | null
   n_candidate: number
   low_sample: boolean
+  /** v2(3단계 기준) 화면일 때만: AreaV2Item 의 값 */
+  mean_add_s?: number | null
+  n_add2?: number
+  coverage_now_mean?: number | null
+  coverage_required_mean?: number | null
 }
 
 export interface AreasResponse {
@@ -30,8 +35,11 @@ export interface AreasResponse {
   radius_m?: Radius
   /** 표본 하한(config.yaml min_sample). 예전 응답에는 없다 */
   min_sample?: number
-  thresholds: { short_ratio_median: number; ratio_65plus_median: number }
+  /** v2 화면이면 mean_add_s_median 도 있다(short_ratio_median 은 0) */
+  thresholds: { short_ratio_median: number; ratio_65plus_median: number; mean_add_s_median?: number }
   items: AreaItem[]
+  /** v2 화면이면 목표 커버리지 */
+  target?: Target
 }
 
 export interface ExposureFlags {

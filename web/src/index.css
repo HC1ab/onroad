@@ -31,6 +31,9 @@ a { color: var(--accent); }
 
 .speed { display: flex; align-items: center; gap: 6px; }
 .speed-title { font-size: 13px; font-weight: 700; margin-right: 4px; }
+.basis { display: flex; align-items: center; gap: 10px; }
+.basis .seg { margin: 0; }
+.basis .seg-btn { white-space: nowrap; }
 .speed-btn {
   display: flex; flex-direction: column; align-items: center; min-width: 76px;
   padding: 4px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); cursor: pointer; font: inherit;

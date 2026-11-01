@@ -1,9 +1,9 @@
-import type { AreaItem, Quadrant } from '../api/types'
+import type { AreaItem, AreasResponse, Quadrant } from '../api/types'
 
 // 사분면 계산. 가중합 점수는 만들지 않는다(PRD 3장). 두 축을 따로 경계선과 비교할 뿐이다.
 
 export interface Thresholds {
-  /** 짧음 비율 경계(가로축) */
+  /** 가로축 경계 (기록값: 짧음 비율, 3단계 기준: 평균 추가 초) */
   x: number
   /** 65세 이상 비율 경계(세로축) */
   y: number
@@ -21,12 +21,13 @@ export interface PlotPoint {
 
 /** 지금 쓰는 경계선: 사용자가 옮겼으면 그 값, 아니면 API 기본값(중앙값) */
 export function effectiveThresholds(
-  data: { thresholds: { short_ratio_median: number; ratio_65plus_median: number } } | null,
+  data: { thresholds: AreasResponse['thresholds'] } | null,
   custom: Thresholds | null,
+  xMedian: (t: AreasResponse['thresholds']) => number = (t) => t.short_ratio_median,
 ): Thresholds | null {
   if (custom) return custom
   if (!data) return null
-  return { x: data.thresholds.short_ratio_median, y: data.thresholds.ratio_65plus_median }
+  return { x: xMedian(data.thresholds), y: data.thresholds.ratio_65plus_median }
 }
 
 /** 경계선과 같은 값은 high 로 본다(API 의 quadrant 계산과 같은 규칙). */
@@ -50,11 +51,12 @@ export interface BuildResult {
   excluded: number
 }
 
-export function buildPoints(items: AreaItem[], t: Thresholds): BuildResult {
+export function buildPoints(items: AreaItem[], t: Thresholds, xOf: (a: AreaItem) => number | null = (a) => a.short_ratio): BuildResult {
   const points: PlotPoint[] = []
   let excluded = 0
   for (const it of items) {
-    if (it.short_ratio === null || it.ratio_65plus === null) {
+    const x = xOf(it)
+    if (x === null || it.ratio_65plus === null) {
       excluded++
       continue
     }
@@ -62,10 +64,10 @@ export function buildPoints(items: AreaItem[], t: Thresholds): BuildResult {
       adm_cd: it.adm_cd,
       adm_name: it.adm_name,
       sigungu: it.sigungu,
-      x: it.short_ratio,
+      x,
       y: it.ratio_65plus,
       low_sample: it.low_sample,
-      quadrant: classify(it.short_ratio, it.ratio_65plus, t),
+      quadrant: classify(x, it.ratio_65plus, t),
     })
   }
   return { points, excluded }

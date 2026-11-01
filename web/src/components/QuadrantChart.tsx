@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import type { AreasResponse } from '../api/types'
+import type { AreaMetric } from '../lib/areaMetric'
 import { pct0 as pct, pct1 } from '../lib/format'
 import { buildPoints, countPriority, effectiveThresholds, niceMax, ticks, type PlotPoint, type Thresholds } from '../lib/quadrant'
 import { regionLabel } from '../lib/region'
@@ -15,23 +16,23 @@ const PH = H - PAD.top - PAD.bottom
 
 type Axis = 'x' | 'y'
 
-/** 읍면동 사분면 (F5). 가로 = 기준식보다 짧은 비율, 세로 = 65세 이상 비율. */
-export function QuadrantChart({ data }: { data: AreasResponse | null }) {
+/** 읍면동 사분면 (F5). 가로 = 지표(짧은 비율 또는 기준 적용 시 평균 추가 초), 세로 = 65세 이상 비율. */
+export function QuadrantChart({ data, metric }: { data: AreasResponse | null; metric: AreaMetric }) {
   const { selectedAdmCd, select, customThresholds: custom, setCustomThresholds: setCustom, region } = useAppState()
   const svgRef = useRef<SVGSVGElement>(null)
   const [drag, setDrag] = useState<Axis | null>(null)
   const [hover, setHover] = useState<PlotPoint | null>(null)
 
   // 사용자가 경계선을 옮기기 전에는 API 기본값(중앙값)을 따른다. 경계선은 상위 N 목록과 공유한다.
-  const t: Thresholds | null = effectiveThresholds(data, custom)
+  const t: Thresholds | null = effectiveThresholds(data, custom, metric.median)
 
   const view = useMemo(() => {
     if (!data || !t) return null
-    const { points, excluded } = buildPoints(data.items, t)
-    const xMax = niceMax(points.map((p) => p.x))
+    const { points, excluded } = buildPoints(data.items, t, metric.value)
+    const xMax = metric.niceMax(points.map((p) => p.x))
     const yMax = niceMax(points.map((p) => p.y))
     return { points, excluded, xMax, yMax, priority: countPriority(points) }
-  }, [data, t])
+  }, [data, t, metric])
 
   if (!data || !t || !view) {
     return (
@@ -83,7 +84,7 @@ export function QuadrantChart({ data }: { data: AreasResponse | null }) {
           ref={svgRef}
           viewBox={`0 0 ${W} ${H}`}
           role="img"
-          aria-label={`읍면동 ${points.length}곳의 짧음 비율과 65세 이상 비율 산점도. 점검 우선순위 후보 ${priority}곳`}
+          aria-label={`읍면동 ${points.length}곳의 ${metric.legendTitle}과 65세 이상 비율 산점도. 점검 우선순위 후보 ${priority}곳`}
           onPointerMove={onMove}
           onPointerUp={() => setDrag(null)}
           onPointerLeave={() => setDrag(null)}
@@ -97,13 +98,13 @@ export function QuadrantChart({ data }: { data: AreasResponse | null }) {
           {/* 축과 눈금 */}
           <line x1={PAD.left} y1={PAD.top + PH} x2={PAD.left + PW} y2={PAD.top + PH} className="q-axis" />
           <line x1={PAD.left} y1={PAD.top} x2={PAD.left} y2={PAD.top + PH} className="q-axis" />
-          {ticks(xMax).map((v) => (
-            <text key={`x${v}`} x={sx(v)} y={PAD.top + PH + 13} textAnchor="middle" className="q-tick">{pct(v)}</text>
+          {metric.ticks(xMax).map((v) => (
+            <text key={`x${v}`} x={sx(v)} y={PAD.top + PH + 13} textAnchor="middle" className="q-tick">{metric.tick(v)}</text>
           ))}
           {ticks(yMax).map((v) => (
             <text key={`y${v}`} x={PAD.left - 5} y={sy(v) + 3} textAnchor="end" className="q-tick">{pct(v)}</text>
           ))}
-          <text x={PAD.left + PW / 2} y={H - 4} textAnchor="middle" className="q-label">기준식보다 짧은 비율 →</text>
+          <text x={PAD.left + PW / 2} y={H - 4} textAnchor="middle" className="q-label">{metric.axisLabel}</text>
           <text transform={`translate(11 ${PAD.top + PH / 2}) rotate(-90)`} textAnchor="middle" className="q-label">65세 이상 비율 →</text>
 
           {/* 점 */}
@@ -137,14 +138,14 @@ export function QuadrantChart({ data }: { data: AreasResponse | null }) {
             style={{ left: `${(sx(hover.x) / W) * 100}%`, top: `${(sy(hover.y) / H) * 100}%` }}
           >
             <b>{hover.adm_name}</b> <span className="muted">{hover.sigungu}</span>
-            <br />짧음 {pct1(hover.x)} · 65세 이상 {pct1(hover.y)}
+            <br />{metric.short} {metric.fmt(hover.x)} · 65세 이상 {pct1(hover.y)}
             {hover.low_sample && <><br />표본 부족 (순위 제외)</>}
           </div>
         )}
       </div>
       <div className="quadrant-foot">
         <span>
-          경계선: {custom ? '직접 조절' : '전국 중앙값'} (짧음 {pct1(t.x)} · 65세 {pct1(t.y)}) · 선을 끌어 조절
+          경계선: {custom ? '직접 조절' : '전국 중앙값'} ({metric.short} {metric.fmt(t.x)} · 65세 {pct1(t.y)}) · 선을 끌어 조절
         </span>
         {custom && (
           <button type="button" className="link-btn" onClick={() => setCustom(null)}>중앙값으로</button>

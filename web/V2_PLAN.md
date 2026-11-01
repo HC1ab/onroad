@@ -30,9 +30,9 @@
 
 ## 체크리스트
 - [x] S1 타입·계산·mock: `api/types.ts` v2 타입, `lib/recommend.ts`(+테스트), `lib/mockV2.ts`, `api/client.ts` `areasV2`·`pointsV2`·`validation` V6·V7·`meta.coefficients`
-- [ ] S2 상단 전환(#80): `AppState` basis·target, `BasisSelector`(기록값/3단계 + 85·90·95), recorded 일 때만 속도 선택
-- [ ] S3 점 레이어 v2(#81): 단계 색·`add_s` 크기, data_check·excluded 속 빈 회색, `PointCard` v2(기록 → 기준 적용 +초, reason, 고령 커버리지, 정의 미확정 고지), 추가 초 2초 이상 필터, `AreaDetail` 같은 필드
-- [ ] S4 채색·사분면(#80): `mean_add_s` 채색·범례, 툴팁 `n_add2`, 사분면 가로 `mean_add_s`·경계 중앙값
+- [x] S2 상단 전환(#80): `AppState` basis·target, `BasisSelector`(기록값/3단계 + 85·90·95), recorded 일 때만 속도 선택
+- [~] S3 점 레이어 v2(#81): 단계 색·`add_s` 크기, data_check·excluded 속 빈 회색, `PointCard` v2(기록 → 기준 적용 +초, reason, 고령 커버리지, 정의 미확정 고지), 추가 초 2초 이상 필터, `AreaDetail` 같은 필드 — 점 색·크기·카드·상세 목록·필터 완료, 브라우저 확인 남음
+- [x] S4 채색·사분면(#80): `mean_add_s` 채색·범례, 툴팁 `n_add2`, 사분면 가로 `mean_add_s`·경계 중앙값
 - [ ] S5 계수와 근거·민감도(#80): About 에 `meta.coefficients` 표, 범례·카드에 시장 보정 0.063~0.157, 고령 속도 0.76 결과
 - [ ] S6 목록·검증(#82): TopList 횡단보도 우선순위(add_s 큰 순 → 단계 1·2·3, 지역 필터 연동), V6·V7 카드, V2 카드에 속도 3종 비교, 카드별 한계 한 줄
 - [ ] S7 마무리: tsc·lint·vitest·build·static build, 브라우저 확인(mock), push, PR → frontend (`Refs #80 #81 #82`), 이슈 코멘트
