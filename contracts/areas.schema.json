@@ -9,6 +9,7 @@
     "_sample": { "$ref": "common.schema.json#/$defs/sample_flag" },
     "speed": { "$ref": "common.schema.json#/$defs/speed" },
     "radius_m": { "type": "integer", "enum": [200, 300, 500], "description": "n_candidate 를 계산한 노출 반경(m). 요청의 radius 와 같다." },
+    "min_sample": { "type": "integer", "minimum": 1, "description": "표본 하한(config.yaml min_sample). 분석 횡단보도가 이보다 적으면 low_sample. 화면의 표본 부족 기준 표시에 쓴다." },
     "thresholds": {
       "type": "object",
       "description": "사분면 경계선 기본값(전국 중앙값). 화면에서 조절할 수 있다.",
@@ -39,7 +40,7 @@
             "description": "짧음 비율_고령 비율 기준 사분면. high_high 가 점검 우선순위 후보. 값이 없으면 null"
           },
           "n_candidate": { "type": "integer", "minimum": 0, "description": "후보 횡단보도 수(gap > 0 그리고 노출 1개 이상)" },
-          "low_sample": { "type": "boolean", "description": "n_analyzed 가 표본 하한(config.yaml) 미만이면 true. 회색 처리·순위 제외" }
+          "low_sample": { "type": "boolean", "description": "n_analyzed 가 표본 하한(min_sample) 미만이면 true. 회색 처리·순위 제외" }
         }
       }
     }
