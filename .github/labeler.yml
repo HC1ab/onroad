@@ -1,0 +1,32 @@
+# PR이 바꾼 폴더에 맞춰 라벨을 붙인다 (.github/workflows/labeler.yml).
+# 라벨을 떼지는 않는다. 사람이 붙인 라벨(task, P0 등)은 그대로 둔다.
+frontend:
+  - changed-files:
+      - any-glob-to-any-file: ["web/**"]
+C-web:
+  - changed-files:
+      - any-glob-to-any-file: ["web/**"]
+backend:
+  - changed-files:
+      - any-glob-to-any-file: ["server/**", "docker-compose.yml"]
+E-server:
+  - changed-files:
+      - any-glob-to-any-file: ["server/**", "docker-compose.yml"]
+db:
+  - changed-files:
+      - any-glob-to-any-file: ["pipeline/**", "validation/**", "data/download_log.csv"]
+A-pipeline:
+  - changed-files:
+      - any-glob-to-any-file: ["pipeline/**", "data/download_log.csv"]
+B-validation:
+  - changed-files:
+      - any-glob-to-any-file: ["validation/**"]
+D-docs:
+  - changed-files:
+      - any-glob-to-any-file: ["docs/**", "README.md", "CLAUDE.md", "**/CLAUDE.md"]
+change-request:
+  - changed-files:
+      - any-glob-to-any-file: ["contracts/**", "config.yaml"]
+ci-cd:
+  - changed-files:
+      - any-glob-to-any-file: [".github/**", "server/deploy/**", "scripts/**", ".githooks/**"]

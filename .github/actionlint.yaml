@@ -1,0 +1,4 @@
+self-hosted-runner:
+  # 학교 서버 runner (server/deploy/README.md "자동 배포")
+  labels:
+    - onroad-prod

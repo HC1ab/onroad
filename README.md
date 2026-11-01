@@ -95,8 +95,9 @@ docker compose down -v             # DB 데이터까지 삭제
 | 프론트 | `cd web && npm run lint && npm run build` |
 | 서버 | `docker build -t onroad-api ./server && docker run --rm onroad-api python -m pytest -q -p no:cacheprovider tests` |
 | 계약 샘플 | [contracts/README.md](contracts/README.md)의 검사 명령 |
+| 파이프라인·검증 | `pip install pandas numpy geopandas shapely pyyaml scipy jsonschema referencing openpyxl pytest && python -m pytest -q pipeline/tests validation/tests` |
 
-PR을 올리면 GitHub Actions가 바뀐 구역의 검사를 자동으로 돌린다(`.github/workflows/`).
+PR을 올리면 GitHub Actions가 바뀐 구역의 검사를 자동으로 돌리고(`.github/workflows/`: contracts·server·web·pipeline), 바뀐 폴더에 맞춰 라벨(`frontend`·`backend`·`db`·`D-docs`·`change-request`·`ci-cd`)을 붙인다. `main`에 병합되면 학교 서버에 자동 배포된다(켜는 법: [server/deploy/README.md](server/deploy/README.md) "자동 배포").
 
 ## 5. 작업 방법 (요약)
 
