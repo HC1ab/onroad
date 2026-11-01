@@ -1,0 +1,30 @@
+# 추천 보행시간 분석 설정. 값을 바꾸고 스크립트를 다시 돌리면 결과가 재현된다.
+entry_seconds: 7               # 보행진입시간 (decisions/001)
+target_coverage: 0.85          # 기본 목표: 이용자의 85%가 시간 안에 건넘
+coverage_sensitivity: [0.90, 0.95]
+radius_m: 300                  # 시설·고령 비율을 보는 반경
+speed_bounds_mps: [0.7, 1.0]   # 추천 속도는 공식 기준 범위 안으로 자른다
+formula_tolerance_s: 0.5       # 보행시간이 기준식과 "같다"고 보는 허용오차
+
+# 보행속도 분포: 한음 외(2020) 초록의 평균과 15퍼센타일을 정규분포로 근사
+walking_speed_mps:
+  general: {mean: 1.29, p15: 1.01}
+  elderly: {mean: 1.13, p15: 0.85}
+
+# 단계 규칙
+tier1_speed_mps: 0.7           # 노인보호구역 반경 안: 현행 보호구역 기준
+big_market_min_stores: 200     # 2단계 목적지 시설: 이 점포 수 이상 전통시장
+# 2단계 이용자 고령 비율 = 주민 고령 비율 + 이 값. metro_check.py 결과:
+# 대형 시장 300m 안 역의 무임 비율이 고령 비율 감안 후 +10.95%p, 고령 비율 10%p당 무임 8.0%p → 10.95 / 0.80
+market_elderly_uplift: 0.137
+market_exclude_keywords: ["산업용재", "공구", "전자", "기계", "자동차"]  # 고령자 목적지로 보기 어려운 상가
+
+# 지하철 검증
+metro_year: "2024"
+metro_radius_m: 500
+permutations: 5000
+seed: 20261101
+
+# 정제 이상치 (팀 config.yaml과 같은 값)
+max_length_m: 80
+max_walk_s: 200
