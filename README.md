@@ -1,6 +1,9 @@
 # 한 박자 (onroad)
 
-전국 횡단보도의 기록된 녹색신호시간을 기준식 `7 + L/v`와 전수 비교하고, 고령 거주 비율과 목적지·사고 노출을 겹쳐 점검 우선순위 후보 지역을 보여주는 웹 서비스.
+부산 횡단보도 3,726곳마다 "누가 건너는가"(노인보호구역·대형 전통시장·주민 고령 비율)로 기준식 `7 + L/v`의 보행속도를 정하고, **기준 적용 시 필요 시간·추가 초·이유·커버리지**를 지도로 보여주는 점검 우선순위 후보 도구.
+
+- **v2 확정 규칙:** [결정 009](docs/decisions/009-추천-보행시간-3단계.md) — 3단계 적용 속도, 계수와 근거, 결과
+- **역할 분담·작업 순서:** [PRD 11장](docs/PRD.md#11-일정과-역할), 라벨 `recommend-v2`
 
 - **처음 왔다면 여기부터:** [팀 온보딩 문서 (웹)](https://hc1ab.github.io/onroad/onboarding.html) — 원본은 [docs/onboarding.html](docs/onboarding.html)
 - 기획: [docs/PRD.md](docs/PRD.md)
@@ -92,8 +95,9 @@ docker compose down -v             # DB 데이터까지 삭제
 | 프론트 | `cd web && npm run lint && npm run build` |
 | 서버 | `docker build -t onroad-api ./server && docker run --rm onroad-api python -m pytest -q -p no:cacheprovider tests` |
 | 계약 샘플 | [contracts/README.md](contracts/README.md)의 검사 명령 |
+| 파이프라인·검증 | `pip install pandas numpy geopandas shapely pyyaml scipy jsonschema referencing openpyxl pytest && python -m pytest -q pipeline/tests validation/tests` |
 
-PR을 올리면 GitHub Actions가 바뀐 구역의 검사를 자동으로 돌린다(`.github/workflows/`).
+PR을 올리면 GitHub Actions가 바뀐 구역의 검사를 자동으로 돌리고(`.github/workflows/`: contracts·server·web·pipeline), 바뀐 폴더에 맞춰 라벨(`frontend`·`backend`·`db`·`D-docs`·`change-request`·`ci-cd`)을 붙인다. `main`에 병합되면 학교 서버에 자동 배포된다(켜는 법: [server/deploy/README.md](server/deploy/README.md) "자동 배포").
 
 ## 5. 작업 방법 (요약)
 

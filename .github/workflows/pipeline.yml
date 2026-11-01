@@ -1,0 +1,46 @@
+name: pipeline
+
+# pipeline/·validation/ 테스트. 원본 데이터 없이 도는 테스트만 둔다(data/raw 는 저장소에 없다).
+on:
+  pull_request:
+    paths:
+      - "pipeline/**"
+      - "validation/**"
+      - "config.yaml"
+      - "contracts/**"
+      - ".github/workflows/pipeline.yml"
+  push:
+    branches: [main, data]
+    paths:
+      - "pipeline/**"
+      - "validation/**"
+      - "config.yaml"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            pipeline/requirements.txt
+            .github/workflows/pipeline.yml
+      - name: Install
+        run: |
+          if [ -f pipeline/requirements.txt ]; then
+            pip install -r pipeline/requirements.txt pytest
+          else
+            pip install pandas numpy geopandas shapely pyyaml scipy "jsonschema>=4.18" referencing openpyxl pytest
+          fi
+      - name: Tests
+        run: |
+          dirs=""
+          for d in pipeline/tests validation/tests; do [ -d "$d" ] && dirs="$dirs $d"; done
+          if [ -z "$dirs" ]; then echo "테스트 폴더 없음 — 건너뜀"; exit 0; fi
+          python -m pytest -q -p no:cacheprovider $dirs
