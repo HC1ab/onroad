@@ -19,6 +19,9 @@ big_market_min_stores: 200     # 2단계 목적지 시설: 이 점포 수 이상
 market_elderly_uplift: 0.137
 market_exclude_keywords: ["산업용재", "공구", "전자", "기계", "자동차"]  # 고령자 목적지로 보기 어려운 상가
 
+child_zone_radius_m: 150     # V7 비교: 어린이보호구역 시설 반경
+add_seconds_threshold: 2     # 읍면동 n_add2
+
 # 지하철 검증
 metro_year: "2024"
 metro_radius_m: 500

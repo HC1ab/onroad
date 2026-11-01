@@ -110,6 +110,13 @@ def load_protect_zones() -> pd.DataFrame:
     return pz[is_busan & is_elderly].dropna(subset=["위도", "경도"]).reset_index(drop=True)
 
 
+def load_child_zones() -> pd.DataFrame:
+    """어린이보호구역 시설(V7 비교용). 지정여부 칸이 대부분 비어 있어 시설 전체를 쓴다."""
+    cz = pd.read_csv(RAW / "child_zone" / "전국어린이보호구역표준데이터.csv")
+    addr = cz["소재지도로명주소"].fillna(cz["소재지지번주소"])
+    return cz[addr.str.startswith("부산", na=False)].dropna(subset=["위도", "경도"]).reset_index(drop=True)
+
+
 # ---------- 반경 안 고령 비율 ----------
 def radius_elderly_ratio(lat, lon, radius_m: float) -> np.ndarray:
     """점마다 반경 원과 겹치는 행정동의 고령 비율을 겹친 면적으로 가중평균한다."""

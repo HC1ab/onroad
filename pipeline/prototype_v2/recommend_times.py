@@ -11,7 +11,7 @@
 import numpy as np
 import pandas as pd
 
-from common import (OUT, P, coverage, design_speed, load_crosswalks, load_markets, load_protect_zones,
+from common import (OUT, P, coverage, design_speed, load_child_zones, load_crosswalks, load_markets, load_protect_zones,
                     md_table, nearest_m, radius_elderly_ratio)
 
 
@@ -34,8 +34,9 @@ def recommend(cw: pd.DataFrame, target: float, market_all_elderly: bool = False)
     rec = np.maximum(T, P["entry_seconds"] + L / speed)
     return pd.DataFrame({"단계": tier, "적용속도": speed, "추천시간": rec, "추가초": rec - T,
                          "이용자고령비율": user_share,
-                         "커버리지_현재": coverage(L, T, user_share),
-                         "커버리지_추천": coverage(L, rec, user_share)}, index=cw.index)
+                         # 화면 커버리지는 고령 보행자 기준으로 통일한다(결정 009 검수 보완)
+                         "커버리지_현재": coverage(L, T, 1.0),
+                         "커버리지_추천": coverage(L, rec, 1.0)}, index=cw.index)
 
 
 def reason(row) -> str:
@@ -102,7 +103,7 @@ def main():
         include_groups=False).reset_index()
     g["단계"] = g["단계"].map(tier_names)
     lines += [md_table(g, pct_cols=("커버리지 현재", "커버리지 추천")), "",
-              "커버리지는 단계별 이용자 기준이다: 1단계는 고령자, 2단계는 주민 + 시장 보정, 3단계는 주민 구성.", ""]
+              "커버리지는 고령 보행자 기준이다(단계끼리 같은 잣대). 이용자 구성은 적용 속도 계산에만 쓴다.", ""]
 
     lines += ["## 민감도 (목표 커버리지, 2단계 방식)", ""]
     sens = []
@@ -117,10 +118,23 @@ def main():
                                      f"{s.loc[s['단계'] == 3, '적용속도'].max():.2f}"})
     lines += [md_table(pd.DataFrame(sens)), ""]
 
-    lines += ["## 정책 반영 점검: 노인보호구역 반경 안인데 0.7식이 아닌 곳", ""]
-    t1 = res[res["단계"] == 1]
-    lines += [f"- 1단계 {len(t1)}곳 중 0.7식 {int((t1['기준식'] == '0.7식').sum())}곳, "
-              f"그 외 {int((t1['기준식'] != '0.7식').sum())}곳", ""]
+    lines += ["## 정책 반영 점검(V7): 0.7식 비율", ""]
+    cz = load_child_zones()
+    res["어린이보호_m"], _ = nearest_m(res["위도"], res["경도"], cz["위도"], cz["경도"])
+    old_zone, child = res["보호구역_m"] <= P["radius_m"], res["어린이보호_m"] <= P["child_zone_radius_m"]
+    is07 = res["기준식"] == "0.7식"
+    v7 = [{"위치": name, "횡단보도": int(m.sum()), "0.7식": int((m & is07).sum()), "비율": (m & is07).sum() / m.sum()}
+          for name, m in [(f"노인보호구역 {P['radius_m']}m 안", old_zone),
+                          (f"어린이보호구역 {P['child_zone_radius_m']}m 안(노인 아님)", child & ~old_zone),
+                          ("둘 다 밖", ~old_zone & ~child)]]
+    lines += [md_table(pd.DataFrame(v7), pct_cols=("비율",)), ""]
+
+    area = res.groupby("adm_nm").agg(n=("추가초", "size"), mean_add_s=("추가초", "mean"),
+                                     n_add2=("추가초", lambda x: int((x >= P["add_seconds_threshold"]).sum())))
+    area = area[area["n"] >= 5]
+    lines += ["## 읍면동 평균 추가 초 (표본 5곳 이상)", "",
+              f"- {len(area)}개 동, 평균 추가 초 분위(10/50/90%): "
+              + " / ".join(f"{area['mean_add_s'].quantile(q):.2f}" for q in (0.1, 0.5, 0.9)) + "초", ""]
 
     lines += ["## 추가 초가 큰 15곳", "",
               md_table(res.sort_values("추가초", ascending=False).head(15)[
