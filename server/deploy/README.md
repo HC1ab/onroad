@@ -56,3 +56,36 @@ docker compose logs --tail 50 api
 git checkout <이전 커밋> && bash server/deploy/deploy.sh --no-pull   # 되돌리기
 git checkout main && bash server/deploy/deploy.sh                       # 다시 최신으로
 ```
+
+## 자동 배포 (self-hosted runner)
+`main`에 병합되면 `.github/workflows/deploy.yml`이 서버에서 `deploy.sh`를 실행한다. 문서(`docs/`, `*.md`)만 바뀐 병합은 배포하지 않는다.
+학과 게이트웨이 뒤라 GitHub Actions가 SSH로 들어올 수 없으므로, 서버에 runner를 설치해 **서버가 GitHub로 나가는 연결**만 쓴다.
+
+### 퍼블릭 저장소 보안 (먼저, 관리자)
+self-hosted runner는 그 워크플로를 실행하는 누구의 코드든 서버에서 돌린다. 아래 세 가지를 runner 등록 **전에** 켠다.
+1. Settings → Actions → General → Fork pull request workflows from outside collaborators → **Require approval for all outside collaborators**
+2. Settings → Environments → `production` 생성 → Deployment branches and tags → **Selected branches: `main`**
+3. `deploy.yml`은 `push`(main)와 수동 실행만 받는다. 다른 워크플로에 `runs-on: self-hosted`를 쓰지 않는다(리뷰에서 확인)
+
+### runner 설치 (서버, 배포 계정으로)
+- 배포 계정은 `/srv/onroad` 소유자이고 `docker` 그룹이어야 한다(위 "처음 한 번").
+- Settings → Actions → Runners → **New self-hosted runner** → Linux x64 화면의 명령을 그대로 실행한다. 등록 토큰은 그 화면에만 있고 1시간 뒤 만료된다. 토큰을 이슈·PR·채팅에 붙이지 않는다.
+- `./config.sh` 질문에서 라벨에 **`onroad-prod`**를 추가한다. runner 폴더는 저장소 밖(예: `~/actions-runner`)에 둔다.
+- 서비스로 등록해 재부팅 뒤에도 뜨게 한다.
+```bash
+cd ~/actions-runner
+sudo ./svc.sh install "$USER"
+sudo ./svc.sh start
+sudo ./svc.sh status
+```
+
+### 켜기·끄기 (관리자)
+- Settings → Secrets and variables → Actions → Variables
+  - `DEPLOY_ENABLED` = `true` (끄려면 `false` 또는 삭제. 꺼져 있으면 job이 건너뛰어진다)
+  - `DEPLOY_DIR` = 저장소 경로 (기본 `/srv/onroad`면 안 만들어도 된다)
+- 시크릿은 필요 없다. 서버 `.env`는 지금처럼 서버에만 둔다.
+
+### 확인과 되돌리기
+- Actions → deploy 실행 로그 마지막 줄이 `healthz OK (<커밋>)`이고, Summary에 컨테이너 상태가 나온다.
+- 되돌리기: Actions → deploy → Run workflow → `ref`에 이전 커밋 SHA → 실행 (`deploy.sh --no-pull`). 다시 최신으로: `ref`를 비우고 실행.
+- runner가 꺼져 있으면 job이 대기한다. 급하면 위 "배포·적재"처럼 서버에서 직접 실행한다.

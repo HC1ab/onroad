@@ -1,0 +1,57 @@
+name: deploy
+
+# main 에 병합되면 학교 서버에 배포한다. 서버에 설치한 self-hosted runner(라벨 onroad-prod)가 실행한다.
+# 서버가 GitHub 로 나가는 연결만 쓰므로 학과 게이트웨이 뒤에서도 동작한다.
+# 켜기: 저장소 변수 DEPLOY_ENABLED=true (설정 전에는 건너뛴다). 절차는 server/deploy/README.md "자동 배포".
+# 보안: pull_request 로는 절대 실행하지 않는다(퍼블릭 저장소의 포크 코드가 서버에서 돌 수 있다).
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "배포할 커밋 SHA 또는 태그 (비우면 main 최신). 되돌리기용"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: vars.DEPLOY_ENABLED == 'true' && github.repository == 'HC1ab/onroad'
+    runs-on: [self-hosted, onroad-prod]
+    environment: production
+    timeout-minutes: 20
+    steps:
+      - name: Deploy
+        env:
+          DEPLOY_DIR: ${{ vars.DEPLOY_DIR || '/srv/onroad' }}
+          REF: ${{ inputs.ref }}
+        run: |
+          set -euo pipefail
+          cd "$DEPLOY_DIR"
+          git fetch --prune --tags origin
+          if [ -n "${REF:-}" ]; then
+            case "$REF" in -*|*[!A-Za-z0-9._/-]*) echo "잘못된 ref: $REF" >&2; exit 1 ;; esac
+            git checkout --detach "$REF"
+            bash server/deploy/deploy.sh --no-pull
+          else
+            git checkout main
+            bash server/deploy/deploy.sh
+          fi
+      - name: Summary
+        if: always()
+        env:
+          DEPLOY_DIR: ${{ vars.DEPLOY_DIR || '/srv/onroad' }}
+        run: |
+          cd "$DEPLOY_DIR"
+          echo "배포 커밋: $(git rev-parse --short HEAD)" >> "$GITHUB_STEP_SUMMARY"
+          docker compose ps --format 'table {{.Service}}\t{{.State}}' >> "$GITHUB_STEP_SUMMARY" || true
