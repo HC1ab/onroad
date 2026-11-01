@@ -89,6 +89,36 @@ paths:
         '429': { $ref: '#/components/responses/RateLimited' }
         '500': { $ref: '#/components/responses/InternalError' }
 
+  /api/crosswalks:
+    get:
+      tags: [지도]
+      operationId: listCrosswalkPoints
+      summary: 전체 횡단보도 점 레이어
+      description: |
+        분석한 모든 횡단보도(status=analyzed)와 정제에서 제외된 횡단보도(status=excluded, 좌표 있는 것)의 GeoJSON 점.
+        점 색(짧은 초), 필터, 클러스터링, 횡단보도 정보 카드에 쓴다. 후보만 필요하면 /api/crosswalks/candidates.
+        bbox 없이 전국을 요청하면 응답이 커지므로 지도 화면 범위를 넘긴다. 미적재 속도·반경은 500(not_loaded 안내).
+      parameters:
+        - $ref: '#/components/parameters/speed'
+        - name: bbox
+          in: query
+          description: 화면 범위 `minLon,minLat,maxLon,maxLat` (EPSG:4326)
+          schema:
+            type: string
+            pattern: '^-?\d+(\.\d+)?,-?\d+(\.\d+)?,-?\d+(\.\d+)?,-?\d+(\.\d+)?$'
+          example: 129.05,35.13,129.22,35.23
+        - $ref: '#/components/parameters/radius'
+      responses:
+        '200':
+          description: 성공
+          content:
+            application/geo+json:
+              schema: { $ref: './points.schema.json' }
+            application/json:
+              schema: { $ref: './points.schema.json' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
   /api/crosswalks/candidates:
     get:
       tags: [지도]
