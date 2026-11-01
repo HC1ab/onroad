@@ -41,7 +41,7 @@ def test_real_bundle_and_schema_rejection(bundle, tmp_path):
         document = copy.deepcopy(document)
         document.pop('_sample', None)
         (tmp_path / f'{kind}.json').write_text(json.dumps(document), encoding='utf-8')
-    assert len(read_bundle(tmp_path, CONTRACTS)) == 5
+    assert len(read_bundle(tmp_path, CONTRACTS)) == 6  # 필수 5 + 선택 points
     path = tmp_path / 'areas.json'
     document = json.loads(path.read_text())
     document['items'][0]['adm_cd'] = 123
@@ -66,7 +66,8 @@ def test_idempotent_import_and_spatial_index(conn, bundle):
     assert conn.execute('SELECT count(*) FROM admin_area').fetchone()[0] == len(areas['items'])
     assert conn.execute('SELECT count(*) FROM crosswalk_gap').fetchone()[0] == len(detail['items'])
     assert conn.execute('SELECT bool_and(ST_SRID(geom)=4326) FROM candidate').fetchone()[0]
-    assert conn.execute('SELECT count(*) FROM schema_migration').fetchone()[0] == 3
+    assert conn.execute('SELECT count(*) FROM schema_migration').fetchone()[0] == 4
+    assert conn.execute('SELECT count(*) FROM crosswalk_point').fetchone()[0] == len(next(d for k, d in bundle if k == 'points')['features'])
     assert conn.execute('SELECT DISTINCT radius_m FROM area_summary').fetchall() == [(300,)]
     assert conn.execute('SELECT is_sample FROM dataset').fetchone()[0] is True
     assert conn.execute('SELECT DISTINCT speed FROM area_summary').fetchall() == [(Decimal('0.8'),)]
