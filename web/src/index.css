@@ -313,3 +313,8 @@ a { color: var(--accent); }
 .legend-fold { float: right; border: none; background: none; color: var(--accent); cursor: pointer; font: inherit; font-size: 11px; padding: 0; }
 .legend.collapsed { min-width: 0; padding: 6px 10px; }
 .legend.collapsed .legend-fold { float: none; }
+.coef-table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 6px 0; }
+.coef-table th, .coef-table td { text-align: left; padding: 4px 6px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+.about-dl { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px; margin: 4px 0; }
+.about-dl dt { color: #6b7280; }
+.about-dl dd { margin: 0; font-weight: 600; }

@@ -14,7 +14,7 @@ import type {
 import { candidatesAsPoints, inBbox, mockPointsFor } from '../lib/points'
 import { ApiError, getJson, NOT_LOADED_MESSAGE } from './http'
 import { staticApi } from './static'
-import { MOCK_COEFFICIENTS, MOCK_V6, MOCK_V7, mockAreasV2, mockPointsV2 } from '../lib/mockV2'
+import { MOCK_COEFFICIENTS, MOCK_V6, MOCK_V7, mockAreasV2, mockPointsV2, mockSensitivity } from '../lib/mockV2'
 
 export { ApiError }
 
@@ -188,7 +188,8 @@ export const api = {
   async meta(signal?: AbortSignal): Promise<MetaResponse> {
     if (API_MODE === 'mock') {
       const m = (await import('@contracts/samples/meta.json')).default as MetaResponse
-      return delay({ ...m, coefficients: m.coefficients ?? MOCK_COEFFICIENTS }, signal)
+      const { points, areas } = await mockV2Base()
+      return delay({ ...m, coefficients: m.coefficients ?? MOCK_COEFFICIENTS, sensitivity: m.sensitivity ?? mockSensitivity(points, areas) }, signal)
     }
     if (API_MODE === 'static') return staticApi.meta(signal)
     return getJson('/api/meta', signal)

@@ -88,14 +88,20 @@ export function withV2(
   }
 }
 
-export function mockPointsV2(points: PointsResponse, areas: AreasResponse, target: Target, radius: Radius): PointsResponse {
+export function mockPointsV2(
+  points: PointsResponse,
+  areas: AreasResponse,
+  target: Target,
+  radius: Radius,
+  opt: { elderlyP15?: number; uplift?: number } = {},
+): PointsResponse {
   const ratio = new Map(areas.items.map((a) => [a.adm_cd, a.ratio_65plus ?? 0.2]))
   // 반경이 좁으면 시장·보호구역 플래그가 일부 빠지는 것처럼 흉내 낸다(500m 는 300m 와 같게).
   const narrow = radius === 200
   const features = points.features.map((f) => {
     let p = f.properties
     if (narrow && p.flags && hash01(p.cw_id) < 0.35) p = { ...p, flags: { ...p.flags, protect_zone: false, market: false } }
-    return { ...f, properties: withV2(p, ratio.get(p.adm_cd) ?? 0.2, target) }
+    return { ...f, properties: withV2(p, ratio.get(p.adm_cd) ?? 0.2, target, opt) }
   })
   return { ...points, target, radius_m: radius, features }
 }
@@ -178,5 +184,19 @@ export const MOCK_COEFFICIENTS: Coefficient[] = [
   { key: 'tier1_speed', label: '1단계 속도', value: '0.7m/s', source: '경찰청 업무편람(2022) 교통약자 기준 개정', level: '학술·언론' },
   { key: 'radius', label: '반경', value: '300m', source: '보호구역 지정 범위(시설 주 출입문 300m)', level: '공식' },
   { key: 'big_market', label: '대형 시장 기준', value: '점포 200개 이상', source: 'V6 에서 효과가 보인 선, 100·150·300 민감도', level: '데이터 + 팀 판단' },
-  { key: 'market_uplift', label: '2단계 시장 보정', value: '+0.137 (범위 0.063~0.157)', source: 'V6 지하철 무임 비율 (역 2곳 의존, 불확실성 큼)', level: '데이터' },
+  { key: 'market_uplift', label: '2단계 시장 보정', value: '+0.137 (범위 0.063~0.157)', source: 'V6 지하철 무임 비율 (대형 시장 근처 역 7곳, 수안·부전 영향 큼)', level: '데이터' },
 ]
+
+/** 민감도(#80): 고령자 속도 0.76, 시장 보정 범위 양 끝에서 2초 이상 추가 수가 어떻게 바뀌는지 */
+export function mockSensitivity(points: PointsResponse, areas: AreasResponse): { label: string; value: string }[] {
+  const n = (opt: { elderlyP15?: number; uplift?: number }) =>
+    mockPointsV2(points, areas, 0.85, 300, opt).features.filter((f) => (f.properties.add_s ?? 0) >= V2_COEF.addSecondsThreshold).length
+  const base = n({})
+  const [lo, hi] = V2_COEF.marketUpliftRange
+  return [
+    { label: '기본 (목표 85%, 반경 300m)', value: `2초 이상 추가 ${base}곳` },
+    { label: `고령자 15퍼센타일 속도 ${V2_COEF.elderlyP15Sensitivity}m/s`, value: `${n({ elderlyP15: V2_COEF.elderlyP15Sensitivity })}곳` },
+    { label: `시장 보정 ${lo}`, value: `${n({ uplift: lo })}곳` },
+    { label: `시장 보정 ${hi}`, value: `${n({ uplift: hi })}곳` },
+  ]
+}
