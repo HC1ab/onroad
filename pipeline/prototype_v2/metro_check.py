@@ -86,7 +86,7 @@ def main():
              "## 대형 시장 300m 안 역", "",
              md_table(st[st["대형시장_m"] <= 300].sort_values("무임비율", ascending=False)
                       .reset_index()[["역", "구", "무임비율", "반경고령비율", "잔차", "대형시장_m"]], digits=3), ""]
-    OUT.mkdir(exist_ok=True)
+    OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "metro_check.md").write_text("\n".join(lines), encoding="utf-8")
     st.to_csv(OUT / "metro_stations.csv", encoding="utf-8-sig")
     print("\n".join(lines))

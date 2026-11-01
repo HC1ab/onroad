@@ -72,7 +72,7 @@ def main():
     keep = ["순번", "행정구역(구)", "adm_nm", "교차로", "위도", "경도", "세로길이", "보행시간", "기준식",
             "반경고령비율", "보호구역_m", "대형시장명", "대형시장_m", "단계", "적용속도", "추천시간", "추가초",
             "커버리지_현재", "커버리지_추천", "이유"]
-    OUT.mkdir(exist_ok=True)
+    OUT.mkdir(parents=True, exist_ok=True)
     res[keep].to_csv(OUT / "crosswalk_recommendations.csv", index=False, encoding="utf-8-sig")
     flagged[keep[:9]].to_csv(OUT / "crosswalk_data_check.csv", index=False, encoding="utf-8-sig")
 
