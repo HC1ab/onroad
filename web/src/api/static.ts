@@ -4,6 +4,7 @@ import type {
   AreasResponse,
   CandidatesResponse,
   MetaResponse,
+  PointsResponse,
   Radius,
   Speed,
   ValidationResponse,
@@ -19,7 +20,7 @@ export const STATIC_BASE = `${import.meta.env.BASE_URL}static/`
 export interface StaticManifest {
   _sample?: boolean
   built_at: string
-  results: { speed: Speed; radius_m: Radius; details: string[] }[]
+  results: { speed: Speed; radius_m: Radius; points?: boolean; details: string[] }[]
 }
 
 /** 파일 이름의 속도·반경. 속도는 소수 한 자리(String(1.0) 은 "1" 이라 쓰지 않는다). */
@@ -27,6 +28,7 @@ export const comboKey = (speed: Speed, radius: Radius) => `${speed.toFixed(1)}_$
 
 let manifestCache: Promise<StaticManifest> | null = null
 const candidatesCache = new Map<string, Promise<CandidatesResponse>>()
+const pointsCache = new Map<string, Promise<PointsResponse>>()
 
 /** 여러 요청이 함께 쓰므로 취소 신호를 넘기지 않는다. 실패하면 다음 요청에서 다시 받는다. */
 export function staticManifest(): Promise<StaticManifest> {
@@ -43,6 +45,7 @@ export function staticManifest(): Promise<StaticManifest> {
 export function resetStaticCache() {
   manifestCache = null
   candidatesCache.clear()
+  pointsCache.clear()
 }
 
 async function combo(speed: Speed, radius: Radius) {
@@ -78,6 +81,21 @@ export const staticApi = {
       all = getJson<CandidatesResponse>(`${STATIC_BASE}candidates/${key}.json`)
       all.catch(() => candidatesCache.delete(key))
       candidatesCache.set(key, all)
+    }
+    const data = await all
+    return bbox ? { ...data, features: data.features.filter((f) => inBbox(f.geometry.coordinates, bbox)) } : data
+  },
+
+  /** 전체 횡단보도 점. 묶음에 점 파일이 없는 조합은 미적재로 본다(그러면 후보 점으로 대신 그린다). */
+  async points(speed: Speed, radius: Radius, bbox?: [number, number, number, number]): Promise<PointsResponse> {
+    const found = await combo(speed, radius)
+    if (!found.points) throw notLoaded()
+    const key = comboKey(speed, radius)
+    let all = pointsCache.get(key)
+    if (!all) {
+      all = getJson<PointsResponse>(`${STATIC_BASE}points/${key}.json`)
+      all.catch(() => pointsCache.delete(key))
+      pointsCache.set(key, all)
     }
     const data = await all
     return bbox ? { ...data, features: data.features.filter((f) => inBbox(f.geometry.coordinates, bbox)) } : data

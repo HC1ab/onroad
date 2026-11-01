@@ -28,6 +28,8 @@ export interface AreasResponse {
   _sample?: boolean
   speed: Speed
   radius_m?: Radius
+  /** 표본 하한(config.yaml min_sample). 예전 응답에는 없다 */
+  min_sample?: number
   thresholds: { short_ratio_median: number; ratio_65plus_median: number }
   items: AreaItem[]
 }
@@ -134,3 +136,27 @@ export interface ValidationResponse {
 
 export type BoundaryProps = { adm_cd: string; adm_name: string; sido: string; sigungu: string }
 export type BoundariesResponse = GeoJSON.FeatureCollection<GeoJSON.Polygon | GeoJSON.MultiPolygon, BoundaryProps>
+
+/** 분석 제외 사유 (F1 제외 사유 표와 같은 기준) */
+export type ExcludeReason = 'green_missing' | 'length_missing' | 'green_out_of_range' | 'length_out_of_range'
+
+/** 전체 횡단보도 점 하나의 속성 (points.schema.json). excluded 는 시간 값이 null */
+export interface PointProps {
+  cw_id: string
+  adm_cd: string
+  status: 'analyzed' | 'excluded'
+  length_m: number | null
+  green_s: number | null
+  t_need_s: number | null
+  gap_s: number | null
+  flags: ExposureFlags | null
+  exposure_cnt: number
+  is_candidate: boolean
+  exclude_reason: ExcludeReason | null
+}
+
+export interface PointsResponse extends GeoJSON.FeatureCollection<GeoJSON.Point, PointProps> {
+  _sample?: boolean
+  speed?: Speed
+  radius_m?: Radius
+}

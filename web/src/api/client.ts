@@ -5,10 +5,12 @@ import type {
   BoundariesResponse,
   CandidatesResponse,
   MetaResponse,
+  PointsResponse,
   Speed,
   ValidationResponse,
 } from './types'
-import { ApiError, getJson } from './http'
+import { candidatesAsPoints, inBbox, mockPointsFor } from '../lib/points'
+import { ApiError, getJson, NOT_LOADED_MESSAGE } from './http'
 import { staticApi } from './static'
 
 export { ApiError }
@@ -119,6 +121,26 @@ export const api = {
     const q = new URLSearchParams({ speed: String(speed), radius: String(radius) })
     if (bbox) q.set('bbox', bbox.join(','))
     return getJson(`/api/crosswalks/candidates?${q}`, signal)
+  },
+
+  /** 전체 횡단보도 점(분석·분석 제외, 피드백 1·12번). 서버·묶음에 아직 없으면 후보 점으로 대신한다. */
+  async points(speed: Speed, radius: Radius, bbox?: [number, number, number, number], signal?: AbortSignal): Promise<PointsResponse> {
+    if (API_MODE === 'mock') {
+      const sample = (await import('@contracts/samples/points.json')).default as unknown as PointsResponse
+      const data = mockPointsFor(sample, speed, radius)
+      return delay(bbox ? { ...data, features: data.features.filter((f) => inBbox(f.geometry.coordinates, bbox)) } : data, signal)
+    }
+    try {
+      if (API_MODE === 'static') return await staticApi.points(speed, radius, bbox)
+      const q = new URLSearchParams({ speed: String(speed), radius: String(radius) })
+      if (bbox) q.set('bbox', bbox.join(','))
+      return await getJson<PointsResponse>(`/api/crosswalks?${q}`, signal)
+    } catch (e) {
+      if (e instanceof ApiError && e.message === NOT_LOADED_MESSAGE) {
+        return candidatesAsPoints(await api.candidates(speed, radius, bbox, signal))
+      }
+      throw e
+    }
   },
 
   async validation(signal?: AbortSignal): Promise<ValidationResponse> {

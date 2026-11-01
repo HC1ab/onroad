@@ -1,12 +1,14 @@
 import type { V2Result } from '../../api/types'
 import { rho } from '../../lib/validation'
 import { ValidationCard } from './ValidationCard'
+import { BASIS } from './basis'
 
 /** V2 속도 민감도: 속도 가정을 바꾸면 읍면동 순위가 얼마나 흔들리는가 */
 export function V2Card({ v2 }: { v2: V2Result | null }) {
   return (
     <ValidationCard
       id="v2"
+      basis={BASIS.v2}
       title="V2 속도 민감도"
       question="보행 속도 가정(1.0 / 0.8 / 0.7 m/s)을 바꾸면 우선순위가 흔들리는가"
       caution="상위 지역 중복이 낮으면 우선순위가 속도 가정에 크게 의존한다는 뜻입니다."
