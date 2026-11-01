@@ -35,7 +35,9 @@
 - [x] S4 채색·사분면(#80): `mean_add_s` 채색·범례, 툴팁 `n_add2`, 사분면 가로 `mean_add_s`·경계 중앙값
 - [x] S5 계수와 근거·민감도(#80): About 에 `meta.coefficients` 표, 범례·카드에 시장 보정 0.063~0.157, 고령 속도 0.76 결과
 - [x] S6 목록·검증(#82): TopList 횡단보도 우선순위(add_s 큰 순 → 단계 1·2·3, 지역 필터 연동), V6·V7 카드, V2 카드에 속도 3종 비교, 카드별 한계 한 줄
-- [ ] S7 마무리: tsc·lint·vitest·build·static build, 브라우저 확인(mock), push, PR → frontend (`Refs #80 #81 #82`), 이슈 코멘트
+- [x] S7 마무리: tsc·lint·vitest·build·static build, 브라우저 확인(mock), push, PR → frontend (`Refs #80 #81 #82`), 이슈 코멘트
 
 ## 진행 기록
 - 2026-11-02: 계획 작성. 브랜치 `web/80-v2-screens` (frontend 9654ead 기준)
+- 2026-11-02: S1~S6 완료, 커밋·push. S7: 빌드·브라우저 확인 후 PR #94 (→ frontend), #80·#81·#82·#73 코멘트
+- 남은 것: C3(#73) 병합되면 mock(`lib/mockV2.ts`) → `contracts/samples`, 타입 이름 맞추기. real·static 기본 기준을 v2 로(`AppState` DEFAULT_BASIS)
