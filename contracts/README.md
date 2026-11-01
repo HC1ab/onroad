@@ -7,6 +7,7 @@
 | `areas.schema.json` | `GET /api/areas?speed=&radius=&sido=&sigungu=` | `samples/areas.json` | F5, F6, F7 |
 | `area_crosswalks.schema.json` | `GET /api/areas/{adm_cd}/crosswalks?speed=&radius=` | `samples/area_crosswalks.json` | F7 |
 | `candidates.schema.json` | `GET /api/crosswalks/candidates?bbox=&speed=&radius=` | `samples/candidates.json` | F5, F11 |
+| `points.schema.json` | `GET /api/crosswalks?bbox=&speed=&radius=` (전체 횡단보도 점, 분석 제외 포함) | `samples/points.json` | F5, F7 |
 | `validation.schema.json` | `GET /api/validation` | `samples/validation.json` | F8 |
 | `meta.schema.json` | `GET /api/meta` | `samples/meta.json` | F9 |
 | `error.schema.json` | 4xx·5xx 오류 응답 | `samples/error.json` | 공통 |
@@ -29,11 +30,13 @@ meta.json                                  GET /api/meta
 validation.json                            GET /api/validation
 areas/{speed}_{radius}.json                GET /api/areas?speed=&radius=  (전국. 지역 필터는 화면에서)
 candidates/{speed}_{radius}.json           GET /api/crosswalks/candidates?speed=&radius=  (전국. bbox 필터는 화면에서)
+points/{speed}_{radius}.json               GET /api/crosswalks?speed=&radius=  (전국 전체 점. 없을 수 있음, bbox 필터는 화면에서)
 crosswalks/{speed}_{radius}/{adm_cd}.json  GET /api/areas/{adm_cd}/crosswalks?speed=&radius=
 export/areas_{speed}_{radius}.csv          GET /api/export/areas.csv?speed=&radius=
 export/crosswalks_{speed}_{radius}.csv     GET /api/export/crosswalks.csv?speed=&radius=
 ```
 - `{speed}`는 소수 한 자리 문자열(`0.7`, `0.8`, `1.0`), `{radius}`는 `200`, `300`, `500`. 예: `areas/1.0_300.json`
+- 전체 점(`points/`)은 파이프라인 결과에 있을 때만 들어간다. manifest 조합의 `points: true`로 표시한다.
 - 묶음에 있는 조합과 상세는 `manifest.json`에 적는다. 없는 조합은 API의 미적재(500 `not_loaded` 안내)와 같게 보여준다(빈 결과로 보이지 않게).
 - 경계는 묶음에 넣지 않는다. 웹 빌드의 `/data/boundaries.json`을 그대로 쓴다.
 - 원본 데이터·인증키·전화번호 칼럼은 넣지 않는다(R4). 결과 테이블만 내보낸다.
