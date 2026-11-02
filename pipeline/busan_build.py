@@ -159,7 +159,7 @@ def crosswalk_items(rows: pd.DataFrame) -> list[dict]:
             "length_m": round(float(r["length_m"]), 2), "green_s": round(float(r["green_s"]), 4),
             "t_need_s": round(float(r["t_need_s"]), 2), "gap_s": round(float(r["gap_s"]), 2),
             "flags": {"senior_center": bool(r["senior_center"]), "market": bool(r["market"]),
-                      "protect_zone": bool(r["protect_zone"]), "hospital": None},
+                      "protect_zone": bool(r["protect_zone"]), "crash_zone_past": False, "hospital": None},
             "exposure_cnt": int(r["exposure_cnt"]), "is_candidate": bool(r["is_candidate"]),
         })
     return out
