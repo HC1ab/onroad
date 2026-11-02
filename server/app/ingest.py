@@ -62,10 +62,15 @@ def migrate(conn):
             conn.execute('INSERT INTO schema_migration VALUES (%s)', (path.name,))
 
 
-def ingest(conn, documents, sample=False):
-    """Caller transaction covers migrations and all writes, including replacement."""
+def migrate_only(conn):
+    """적재 없이 스키마만 올린다(배포용). 결과 행은 건드리지 않는다."""
     conn.execute('SELECT pg_advisory_xact_lock(1373013)')
     migrate(conn)
+
+
+def ingest(conn, documents, sample=False):
+    """Caller transaction covers migrations and all writes, including replacement."""
+    migrate_only(conn)
     conn.execute('TRUNCATE crosswalk_point_v2, point_layer_v2, area_vulnerability_v2, area_summary_v2, crosswalk_point, point_layer, candidate, candidate_layer, crosswalk_gap, crosswalk, area_detail, area_vulnerability, area_summary, admin_area, result_document, dataset')
     conn.execute('INSERT INTO dataset (is_sample) VALUES (%s)', (sample,))
     areas = {}
@@ -151,10 +156,21 @@ def ingest(conn, documents, sample=False):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--source', type=Path, required=True)
+    parser.add_argument('--source', type=Path)
     parser.add_argument('--contracts', type=Path, default=Path('/contracts'))
     parser.add_argument('--sample', action='store_true')
+    parser.add_argument('--migrate-only', action='store_true', help='적재 없이 마이그레이션만 실행')
     args = parser.parse_args()
+    if args.migrate_only:
+        try:
+            with psycopg.connect(get_settings().db_dsn) as conn:
+                migrate_only(conn)
+        except (OSError, psycopg.Error) as exc:
+            parser.exit(1, f'Migration failed ({type(exc).__name__}); existing schema preserved.\n')
+        print('Migrated')
+        return
+    if args.source is None:
+        parser.error('--source 가 필요합니다')
     try:
         documents = read_bundle(args.source, args.contracts, args.sample)
         with psycopg.connect(get_settings().db_dsn) as conn:

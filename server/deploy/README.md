@@ -37,7 +37,7 @@ cp .env.example .env && chmod 600 .env
 ## 배포·적재
 ```bash
 cd /srv/onroad
-bash server/deploy/deploy.sh                 # git pull → 프론트 빌드 → compose up → /healthz 확인
+bash server/deploy/deploy.sh                 # git pull → 프론트 빌드 → DB 마이그레이션 → compose up → /healthz 확인
 bash server/deploy/load.sh --sample          # 샘플 적재 (실데이터 전까지)
 bash server/deploy/load.sh /srv/onroad-results   # 파이프라인 결과 적재 (scp 로 결과 JSON만 올린다)
 ```
