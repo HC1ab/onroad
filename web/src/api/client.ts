@@ -12,7 +12,7 @@ import type {
   ValidationResponse,
 } from './types'
 import { candidatesAsPoints, inBbox, mockPointsFor } from '../lib/points'
-import { ApiError, getJson, NOT_LOADED_MESSAGE } from './http'
+import { ApiError, getJson, isNotAvailable, NOT_LOADED_MESSAGE } from './http'
 import { staticApi } from './static'
 import { MOCK_COEFFICIENTS, MOCK_V6, MOCK_V7, mockAreasV2, mockPointsV2, mockSensitivity } from '../lib/mockV2'
 
@@ -135,7 +135,7 @@ export const api = {
     return getJson(`/api/crosswalks/candidates?${q}`, signal)
   },
 
-  /** 전체 횡단보도 점(분석·분석 제외, 피드백 1·12번). 서버·묶음에 아직 없으면 후보 점으로 대신한다. */
+  /** 전체 횡단보도 점(분석·분석 제외, 피드백 1·12번). 서버·묶음에 아직 없거나 서버가 이 경로를 모르면(404) 후보 점으로 대신한다. */
   async points(speed: Speed, radius: Radius, bbox?: [number, number, number, number], signal?: AbortSignal): Promise<PointsResponse> {
     if (API_MODE === 'mock') {
       const sample = (await import('@contracts/samples/points.json')).default as unknown as PointsResponse
@@ -148,7 +148,7 @@ export const api = {
       if (bbox) q.set('bbox', bbox.join(','))
       return await getJson<PointsResponse>(`/api/crosswalks?${q}`, signal)
     } catch (e) {
-      if (e instanceof ApiError && e.message === NOT_LOADED_MESSAGE) {
+      if (isNotAvailable(e)) {
         return candidatesAsPoints(await api.candidates(speed, radius, bbox, signal))
       }
       throw e
