@@ -41,3 +41,4 @@
 - 2026-11-02: 계획 작성. 브랜치 `web/80-v2-screens` (frontend 9654ead 기준)
 - 2026-11-02: S1~S6 완료, 커밋·push. S7: 빌드·브라우저 확인 후 PR #94 (→ frontend), #80·#81·#82·#73 코멘트
 - 남은 것: C3(#73) 병합되면 mock(`lib/mockV2.ts`) → `contracts/samples`, 타입 이름 맞추기. real·static 기본 기준을 v2 로(`AppState` DEFAULT_BASIS)
+- 2026-11-02: C3(#95) 병합 후 #98 로 V6 타입 맞춤. mock 의 areasV2·pointsV2 가 목표 85%·반경 300m 에서 C3 샘플(points_v2·areas_v2)을 읽게 바꿈(#81 코멘트), 나머지 조합은 계산 mock
