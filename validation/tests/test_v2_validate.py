@@ -63,6 +63,16 @@ def test_v7_senior_zone_takes_precedence_over_child_zone():
     assert sum(x["n"] for x in g.values()) == len(cw)
 
 
+def test_sigungu_of_accepts_both_code_lengths_and_rejects_unknown():
+    # D12 는 adm_cd2(10자리), C3 샘플은 adm_cd(8자리)를 쓴다
+    dongs = pd.DataFrame({"adm_cd": ["21090530", "21120510"], "adm_cd2": ["2635053000", "2641051000"],
+                          "sggnm": ["해운대구", "금정구"]})
+    got = vv.sigungu_of(pd.Series(["2635053000", "21120510"]), dongs)
+    assert got.tolist() == ["해운대구", "금정구"]
+    with pytest.raises(ValueError, match="1곳"):
+        vv.sigungu_of(pd.Series(["2635053000", "9999999999"]), dongs)
+
+
 def test_stratified_overlap_compares_within_same_sigungu():
     # 가 구는 전부 다발지역 안, 나 구는 전부 밖. 대상이 가 구에만 있으면 무작위도 가 구에서만 뽑아 배수 1
     cw = pd.DataFrame({"sigungu": ["가"] * 20 + ["나"] * 20, "length_m": np.tile(np.arange(10, 30), 2),
