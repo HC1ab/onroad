@@ -10,7 +10,8 @@ import psycopg
 import pytest
 from jsonschema.exceptions import ValidationError
 
-from app.ingest import ingest, read_bundle
+from app import ingest as ingest_module
+from app.ingest import ingest, migrate_only, read_bundle
 
 CONTRACTS = Path(os.environ.get('TEST_CONTRACTS', '/contracts'))
 
@@ -125,6 +126,25 @@ def test_conflicting_v2_area_rolls_back(conn, bundle):
             ingest(conn, broken, True)
     assert conn.execute('SELECT count(*) FROM crosswalk_point_v2').fetchone()[0] == len(
         next(d for k, d in bundle if k == 'points_v2')['features'])
+
+
+def test_migrate_only_keeps_results(conn, bundle):
+    with conn.transaction():
+        ingest(conn, bundle, True)
+    before = conn.execute('SELECT count(*) FROM crosswalk_point').fetchone()[0]
+    assert before > 0
+    # 이미 올라간 DB 에 다시 실행해도 오류 없이 그대로다(배포마다 실행된다).
+    with conn.transaction():
+        migrate_only(conn)
+    assert conn.execute('SELECT count(*) FROM crosswalk_point').fetchone()[0] == before
+    assert conn.execute('SELECT count(*) FROM schema_migration').fetchone()[0] == 5
+
+
+def test_cli_requires_source_unless_migrate_only(monkeypatch):
+    monkeypatch.setattr('sys.argv', ['ingest'])
+    with pytest.raises(SystemExit) as exc:
+        ingest_module.main()
+    assert exc.value.code == 2
 
 
 def test_idempotent_import_and_spatial_index(conn, bundle):

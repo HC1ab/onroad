@@ -98,7 +98,7 @@ docker compose run --rm -v "${PWD}/contracts:/contracts:ro" -v "D:/onroad-result
 
 v2 결과는 선택 항목이다. `areas_v2/{target}_{radius}.json`, `points_v2/{target}_{radius}.json`(샘플은 `areas_v2.json`, `points_v2.json`)을 탐색하며, 적재 키인 target·radius_m(점은 speed까지)이 반드시 있어야 한다. v2 표는 target·반경별로 v1 표와 따로 저장한다.
 
-마이그레이션은 적재할 때 실행된다. 배포만 하고 다시 적재하지 않으면 새 표가 없어 v2 요청이 일반 500으로 응답하므로, v2 코드를 배포한 뒤에는 `load.sh`를 한 번 실행한다.
+마이그레이션은 적재할 때와 `deploy.sh`에서 실행된다(`python -m app.ingest --migrate-only`, 결과 행은 건드리지 않음). 그래서 배포만 해도 새 표가 생기고, 아직 적재하지 않은 v2 조합은 미적재 안내로 응답한다. `deploy.sh`를 거치지 않고 컨테이너만 올렸다면 위 명령을 직접 실행한다.
 
 전체 묶음 교체 방식이다. 누락된 속도나 지역을 이전 적재에서 유지하지 않는다. 입력 검증 후 마이그레이션과 교체를 한 트랜잭션으로 실행하며, 실패하면 기존 결과가 유지된다. 같은 묶음을 다시 넣어도 행이 누적되지 않는다. 동시 적재는 DB 잠금으로 직렬화한다.
 
