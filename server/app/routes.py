@@ -15,6 +15,7 @@ from .swagger import responses
 api = APIRouter(prefix='/api')
 Speed = Annotated[float, Query(enum=[0.7, 0.8, 1.0])]
 Radius = Annotated[int, Query(enum=[200, 300, 500])]
+Target = Annotated[float | None, Query(enum=[0.85, 0.9, 0.95], description='v2 목표 커버리지. 주지 않으면 v1 응답')]
 
 
 def check_speed(speed):
@@ -24,6 +25,11 @@ def check_speed(speed):
 
 def check_radius(radius):
     if radius not in (200, 300, 500):
+        raise HTTPException(400)
+
+
+def check_target(target):
+    if target is not None and target not in (0.85, 0.9, 0.95):
         raise HTTPException(400)
 
 
@@ -50,22 +56,32 @@ def sample_flag(conn):
 
 
 # 조회 함수는 API와 정적 묶음 내보내기(export.py)가 함께 쓴다. 응답 본문을 그대로 돌려준다.
-def load_areas(conn, speed, radius, sido=None, sigungu=None):
+def _load_area_summary(conn, key, value, radius, sido, sigungu, summary_table, item_table):
+    """v1(speed)·v2(target) 집계 공통. key·표 이름은 호출부의 상수다."""
     flag = sample_flag(conn)
-    summary = conn.execute('SELECT thresholds, min_sample FROM area_summary WHERE speed=%s AND radius_m=%s',
-                           (speed, radius)).fetchone()
+    summary = conn.execute(f'SELECT thresholds, min_sample FROM {summary_table} WHERE {key}=%s AND radius_m=%s',
+                           (value, radius)).fetchone()
     if summary is None:
         raise not_loaded()
-    clauses, params = ['v.speed=%s', 'v.radius_m=%s'], [speed, radius]
-    for column, value in (('sido', sido), ('sigungu', sigungu)):
-        if value is not None:
+    clauses, params = [f'v.{key}=%s', 'v.radius_m=%s'], [value, radius]
+    for column, region in (('sido', sido), ('sigungu', sigungu)):
+        if region is not None:
             clauses.append(f'a.{column}=%s')
-            params.append(value)
-    rows = conn.execute('SELECT v.payload FROM area_vulnerability v JOIN admin_area a USING(adm_cd) WHERE '
+            params.append(region)
+    rows = conn.execute(f'SELECT v.payload FROM {item_table} v JOIN admin_area a USING(adm_cd) WHERE '
                         + ' AND '.join(clauses) + ' ORDER BY v.adm_cd', params).fetchall()
     extra = {'min_sample': summary[1]} if summary[1] is not None else {}
-    return {**flag, 'speed': speed, 'radius_m': radius, **extra, 'thresholds': summary[0],
+    return {**flag, key: value, 'radius_m': radius, **extra, 'thresholds': summary[0],
             'items': [r[0] for r in rows]}
+
+
+def load_areas(conn, speed, radius, sido=None, sigungu=None):
+    return _load_area_summary(conn, 'speed', speed, radius, sido, sigungu, 'area_summary', 'area_vulnerability')
+
+
+def load_areas_v2(conn, target, radius, sido=None, sigungu=None):
+    return _load_area_summary(conn, 'target', target, radius, sido, sigungu,
+                              'area_summary_v2', 'area_vulnerability_v2')
 
 
 def load_crosswalks(conn, adm_cd, speed, radius):
@@ -109,6 +125,23 @@ def load_points(conn, speed, radius, bounds=None):
             'features': [r[0] for r in rows]}
 
 
+def load_points_v2(conn, target, radius, speed=None, bounds=None):
+    """v2 필드를 담은 전체 점. v1 필드는 조합마다 한 속도로만 계산돼 있어, speed 를 주면 그 속도와 같아야 한다."""
+    flag = sample_flag(conn)
+    layer = conn.execute('SELECT speed FROM point_layer_v2 WHERE target=%s AND radius_m=%s',
+                         (target, radius)).fetchone()
+    if layer is None or (speed is not None and float(layer[0]) != speed):
+        raise not_loaded()
+    sql = 'SELECT payload FROM crosswalk_point_v2 WHERE target=%s AND radius_m=%s'
+    params = [target, radius]
+    if bounds:
+        sql += ' AND geom && ST_MakeEnvelope(%s,%s,%s,%s,4326)'
+        params.extend(bounds)
+    rows = conn.execute(sql + ' ORDER BY cw_id COLLATE "C"', params).fetchall()
+    return {**flag, 'type': 'FeatureCollection', 'speed': float(layer[0]), 'radius_m': radius, 'target': target,
+            'features': [r[0] for r in rows]}
+
+
 def load_candidate_rows(conn, speed, radius):
     """적재된 상세의 후보 행(adm_cd 포함). 상세가 하나도 없는 조합은 미적재로 본다."""
     sample_flag(conn)
@@ -130,12 +163,16 @@ def load_document(conn, kind):
 
 
 @api.get('/areas', summary='읍면동별 집계', operation_id='listAreas', responses=responses('areas'))
-def areas(speed: Speed = 0.8, radius: Radius = 300, sido: str | None = None, sigungu: str | None = None):
+def areas(speed: Speed = 0.8, radius: Radius = 300, sido: str | None = None, sigungu: str | None = None,
+          target: Target = None):
     check_speed(speed)
     check_radius(radius)
+    check_target(target)
     if sigungu is not None and not sido:
         raise HTTPException(400)
     with reader() as conn:
+        if target is not None:  # 계약: target 이 있으면 v2 형태이고 speed 는 무시한다.
+            return JSONResponse(load_areas_v2(conn, target, radius, sido, sigungu))
         return JSONResponse(load_areas(conn, speed, radius, sido, sigungu))
 
 
@@ -162,11 +199,14 @@ def candidates(speed: Speed = 0.8, radius: Radius = 300, bbox: str | None = None
 
 @api.get('/crosswalks', summary='전체 횡단보도 점', operation_id='listCrosswalkPoints',
          responses=responses('points'))
-def points(speed: Speed = 0.8, radius: Radius = 300, bbox: str | None = None):
+def points(speed: Speed = 0.8, radius: Radius = 300, bbox: str | None = None, target: Target = None):
     check_speed(speed)
     check_radius(radius)
+    check_target(target)
     bounds = parse_bbox(bbox)
     with reader() as conn:
+        if target is not None:
+            return JSONResponse(load_points_v2(conn, target, radius, speed, bounds))
         return JSONResponse(load_points(conn, speed, radius, bounds))
 
 
