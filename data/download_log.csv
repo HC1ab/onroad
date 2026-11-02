@@ -1,1 +1,22 @@
 id,file,source_url,downloaded_at,source_modified,row_count,encoding,license,by
+R2,admin_boundary/HangJeongDong_ver20261001.geojson,https://github.com/vuski/admdongkor,2026-10-27,ver20261001,3559,utf-8,CC BY 4.0,
+R3,population_65/202609_202609_주민등록인구기타현황(고령 인구현황)_월간.csv,https://jumin.mois.go.kr/etcStatOldAge.do,2026-10-27,2026-09 기준,3919,cp949,,
+O1,protect_zone/전국노인장애인보호구역표준데이터.csv,https://www.data.go.kr/data/15034532/standard.do,2026-10-27,2026-06-16,4184,cp949,,
+O3,market/전국전통시장표준데이터.csv,https://www.data.go.kr/data/15012894/standard.do,2026-10-27,2025-11-26,1393,cp949,,
+R1,crosswalk/crosswalk_api_20261029.csv,https://api.data.go.kr/openapi/tn_pubr_public_crosswalk_api,2026-10-29,,58841,utf-8-sig,,fetch_api.py
+O2,senior_center/senior_center_api_20261029.csv,https://api.data.go.kr/openapi/tn_pubr_public_vill_hall_sen_cent_api,2026-10-29,,51586,utf-8-sig,,fetch_api.py
+R4,crash_zone/crash_zone_2012.json,https://apis.data.go.kr/B552061/frequentzoneOldman/getRestFrequentzoneOldman,2026-10-29,,508,utf-8,,fetch_api.py
+R4,crash_zone/crash_zone_2013.json,https://apis.data.go.kr/B552061/frequentzoneOldman/getRestFrequentzoneOldman,2026-10-29,,552,utf-8,,fetch_api.py
+R4,crash_zone/crash_zone_2014.json,https://apis.data.go.kr/B552061/frequentzoneOldman/getRestFrequentzoneOldman,2026-10-29,,586,utf-8,,fetch_api.py
+R4,crash_zone/crash_zone_2015.json,https://apis.data.go.kr/B552061/frequentzoneOldman/getRestFrequentzoneOldman,2026-10-29,,606,utf-8,,fetch_api.py
+R4,crash_zone/crash_zone_2016.json,https://apis.data.go.kr/B552061/frequentzoneOldman/getRestFrequentzoneOldman,2026-10-29,,586,utf-8,,fetch_api.py
+R4,crash_zone/crash_zone_2017.json,https://apis.data.go.kr/B552061/frequentzoneOldman/getRestFrequentzoneOldman,2026-10-29,,552,utf-8,,fetch_api.py
+R4,crash_zone/crash_zone_2018.json,https://apis.data.go.kr/B552061/frequentzoneOldman/getRestFrequentzoneOldman,2026-10-29,,529,utf-8,,fetch_api.py
+R4,crash_zone/crash_zone_2019.json,https://apis.data.go.kr/B552061/frequentzoneOldman/getRestFrequentzoneOldman,2026-10-29,,561,utf-8,,fetch_api.py
+R4,crash_zone/crash_zone_2020.json,https://apis.data.go.kr/B552061/frequentzoneOldman/getRestFrequentzoneOldman,2026-10-29,,507,utf-8,,fetch_api.py
+R4,crash_zone/crash_zone_2021.json,https://apis.data.go.kr/B552061/frequentzoneOldman/getRestFrequentzoneOldman,2026-10-29,,269,utf-8,,fetch_api.py
+R4,crash_zone/crash_zone_2022.json,https://apis.data.go.kr/B552061/frequentzoneOldman/getRestFrequentzoneOldman,2026-10-29,,245,utf-8,,fetch_api.py
+R4,crash_zone/crash_zone_2023.json,https://apis.data.go.kr/B552061/frequentzoneOldman/getRestFrequentzoneOldman,2026-10-29,,228,utf-8,,fetch_api.py
+R4,crash_zone/crash_zone_2024.json,https://apis.data.go.kr/B552061/frequentzoneOldman/getRestFrequentzoneOldman,2026-10-29,,262,utf-8,,fetch_api.py
+R4,crash_zone/crash_zone_2025.json,https://apis.data.go.kr/B552061/frequentzoneOldman/getRestFrequentzoneOldman,2026-10-29,,291,utf-8,,fetch_api.py
+R1B,"crosswalk_busan/부산광역시 관내 횡단보도, 음향신호기, 보행자작동신호기 현황.xlsx",확인 필요,확인 필요,2026-08-01 기준,3815,xlsx(첫 시트),확인 필요,
