@@ -63,3 +63,26 @@ python3 pipeline/check_data.py
 - 판정식 값(진입시간, 속도, 이상치 상한)은 `config.yaml`에서 읽는다.
 - 칼럼 이름은 키워드로 자동 탐지한다. 리포트의 "칼럼 자동 탐지" 줄이 틀렸으면 `check_data.py`의 `COLUMN_OVERRIDES`에 실제 칼럼명을 적는다.
 - 녹색신호시간의 점멸 포함 여부와 데이터별 라이선스는 스크립트로 확인할 수 없다.
+
+## 4. v2 추천 보행시간 (결정 009, D12)
+
+F2 결과(`busan_f2_assigned.csv`)에서 3단계 적용 속도·기준 적용 시 시간·추가 초·커버리지를 계산해 C3 형식으로 내보낸다.
+
+```bash
+python3 -m pipeline.v2_build \
+  --assigned data/interim/busan_f2_assigned.csv --boundary data/raw/admin_boundary/HangJeongDong_ver20261001.geojson \
+  --population "data/raw/population_65/<R3 파일>.csv" --protect-zone data/raw/protect_zone/전국노인장애인보호구역표준데이터.csv \
+  --market data/raw/market/전국전통시장표준데이터.csv --out data/interim/v2 --bundle-v2 data/interim/v2/bundle
+python3 -m pipeline.v2_handcheck data/interim/v2/bundle/points_v2/0.85_300.json --n 10   # 내보낸 값을 독립 코드로 다시 계산
+```
+
+| 파일 | 역할 |
+| --- | --- |
+| `v2_speed.py` | 보행속도 분포(일반·고령 정규분포), 적용 속도(이분법), 커버리지. 순수 함수 |
+| `v2_tiers.py` | 단계 판정, 반경 안 주민 고령 비율(EPSG:5179 면적 가중), 기준식 분류, `data_check` |
+| `v2_build.py` | 목표 0.85·0.90·0.95 × 반경 200·300·500 = 9개 조합의 `areas_v2`·`points_v2`·`manifest.json`, 요약 |
+| `v2_handcheck.py` | 내보낸 점에서 무작위 N건을 골라 `scipy.optimize.brentq`로 독립 재계산 |
+
+- 값은 모두 `config.yaml` v2 키에서 읽는다. 문서는 쓰기 전에 `contracts/*.schema.json`으로 검사한다.
+- `points_v2`의 v1 필수 필드(`t_need_s`, `gap_s`)는 0.8m/s 기준식으로 채우고, `flags`의 `senior_center`·`crash_zone_past`는 `false`다(C3 샘플과 같다). 정제에서 제외된 행(`excluded`)은 이번 파일에 넣지 않는다.
+- 결과 파일은 `data/interim/` 아래에 쓰며 Git에 올리지 않는다.
