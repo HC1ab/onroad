@@ -3,11 +3,12 @@ import { api, API_MODE } from './api/client'
 import { staticManifest } from './api/static'
 import { AreaDetail } from './components/AreaDetail'
 import { CrosswalkTopList } from './components/CrosswalkTopList'
-import { Legend } from './components/Legend'
+import { CrosswalkDetail } from './components/CrosswalkDetail'
+import { FilterPanel } from './components/FilterPanel'
 import { LoadState } from './components/LoadState'
+import { MapLegend } from './components/MapLegend'
 import { MapView, type Bbox } from './components/MapView'
-import { PointCard } from './components/PointCard'
-import { RegionFilter } from './components/RegionFilter'
+import { Overview } from './components/Overview'
 import { QuadrantChart } from './components/QuadrantChart'
 import { BasisSelector } from './components/BasisSelector'
 import { Tabs } from './components/Tabs'
@@ -77,14 +78,14 @@ function Main() {
 
   return (
     <div className="app">
-      <header className="header">
-        <div className="brand">
-          <h1>한 박자</h1>
-          <span className="muted">점검 우선순위 후보 지도</span>
-        </div>
+      <header className="topbar">
+        <a className="brand" href="#/">
+          <span className="brand-mark" aria-hidden>⏱</span>
+          <span className="brand-name">한 박자</span>
+          <span className="brand-sub">점검 우선순위 후보 지도</span>
+        </a>
         <Tabs route={route} />
-        {onMap && <RegionFilter boundaries={boundaries.data} />}
-        {onMap && <BasisSelector />}
+        {onMap && <div className="topbar-controls"><BasisSelector /></div>}
         <div className="badges">
           {API_MODE === 'static' && (
             <span className="badge offline" title="서버 없이 정적 묶음으로 보는 화면">
@@ -98,7 +99,8 @@ function Main() {
       </header>
 
       {/* 검증·About 화면에서도 지도는 지우지 않고 숨긴다(돌아왔을 때 위치·선택 유지). */}
-      <main className={selectedArea ? 'body wide' : 'body'} hidden={!onMap}>
+      <main className={point || selectedArea ? 'workspace wide' : 'workspace'} hidden={!onMap}>
+        <FilterPanel boundaries={boundaries.data} shown={shownCount} />
         <section className="map-wrap">
           <MapView
             boundaries={boundaries.data}
@@ -111,31 +113,29 @@ function Main() {
             onBoundsChange={setBbox}
             visible={onMap}
           />
-          <Legend metric={metric} minSample={minSample} shown={shownCount} candidatesOnly={candidatesOnly} />
-          {point && <PointCard key={point.cwId} areaName={pointArea ? `${pointArea.sigungu} ${pointArea.adm_name}` : null} />}
+          <MapLegend metric={metric} minSample={minSample} candidatesOnly={candidatesOnly} />
           <LoadState loading={boundaries.loading || areas.loading} error={error} onRetry={retry} />
         </section>
-        {/* 지역을 고르면 오른쪽 패널을 넓혀 상세를 보여주고, 닫으면 사분면·상위 N 으로 돌아간다. */}
+        {/* 오른쪽 패널: 횡단보도를 고르면 그 상세, 읍면동만 고르면 지역 상세, 아무것도 없으면 개요(사분면·우선순위 목록). */}
         <aside className="side">
-          {selectedArea ? (
+          {point ? (
+            <CrosswalkDetail key={point.cwId} areaName={pointArea ? `${pointArea.sigungu} ${pointArea.adm_name}` : null} />
+          ) : selectedArea ? (
             <AreaDetail key={selectedArea.adm_cd} area={selectedArea} thresholdsData={areas.data} metric={metric} />
+          ) : areas.error ? (
+            <section className="card">
+              <h3>읍면동 결과 없음</h3>
+              <p className="muted">선택한 기준·반경의 결과를 불러오지 못했습니다. 지도 위 안내에서 다시 시도할 수 있습니다.</p>
+            </section>
           ) : (
             <>
-              {areas.error ? (
-                <section className="card">
-                  <h3>읍면동 결과 없음</h3>
-                  <p className="muted">선택한 기준·반경의 결과를 불러오지 못했습니다. 지도 위 안내에서 다시 시도할 수 있습니다.</p>
-                </section>
+              <Overview points={allV2.data} />
+              {isV2 ? (
+                <CrosswalkTopList points={allV2.data} areas={scoped?.items ?? null} error={allV2.error} onRetry={allV2.reload} />
               ) : (
-                <>
-                  <QuadrantChart data={scoped} metric={metric} />
-                  {isV2 ? (
-                    <CrosswalkTopList points={allV2.data} areas={scoped?.items ?? null} error={allV2.error} onRetry={allV2.reload} />
-                  ) : (
-                    <TopList data={scoped} />
-                  )}
-                </>
+                <TopList data={scoped} />
               )}
+              <QuadrantChart data={scoped} metric={metric} />
             </>
           )}
         </aside>

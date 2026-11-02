@@ -12,7 +12,6 @@ export function RegionFilter({ boundaries }: { boundaries: BoundariesResponse | 
 
   return (
     <div className="region" role="group" aria-label="지역 필터">
-      <span className="speed-title">지역</span>
       <select
         aria-label="시도"
         value={region?.sido ?? ''}

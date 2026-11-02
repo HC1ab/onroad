@@ -11,7 +11,7 @@ const W = 420
 const H = 170
 const PAD = { left: 36, right: 10, top: 10, bottom: 26 }
 
-const MINE_PENDING = '아직 입력한 실측이 없습니다. 지도에서 횡단보도를 누르고 실측 점등·점멸 시간을 입력하면 여기에 바로 반영됩니다.'
+const MINE_PENDING = '아직 입력한 실측이 없습니다. 지도에서 횡단보도를 고른 뒤 위 "현장 실측 입력"에서 점등·점멸 시간을 넣으면 여기에 바로 반영됩니다.'
 
 /** V1 현장 실측: 기록된 녹색신호시간과 실제(점등 + 점멸)의 차이. 공식 결과와 내 입력(검토 전)을 전환해 본다. */
 export function V1Card({ v1: official }: { v1: V1Result | null }) {
