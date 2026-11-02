@@ -68,3 +68,14 @@ def test_reason_is_conditional_and_matches_rounded_values():
 
 def test_target_key_two_decimals():
     assert vb.target_key(0.9) == "0.90" and vb.target_key(0.85) == "0.85"
+
+
+def test_exclude_reason_mapping():
+    import math
+    assert vb.exclude_reason("length_invalid", math.nan, 7.0) == "length_missing"
+    assert vb.exclude_reason("length_invalid", 0.0, 7.0) == "length_out_of_range"
+    assert vb.exclude_reason("outlier_length", 120.0, 30.0) == "length_out_of_range"
+    assert vb.exclude_reason("green_invalid", 10.0, math.nan) == "green_missing"
+    assert vb.exclude_reason("outlier_green", 10.0, 300.0) == "green_out_of_range"
+    assert vb.exclude_reason("duplicate", 10.0, 30.0) is None  # 계약에 대응하는 사유가 없다
+    assert vb.exclude_reason("coord_missing", 10.0, 30.0) is None

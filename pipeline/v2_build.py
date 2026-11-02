@@ -19,6 +19,7 @@ import pandas as pd
 import yaml
 
 from pipeline import busan_build as bb
+from pipeline import busan_clean as bc
 from pipeline import busan_facilities as fac
 from pipeline import busan_judge as jd
 from pipeline import v2_speed as sp
@@ -132,13 +133,52 @@ def make_reason(tier: int, row: dict, radius: int, t_req: float, add: float) -> 
 
 
 # ---------- 문서 ----------
+# F1 제외 사유 -> 계약 exclude_reason. 값이 비어 있으면 *_missing, 값은 있으나 쓸 수 없으면 *_out_of_range.
+# 중복(duplicate)과 좌표 사유(coord_*)는 계약에 대응이 없어 점으로 내보내지 않는다.
+def exclude_reason(reason: str, length, green) -> str | None:
+    if reason in ("length_invalid", "outlier_length"):
+        return "length_missing" if pd.isna(length) else "length_out_of_range"
+    if reason in ("green_invalid", "outlier_green"):
+        return "green_missing" if pd.isna(green) else "green_out_of_range"
+    return None
+
+
+def excluded_features(excl: pd.DataFrame, bnd, cfg: dict) -> tuple[list[dict], dict]:
+    """정제(F1)에서 제외됐지만 좌표가 있는 행을 status=excluded 점으로 만든다(#62).
+
+    동 배정이 안 되거나 계약에 대응하는 사유가 없는 행은 뺀다. 빠진 건수를 사유별로 돌려준다.
+    """
+    note = {"input": len(excl), "no_coord": 0, "no_reason_mapping": 0, "no_dong": 0, "exported": 0}
+    if excl.empty:
+        return [], note
+    e = excl.copy()
+    has_xy = e["lat"].notna() & e["lon"].notna()
+    note["no_coord"] = int((~has_xy).sum())
+    e = e[has_xy].copy()
+    e["exclude_reason"] = [exclude_reason(r, l, g) for r, l, g in zip(e["reason"], e["length_m"], e["green_s"])]
+    note["no_reason_mapping"] = int(e["exclude_reason"].isna().sum())
+    e = e[e["exclude_reason"].notna()].copy()
+    e["cw_id"] = e["seq"].map(lambda q: f"busan-{int(q):05d}")
+    assigned, unmatched = bc.assign(e, bnd, cfg)
+    note["no_dong"] = len(unmatched)
+    feats = []
+    for _, r in assigned.iterrows():
+        feats.append({"type": "Feature",
+                      "geometry": {"type": "Point", "coordinates": [round(float(r["lon"]), 6), round(float(r["lat"]), 6)]},
+                      "properties": {"cw_id": r["cw_id"], "adm_cd": r["adm_cd2"], "status": "excluded",
+                                     "length_m": _num(r["length_m"], 2), "green_s": _num(r["green_s"], TIME_DIGITS),
+                                     "t_need_s": None, "gap_s": None, "flags": None, "exposure_cnt": 0,
+                                     "is_candidate": False, "exclude_reason": r["exclude_reason"]}})
+    note["exported"] = len(feats)
+    return feats, note
+
 def _num(x, digits):
     return None if x is None or (isinstance(x, float) and np.isnan(x)) else round(float(x), digits)
 
 
 def points_doc(d: pd.DataFrame, tiers: pd.DataFrame, res: pd.DataFrame, flags: pd.DataFrame, target: float,
-               radius: int, cfg: dict) -> dict:
-    """전체 횡단보도 점(analyzed + data_check). excluded 는 이번 범위에 넣지 않는다(좌표·동 배정이 없는 행이 많다)."""
+               radius: int, cfg: dict, excluded: list[dict] | None = None) -> dict:
+    """전체 횡단보도 점(analyzed + data_check + excluded). excluded 는 excluded_features 가 만든 점."""
     entry = cfg["entry_seconds"]
     g3, t3, add3 = rounded_times(d["green_s"], res["t_req_raw"])
     t_need = np.round(entry + d["length_m"].to_numpy(float) / V1_FIELD_SPEED, TIME_DIGITS)
@@ -179,7 +219,8 @@ def points_doc(d: pd.DataFrame, tiers: pd.DataFrame, res: pd.DataFrame, flags: p
                      check_reason=None)
         feats.append({"type": "Feature", "geometry": {"type": "Point", "coordinates": [round(float(r["lon"]), 6), round(float(r["lat"]), 6)]},
                       "properties": p})
-    return {"type": "FeatureCollection", "speed": V1_FIELD_SPEED, "radius_m": radius, "target": target, "features": feats}
+    return {"type": "FeatureCollection", "speed": V1_FIELD_SPEED, "radius_m": radius, "target": target,
+            "features": feats + (excluded or [])}
 
 
 def areas_doc(d: pd.DataFrame, res: pd.DataFrame, dongs, pop: pd.DataFrame, target: float, radius: int, cfg: dict) -> dict:
@@ -256,6 +297,11 @@ def run(a: argparse.Namespace) -> dict:
     ratio_by = pop.set_index("adm_cd")["ratio_65plus"]
     ratio = np.array([ratio_by.get(c, np.nan) for c in dongs_m["adm_cd2"]], dtype=float)
 
+    excl_feats, excl_note = [], None
+    if a.exclusions:
+        bnd = bc.load_boundary(a.boundary, a.sido_prefix, cfg)
+        excl_feats, excl_note = excluded_features(pd.read_csv(a.exclusions), bnd, cfg)
+
     model = sp.SpeedModel.from_config(cfg)
     check = bb.SchemaCheck(a.contracts)
     out_dir = a.bundle_v2
@@ -264,7 +310,7 @@ def run(a: argparse.Namespace) -> dict:
                "formula_classes": d["formula_class"].value_counts().to_dict(),
                "facilities": {"protect_zone": {"rows": protect.total_rows, "used": int(len(protect.xy)), "bad_coord": protect.bad_coord_rows},
                               "big_market": {"rows": big.total_rows, "kept": big.kept_rows, "used": int(len(big.xy)), "bad_coord": big.bad_coord_rows}},
-               "by_combo": {}, "sensitivity": {}}
+               "excluded_points": excl_note, "by_combo": {}, "sensitivity": {}}
     manifest_v2, n_docs = [], 0
     for r in radii:
         tiers = tier_table(d, r, polys, ratio, cfg)
@@ -274,7 +320,7 @@ def run(a: argparse.Namespace) -> dict:
         for t in targets:
             res = apply_target(d, tiers, t, cfg, model)
             tk = f"{target_key(t)}_{r}"
-            bb.write_json(out_dir / "points_v2" / f"{tk}.json", points_doc(d, tiers, res, flags, t, r, cfg), check, "points")
+            bb.write_json(out_dir / "points_v2" / f"{tk}.json", points_doc(d, tiers, res, flags, t, r, cfg, excl_feats), check, "points")
             bb.write_json(out_dir / "areas_v2" / f"{tk}.json", areas_doc(d, res, dongs, pop, t, r, cfg), check, "areas")
             n_docs += 2
             manifest_v2.append({"target": t, "radius_m": r, "points": True})
@@ -294,7 +340,7 @@ def run(a: argparse.Namespace) -> dict:
     summary["documents"] = n_docs
     a.out.mkdir(parents=True, exist_ok=True)
     (a.out / "v2_summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
-    print(json.dumps({k: summary[k] for k in ("rows", "data_check", "formula_classes", "facilities", "documents")}, ensure_ascii=False, indent=1))
+    print(json.dumps({k: summary[k] for k in ("rows", "data_check", "formula_classes", "facilities", "excluded_points", "documents")}, ensure_ascii=False, indent=1))
     base = summary["by_combo"][f"{target_key(cfg['target_coverage'])}_{cfg['exposure_radius_m']}"]
     print("\n[기본] 목표 0.85, 반경", cfg["exposure_radius_m"]); print(pd.DataFrame(base["tiers"]).to_string(index=False))
     print("2초 이상 추가:", base["n_add2"], "/ 평균 추가(추가되는 곳):", base["mean_add_where_added"])
@@ -309,6 +355,7 @@ def main(argv=None) -> int:
     p.add_argument("--population", type=Path, required=True)
     p.add_argument("--protect-zone", type=Path, required=True)
     p.add_argument("--market", type=Path, required=True)
+    p.add_argument("--exclusions", type=Path, default=None, help="F1 제외 행(busan_f1_exclusions.csv). 주면 excluded 점을 넣는다")
     p.add_argument("--contracts", type=Path, default=Path("contracts"))
     p.add_argument("--config", type=Path, default=Path("config.yaml"))
     p.add_argument("--out", type=Path, required=True)

@@ -84,5 +84,5 @@ python3 -m pipeline.v2_handcheck data/interim/v2/bundle/points_v2/0.85_300.json 
 | `v2_handcheck.py` | 내보낸 점에서 무작위 N건을 골라 `scipy.optimize.brentq`로 독립 재계산 |
 
 - 값은 모두 `config.yaml` v2 키에서 읽는다. 문서는 쓰기 전에 `contracts/*.schema.json`으로 검사한다.
-- `points_v2`의 v1 필수 필드(`t_need_s`, `gap_s`)는 0.8m/s 기준식으로 채우고, `flags`의 `senior_center`·`crash_zone_past`는 `false`다(C3 샘플과 같다). 정제에서 제외된 행(`excluded`)은 이번 파일에 넣지 않는다.
+- `points_v2`의 v1 필수 필드(`t_need_s`, `gap_s`)는 0.8m/s 기준식으로 채우고, `flags`의 `senior_center`·`crash_zone_past`는 `false`다(C3 샘플과 같다). `--exclusions`로 F1 제외 행을 주면 좌표와 동 배정이 있는 행을 `excluded` 점으로 넣는다(중복·좌표 사유는 계약에 대응하는 사유가 없어 뺀다).
 - 결과 파일은 `data/interim/` 아래에 쓰며 Git에 올리지 않는다.
