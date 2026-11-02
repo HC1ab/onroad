@@ -2,6 +2,7 @@ import type { V3Result } from '../../api/types'
 import { pct1 } from '../../lib/format'
 import { histogram, pValue } from '../../lib/validation'
 import { Metric, ValidationCard } from './ValidationCard'
+import { BASIS } from './basis'
 
 const W = 420
 const H = 170
@@ -12,6 +13,7 @@ export function V3Card({ v3 }: { v3: V3Result | null }) {
   return (
     <ValidationCard
       id="v3"
+      basis={BASIS.v3}
       title="V3 사고다발지역 연관성 (연도 분할)"
       question="점검 우선순위 후보가 최근 연도 노인 보행사고 다발지역과 겹치는가"
       caution="겹침이 높아도 인과는 아닙니다(보행량·도로 규모 등). 낮게 나와도 그대로 보고합니다."
