@@ -93,6 +93,9 @@ async function mockV2Base() {
   return { points, areas }
 }
 
+/** contracts/samples 의 v2 샘플(points_v2·areas_v2)이 있는 조합 */
+const isV2SampleCombo = (target: Target, radius: Radius) => target === 0.85 && radius === 300
+
 // ---- 공개 API ----
 
 export const api = {
@@ -155,6 +158,10 @@ export const api = {
   /** v2(결정 009) 읍면동 값. 서버·묶음이 아직 v2 를 내보내지 않으면 미적재 오류 */
   async areasV2(target: Target, radius: Radius, signal?: AbortSignal): Promise<AreasV2Response> {
     if (API_MODE === 'mock') {
+      // C3 샘플은 목표 85%·반경 300m 한 조합뿐이라, 나머지 조합은 기존 샘플에서 계산한 mock 으로 보여준다.
+      if (isV2SampleCombo(target, radius)) {
+        return delay((await import('@contracts/samples/areas_v2.json')).default as unknown as AreasV2Response, signal)
+      }
       const { points, areas } = await mockV2Base()
       return delay(mockAreasV2(areas, mockPointsV2(points, areas, target, radius), target, radius), signal)
     }
@@ -165,8 +172,9 @@ export const api = {
   /** v2 횡단보도 점(단계·추가 초·이유·커버리지) */
   async pointsV2(target: Target, radius: Radius, bbox?: [number, number, number, number], signal?: AbortSignal): Promise<PointsResponse> {
     if (API_MODE === 'mock') {
-      const { points, areas } = await mockV2Base()
-      const data = mockPointsV2(points, areas, target, radius)
+      const data = isV2SampleCombo(target, radius)
+        ? ((await import('@contracts/samples/points_v2.json')).default as unknown as PointsResponse)
+        : await mockV2Base().then(({ points, areas }) => mockPointsV2(points, areas, target, radius))
       return delay(bbox ? { ...data, features: data.features.filter((f) => inBbox(f.geometry.coordinates, bbox)) } : data, signal)
     }
     if (API_MODE === 'static') throw new ApiError(NOT_LOADED_MESSAGE, 500)
