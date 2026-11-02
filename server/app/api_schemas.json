@@ -272,6 +272,11 @@
         ],
         "description": "n_candidate 를 계산한 노출 반경(m). 요청의 radius 와 같다."
       },
+      "min_sample": {
+        "type": "integer",
+        "minimum": 1,
+        "description": "표본 하한(config.yaml min_sample). 분석 횡단보도가 이보다 적으면 low_sample. 화면의 표본 부족 기준 표시에 쓴다."
+      },
       "thresholds": {
         "type": "object",
         "description": "사분면 경계선 기본값(전국 중앙값). 화면에서 조절할 수 있다.",
@@ -375,7 +380,7 @@
             },
             "low_sample": {
               "type": "boolean",
-              "description": "n_analyzed 가 표본 하한(config.yaml) 미만이면 true. 회색 처리·순위 제외"
+              "description": "n_analyzed 가 표본 하한(min_sample) 미만이면 true. 회색 처리·순위 제외"
             }
           }
         }
@@ -888,6 +893,233 @@
           },
           "message": {
             "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "static_manifest.schema.json": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "static_manifest.schema.json",
+    "title": "정적 묶음 manifest.json",
+    "description": "서버 없이 데모하는 정적 묶음(F18)의 목차. 묶음에 들어 있는 속도·반경 조합과 상세가 있는 읍면동을 적는다. 여기 없는 조합은 '아직 적재되지 않음'으로 보여준다(빈 결과로 보이지 않게). 파일 구성은 README '정적 묶음'.",
+    "type": "object",
+    "required": [
+      "built_at",
+      "results"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "_sample": {
+        "$ref": "common.schema.json#/$defs/sample_flag"
+      },
+      "built_at": {
+        "type": "string",
+        "format": "date-time",
+        "description": "묶음을 내보낸 시각"
+      },
+      "results": {
+        "type": "array",
+        "description": "묶음에 들어 있는 속도·반경 조합. 조합마다 areas·candidates 파일이 있다.",
+        "items": {
+          "type": "object",
+          "required": [
+            "speed",
+            "radius_m",
+            "details"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "speed": {
+              "$ref": "common.schema.json#/$defs/speed"
+            },
+            "radius_m": {
+              "type": "integer",
+              "enum": [
+                200,
+                300,
+                500
+              ]
+            },
+            "points": {
+              "type": "boolean",
+              "description": "전체 횡단보도 점 파일(points/{speed}_{radius}.json)이 있으면 true. 없으면 생략하거나 false"
+            },
+            "details": {
+              "type": "array",
+              "description": "이 조합에서 상세(crosswalks) 파일이 있는 읍면동 코드",
+              "items": {
+                "$ref": "common.schema.json#/$defs/adm_cd"
+              },
+              "uniqueItems": true
+            }
+          }
+        }
+      }
+    }
+  },
+  "points.schema.json": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "points.schema.json",
+    "title": "GET /api/crosswalks?bbox=&speed=&radius=",
+    "description": "전체 횡단보도 점 레이어(GeoJSON FeatureCollection). 후보만이 아니라 분석한 모든 횡단보도(status=analyzed)와, 좌표는 있지만 정제(F1)에서 제외된 횡단보도(status=excluded)를 담는다. 지도 점 색·필터·정보 카드에 쓴다. bbox 는 minLon,minLat,maxLon,maxLat.",
+    "type": "object",
+    "required": [
+      "type",
+      "features"
+    ],
+    "properties": {
+      "_sample": {
+        "$ref": "common.schema.json#/$defs/sample_flag"
+      },
+      "type": {
+        "const": "FeatureCollection"
+      },
+      "speed": {
+        "$ref": "common.schema.json#/$defs/speed"
+      },
+      "radius_m": {
+        "type": "integer",
+        "enum": [
+          200,
+          300,
+          500
+        ],
+        "description": "flags·exposure_cnt·is_candidate 를 계산한 노출 반경(m)."
+      },
+      "features": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "type",
+            "geometry",
+            "properties"
+          ],
+          "properties": {
+            "type": {
+              "const": "Feature"
+            },
+            "geometry": {
+              "type": "object",
+              "required": [
+                "type",
+                "coordinates"
+              ],
+              "properties": {
+                "type": {
+                  "const": "Point"
+                },
+                "coordinates": {
+                  "type": "array",
+                  "prefixItems": [
+                    {
+                      "$ref": "common.schema.json#/$defs/lon"
+                    },
+                    {
+                      "$ref": "common.schema.json#/$defs/lat"
+                    }
+                  ],
+                  "minItems": 2,
+                  "maxItems": 2
+                }
+              }
+            },
+            "properties": {
+              "type": "object",
+              "required": [
+                "cw_id",
+                "adm_cd",
+                "status",
+                "length_m",
+                "green_s",
+                "t_need_s",
+                "gap_s",
+                "flags",
+                "exposure_cnt",
+                "is_candidate",
+                "exclude_reason"
+              ],
+              "properties": {
+                "cw_id": {
+                  "type": "string"
+                },
+                "adm_cd": {
+                  "$ref": "common.schema.json#/$defs/adm_cd"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "analyzed",
+                    "excluded"
+                  ],
+                  "description": "analyzed: 기준식과 비교함. excluded: 정제에서 제외(사유는 exclude_reason)."
+                },
+                "length_m": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "description": "횡단보도 연장(m). 결측이면 null"
+                },
+                "green_s": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "description": "기록된 녹색신호시간(초). 결측이면 null"
+                },
+                "t_need_s": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "description": "기준식 필요 시간(초) = 진입 시간 + 연장/속도. excluded 면 null"
+                },
+                "gap_s": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "description": "t_need_s - green_s. 양수면 기록값이 기준식보다 짧음. excluded 면 null"
+                },
+                "flags": {
+                  "anyOf": [
+                    {
+                      "$ref": "common.schema.json#/$defs/exposure_flags"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "노출 여부. excluded 라도 계산할 수 있으면 채운다"
+                },
+                "exposure_cnt": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "is_candidate": {
+                  "type": "boolean",
+                  "description": "gap_s > 0 그리고 exposure_cnt >= 1. excluded 는 false"
+                },
+                "exclude_reason": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "green_missing",
+                    "length_missing",
+                    "green_out_of_range",
+                    "length_out_of_range",
+                    null
+                  ],
+                  "description": "excluded 의 사유(F1 제외 사유 표와 같은 기준). analyzed 면 null"
+                }
+              }
+            }
           }
         }
       }

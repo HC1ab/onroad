@@ -40,6 +40,7 @@ PR에서 `server/`가 바뀌면 GitHub Actions(`server.yml`)가 테스트와 `/h
 | `/api/areas?speed=0.8&radius=300&sido=부산광역시&sigungu=해운대구` | 읍면동 집계, 지역 필터. 사분면 기준은 저장된 전국 기준 유지 |
 | `/api/areas/21090730/crosswalks?speed=0.8&radius=300` | gap_s 내림차순 상세 목록 |
 | `/api/crosswalks/candidates?speed=0.8&radius=300&bbox=129.05,35.13,129.22,35.23` | 저장된 후보 점을 지도 범위로 필터 |
+| `/api/crosswalks?speed=0.8&radius=300&bbox=129.05,35.13,129.22,35.23` | 전체 횡단보도 점(분석·분석 제외). 묶음에 `points.json`이 있을 때만 적재, 없으면 미적재 안내 |
 | `/api/validation` | V1~V5 결과 그대로 반환 |
 | `/api/meta` | 기준일·출처·한계 그대로 반환 |
 
@@ -57,6 +58,21 @@ docker compose -p onroad-server-tests -f server/compose.test.yml down
 ```
 
 테스트 DB는 내부 네트워크와 임시 메모리 저장소만 사용하며 운영 DB와 분리된다.
+
+## B5 CSV 내려받기와 정적 묶음
+
+| 요청 | 내용 |
+| --- | --- |
+| `/api/export/areas.csv?speed=0.8&radius=300` | 읍면동 집계. 칼럼은 areas 항목과 같다 |
+| `/api/export/crosswalks.csv?speed=0.8&radius=300` | 적재된 상세의 후보 횡단보도. `adm_cd` + 상세 항목, `flags.*`로 펼침 |
+
+UTF-8(BOM) CSV라 엑셀에서 바로 열린다. 참·거짓은 `true`/`false`, 값 없음은 빈칸. 샘플이면 파일 이름에 `_sample`이 붙는다. 미적재 조합은 API와 같은 500 안내 문구.
+
+정적 묶음(서버 없이 데모, F18)은 적재된 결과를 `contracts/README.md` "정적 묶음" 구성 그대로 파일로 쓴다. 한 읽기 트랜잭션에서 내보내 적재 중 결과가 섞이지 않는다.
+
+```bash
+bash server/deploy/export_static.sh /srv/onroad-static   # 비어 있는 폴더
+```
 
 ## B2 결과 적재
 
