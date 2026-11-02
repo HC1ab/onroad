@@ -60,6 +60,19 @@ def read_dongs(raw: Path, crs: str) -> gpd.GeoDataFrame:
     return g.to_crs(crs)
 
 
+def sigungu_of(adm_cd: pd.Series, dongs: pd.DataFrame) -> pd.Series:
+    """점의 adm_cd → 구·군 이름. D12 는 adm_cd2(10자리), C3 샘플은 adm_cd(8자리)라 둘 다 받는다.
+
+    구·군을 못 붙인 점이 있으면 층화 비교가 조용히 비므로 멈춘다.
+    """
+    lookup = pd.concat([dongs.set_index("adm_cd2")["sggnm"], dongs.set_index("adm_cd")["sggnm"]])
+    out = adm_cd.astype(str).map(lookup)
+    if out.isna().any():
+        bad = adm_cd[out.isna()].astype(str).unique()[:5].tolist()
+        raise ValueError(f"구·군을 붙이지 못한 점 {int(out.isna().sum())}곳 (adm_cd 예: {bad})")
+    return out
+
+
 def read_elderly_ratio(raw: Path) -> pd.Series:
     """R3 구·군별 파일(cp949)을 합쳐 adm_cd2 → 65세 이상 비율. 구·군 합계 행(끝 5자리 00000)은 뺀다."""
     frames = [pd.read_csv(f, encoding="cp949", dtype=str) for f in sorted((raw / "population_65").glob("*.csv"))]
@@ -339,7 +352,7 @@ def run(a: argparse.Namespace) -> dict:
 
     cw = read_points_v2(a.points_v2, crs)
     cw["child_zone_m"] = nearest_m(cw, read_child_zones(a.raw, crs))
-    cw["sigungu"] = cw["adm_cd"].map(dongs.set_index("adm_cd")["sggnm"])
+    cw["sigungu"] = sigungu_of(cw["adm_cd"], dongs)
     r7, n7 = v7(cw, cfg)
     near_zone = (cw["protect_zone_m"] <= cfg["exposure_radius_m"]) | (cw["child_zone_m"] <= cfg["child_zone_radius_m"])
     r3 = v3_tier1(cw, read_crash_zones(a.crash_dir, years, crs), years, near_zone, n_perm, seed, a.length_bins)
