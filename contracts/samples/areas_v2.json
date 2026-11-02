@@ -1,0 +1,40 @@
+{
+  "_sample": true,
+  "target": 0.85,
+  "radius_m": 300,
+  "min_sample": 5,
+  "thresholds": {
+    "mean_add_s_median": 0.73,
+    "ratio_65plus_median": 0.271
+  },
+  "items": [
+    {"adm_cd": "21090730", "adm_name": "우1동", "sido": "부산광역시", "sigungu": "해운대구", "n_analyzed": 19, "mean_add_s": 0.48, "n_add2": 0, "coverage_now_mean": 0.732, "coverage_required_mean": 0.765, "ratio_65plus": 0.235, "quadrant": "low_low", "low_sample": false},
+    {"adm_cd": "21090740", "adm_name": "우2동", "sido": "부산광역시", "sigungu": "해운대구", "n_analyzed": 53, "mean_add_s": 0.27, "n_add2": 0, "coverage_now_mean": 0.82, "coverage_required_mean": 0.837, "ratio_65plus": 0.207, "quadrant": "low_low", "low_sample": false},
+    {"adm_cd": "21090530", "adm_name": "중1동", "sido": "부산광역시", "sigungu": "해운대구", "n_analyzed": 36, "mean_add_s": 0.33, "n_add2": 0, "coverage_now_mean": 0.791, "coverage_required_mean": 0.813, "ratio_65plus": 0.2, "quadrant": "low_low", "low_sample": false},
+    {"adm_cd": "21090540", "adm_name": "중2동", "sido": "부산광역시", "sigungu": "해운대구", "n_analyzed": 1, "mean_add_s": 0.0, "n_add2": 0, "coverage_now_mean": 0.994, "coverage_required_mean": 0.994, "ratio_65plus": 0.237, "quadrant": null, "low_sample": true},
+    {"adm_cd": "21090560", "adm_name": "송정동", "sido": "부산광역시", "sigungu": "해운대구", "n_analyzed": 6, "mean_add_s": 0.86, "n_add2": 0, "coverage_now_mean": 0.775, "coverage_required_mean": 0.821, "ratio_65plus": 0.348, "quadrant": "high_high", "low_sample": false},
+    {"adm_cd": "21090580", "adm_name": "반여2동", "sido": "부산광역시", "sigungu": "해운대구", "n_analyzed": 9, "mean_add_s": 0.36, "n_add2": 0, "coverage_now_mean": 0.807, "coverage_required_mean": 0.84, "ratio_65plus": 0.368, "quadrant": "low_high", "low_sample": false},
+    {"adm_cd": "21090590", "adm_name": "반여3동", "sido": "부산광역시", "sigungu": "해운대구", "n_analyzed": 2, "mean_add_s": 0.44, "n_add2": 0, "coverage_now_mean": 0.815, "coverage_required_mean": 0.853, "ratio_65plus": 0.415, "quadrant": null, "low_sample": true},
+    {"adm_cd": "21090620", "adm_name": "반송2동", "sido": "부산광역시", "sigungu": "해운대구", "n_analyzed": 7, "mean_add_s": 0.29, "n_add2": 1, "coverage_now_mean": 0.903, "coverage_required_mean": 0.915, "ratio_65plus": 0.422, "quadrant": "low_high", "low_sample": false},
+    {"adm_cd": "21090640", "adm_name": "재송1동", "sido": "부산광역시", "sigungu": "해운대구", "n_analyzed": 34, "mean_add_s": 0.91, "n_add2": 4, "coverage_now_mean": 0.825, "coverage_required_mean": 0.859, "ratio_65plus": 0.173, "quadrant": "high_low", "low_sample": false},
+    {"adm_cd": "21090650", "adm_name": "재송2동", "sido": "부산광역시", "sigungu": "해운대구", "n_analyzed": 9, "mean_add_s": 0.0, "n_add2": 0, "coverage_now_mean": 0.972, "coverage_required_mean": 0.972, "ratio_65plus": 0.298, "quadrant": "low_high", "low_sample": false},
+    {"adm_cd": "21090660", "adm_name": "좌1동", "sido": "부산광역시", "sigungu": "해운대구", "n_analyzed": 37, "mean_add_s": 1.87, "n_add2": 6, "coverage_now_mean": 0.785, "coverage_required_mean": 0.848, "ratio_65plus": 0.197, "quadrant": "high_low", "low_sample": false},
+    {"adm_cd": "21090670", "adm_name": "좌2동", "sido": "부산광역시", "sigungu": "해운대구", "n_analyzed": 29, "mean_add_s": 0.24, "n_add2": 0, "coverage_now_mean": 0.825, "coverage_required_mean": 0.841, "ratio_65plus": 0.214, "quadrant": "low_low", "low_sample": false},
+    {"adm_cd": "21090680", "adm_name": "좌3동", "sido": "부산광역시", "sigungu": "해운대구", "n_analyzed": 18, "mean_add_s": 0.27, "n_add2": 0, "coverage_now_mean": 0.843, "coverage_required_mean": 0.862, "ratio_65plus": 0.265, "quadrant": "low_low", "low_sample": false},
+    {"adm_cd": "21090690", "adm_name": "좌4동", "sido": "부산광역시", "sigungu": "해운대구", "n_analyzed": 17, "mean_add_s": 1.3, "n_add2": 2, "coverage_now_mean": 0.807, "coverage_required_mean": 0.855, "ratio_65plus": 0.202, "quadrant": "high_low", "low_sample": false},
+    {"adm_cd": "21090700", "adm_name": "반여1동", "sido": "부산광역시", "sigungu": "해운대구", "n_analyzed": 48, "mean_add_s": 0.08, "n_add2": 0, "coverage_now_mean": 0.91, "coverage_required_mean": 0.916, "ratio_65plus": 0.208, "quadrant": "low_low", "low_sample": false},
+    {"adm_cd": "21090710", "adm_name": "반여4동", "sido": "부산광역시", "sigungu": "해운대구", "n_analyzed": 6, "mean_add_s": 0.0, "n_add2": 0, "coverage_now_mean": 0.979, "coverage_required_mean": 0.979, "ratio_65plus": 0.241, "quadrant": "low_low", "low_sample": false},
+    {"adm_cd": "21090720", "adm_name": "반송1동", "sido": "부산광역시", "sigungu": "해운대구", "n_analyzed": 15, "mean_add_s": 0.78, "n_add2": 1, "coverage_now_mean": 0.808, "coverage_required_mean": 0.854, "ratio_65plus": 0.429, "quadrant": "high_high", "low_sample": false},
+    {"adm_cd": "21140510", "adm_name": "남천1동", "sido": "부산광역시", "sigungu": "수영구", "n_analyzed": 12, "mean_add_s": 0.5, "n_add2": 0, "coverage_now_mean": 0.685, "coverage_required_mean": 0.73, "ratio_65plus": 0.23, "quadrant": "low_low", "low_sample": false},
+    {"adm_cd": "21140520", "adm_name": "남천2동", "sido": "부산광역시", "sigungu": "수영구", "n_analyzed": 14, "mean_add_s": 0.58, "n_add2": 0, "coverage_now_mean": 0.685, "coverage_required_mean": 0.734, "ratio_65plus": 0.249, "quadrant": "low_low", "low_sample": false},
+    {"adm_cd": "21140530", "adm_name": "수영동", "sido": "부산광역시", "sigungu": "수영구", "n_analyzed": 17, "mean_add_s": 0.7, "n_add2": 0, "coverage_now_mean": 0.715, "coverage_required_mean": 0.775, "ratio_65plus": 0.376, "quadrant": "low_high", "low_sample": false},
+    {"adm_cd": "21140540", "adm_name": "망미1동", "sido": "부산광역시", "sigungu": "수영구", "n_analyzed": 9, "mean_add_s": 0.8, "n_add2": 0, "coverage_now_mean": 0.742, "coverage_required_mean": 0.795, "ratio_65plus": 0.34, "quadrant": "high_high", "low_sample": false},
+    {"adm_cd": "21140550", "adm_name": "망미2동", "sido": "부산광역시", "sigungu": "수영구", "n_analyzed": 17, "mean_add_s": 0.9, "n_add2": 0, "coverage_now_mean": 0.685, "coverage_required_mean": 0.748, "ratio_65plus": 0.317, "quadrant": "high_high", "low_sample": false},
+    {"adm_cd": "21140560", "adm_name": "광안1동", "sido": "부산광역시", "sigungu": "수영구", "n_analyzed": 4, "mean_add_s": 0.74, "n_add2": 0, "coverage_now_mean": 0.685, "coverage_required_mean": 0.735, "ratio_65plus": 0.251, "quadrant": null, "low_sample": true},
+    {"adm_cd": "21140570", "adm_name": "광안2동", "sido": "부산광역시", "sigungu": "수영구", "n_analyzed": 19, "mean_add_s": 0.47, "n_add2": 0, "coverage_now_mean": 0.726, "coverage_required_mean": 0.767, "ratio_65plus": 0.247, "quadrant": "low_low", "low_sample": false},
+    {"adm_cd": "21140580", "adm_name": "광안3동", "sido": "부산광역시", "sigungu": "수영구", "n_analyzed": 1, "mean_add_s": 1.08, "n_add2": 0, "coverage_now_mean": 0.685, "coverage_required_mean": 0.752, "ratio_65plus": 0.281, "quadrant": null, "low_sample": true},
+    {"adm_cd": "21140590", "adm_name": "광안4동", "sido": "부산광역시", "sigungu": "수영구", "n_analyzed": 3, "mean_add_s": 0.8, "n_add2": 0, "coverage_now_mean": 0.685, "coverage_required_mean": 0.733, "ratio_65plus": 0.246, "quadrant": null, "low_sample": true},
+    {"adm_cd": "21140600", "adm_name": "민락동", "sido": "부산광역시", "sigungu": "수영구", "n_analyzed": 34, "mean_add_s": 0.56, "n_add2": 0, "coverage_now_mean": 0.692, "coverage_required_mean": 0.742, "ratio_65plus": 0.256, "quadrant": "low_low", "low_sample": false},
+    {"adm_cd": "21090750", "adm_name": "우3동", "sido": "부산광역시", "sigungu": "해운대구", "n_analyzed": 38, "mean_add_s": 0.15, "n_add2": 0, "coverage_now_mean": 0.867, "coverage_required_mean": 0.877, "ratio_65plus": 0.215, "quadrant": "low_low", "low_sample": false}
+  ]
+}

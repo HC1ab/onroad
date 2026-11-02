@@ -1,21 +1,23 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "areas.schema.json",
-  "title": "GET /api/areas?speed=&radius=&sido=&sigungu=",
-  "description": "읍면동별 집계. 속도 하나 기준. 지도 채색(F5), 사분면(F5), 상위 N(F7)에 쓴다.",
+  "title": "GET /api/areas?speed=&radius=&sido=&sigungu= | GET /api/areas?target=&radius=&sido=&sigungu=",
+  "description": "읍면동별 집계. 지도 채색(F5), 사분면(F5), 상위 N(F7)에 쓴다. 두 가지 형태가 있다. speed 를 주면 v1(속도 하나 기준 gap>0 비율), target 을 주면 v2(3단계 기준 평균 추가 초, 결정 009). 한 응답에는 둘 중 하나만 있다.",
   "type": "object",
-  "required": ["speed", "thresholds", "items"],
+  "required": ["thresholds", "items"],
   "properties": {
     "_sample": { "$ref": "common.schema.json#/$defs/sample_flag" },
     "speed": { "$ref": "common.schema.json#/$defs/speed" },
-    "radius_m": { "type": "integer", "enum": [200, 300, 500], "description": "n_candidate 를 계산한 노출 반경(m). 요청의 radius 와 같다." },
+    "target": { "$ref": "common.schema.json#/$defs/target", "description": "v2. 목표 커버리지. 요청의 target 과 같다." },
+    "radius_m": { "type": "integer", "enum": [200, 300, 500], "description": "n_candidate·단계(1·2)를 계산한 반경(m). 요청의 radius 와 같다." },
     "min_sample": { "type": "integer", "minimum": 1, "description": "표본 하한(config.yaml min_sample). 분석 횡단보도가 이보다 적으면 low_sample. 화면의 표본 부족 기준 표시에 쓴다." },
     "thresholds": {
       "type": "object",
-      "description": "사분면 경계선 기본값(전국 중앙값). 화면에서 조절할 수 있다.",
-      "required": ["short_ratio_median", "ratio_65plus_median"],
+      "description": "사분면 경계선 기본값(중앙값, low_sample 제외). 화면에서 조절할 수 있다. v1 은 short_ratio_median, v2 는 mean_add_s_median 을 쓴다.",
+      "required": ["ratio_65plus_median"],
       "properties": {
         "short_ratio_median": { "$ref": "common.schema.json#/$defs/ratio" },
+        "mean_add_s_median": { "type": "number", "minimum": 0, "description": "v2. 읍면동 평균 추가 초의 중앙값" },
         "ratio_65plus_median": { "$ref": "common.schema.json#/$defs/ratio" }
       }
     },
@@ -23,26 +25,50 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["adm_cd", "adm_name", "sido", "sigungu", "n_analyzed", "n_short", "short_ratio", "mean_gap_s", "ratio_65plus", "quadrant", "n_candidate", "low_sample"],
+        "required": ["adm_cd", "adm_name", "sido", "sigungu", "n_analyzed", "ratio_65plus", "quadrant", "low_sample"],
         "properties": {
           "adm_cd": { "$ref": "common.schema.json#/$defs/adm_cd" },
           "adm_name": { "type": "string" },
           "sido": { "type": "string" },
           "sigungu": { "type": "string" },
-          "n_analyzed": { "type": "integer", "minimum": 0, "description": "분석 가능한 횡단보도 수" },
-          "n_short": { "type": "integer", "minimum": 0, "description": "gap > 0 인 횡단보도 수" },
-          "short_ratio": { "type": ["number", "null"], "minimum": 0, "maximum": 1, "description": "n_short / n_analyzed. 분석 0건이면 null" },
-          "mean_gap_s": { "type": ["number", "null"], "description": "gap > 0 인 횡단보도의 평균 짧은 초. 없으면 null" },
+          "n_analyzed": { "type": "integer", "minimum": 0, "description": "분석 가능한 횡단보도 수(v2 는 data_check 제외)" },
+          "n_short": { "type": "integer", "minimum": 0, "description": "v1. gap > 0 인 횡단보도 수" },
+          "short_ratio": { "type": ["number", "null"], "minimum": 0, "maximum": 1, "description": "v1. n_short / n_analyzed. 분석 0건이면 null" },
+          "mean_gap_s": { "type": ["number", "null"], "description": "v1. gap > 0 인 횡단보도의 평균 짧은 초. 없으면 null" },
+          "n_candidate": { "type": "integer", "minimum": 0, "description": "v1. 후보 횡단보도 수(gap > 0 그리고 노출 1개 이상)" },
+          "mean_add_s": { "type": ["number", "null"], "minimum": 0, "description": "v2. 분석 횡단보도 전체(추가 0 포함)의 평균 추가 초. 채색·사분면 가로축. 분석 0건이면 null" },
+          "n_add2": { "type": "integer", "minimum": 0, "description": "v2. 추가 초가 config add_seconds_threshold(2초) 이상인 횡단보도 수. 툴팁·상세용" },
+          "coverage_now_mean": { "anyOf": [{ "$ref": "common.schema.json#/$defs/ratio" }, { "type": "null" }], "description": "v2. coverage_now 평균(고령 보행자 기준)" },
+          "coverage_required_mean": { "anyOf": [{ "$ref": "common.schema.json#/$defs/ratio" }, { "type": "null" }], "description": "v2. coverage_required 평균(고령 보행자 기준)" },
           "ratio_65plus": { "type": ["number", "null"], "minimum": 0, "maximum": 1, "description": "65세 이상 인구 비율. 인구 미매칭이면 null" },
           "quadrant": {
             "type": ["string", "null"],
             "enum": ["high_high", "high_low", "low_high", "low_low", null],
-            "description": "짧음 비율_고령 비율 기준 사분면. high_high 가 점검 우선순위 후보. 값이 없으면 null"
+            "description": "가로축(v1 짧음 비율, v2 평균 추가 초)_고령 비율 기준 사분면. high_high 가 점검 우선순위 후보. 값이 없으면 null"
           },
-          "n_candidate": { "type": "integer", "minimum": 0, "description": "후보 횡단보도 수(gap > 0 그리고 노출 1개 이상)" },
           "low_sample": { "type": "boolean", "description": "n_analyzed 가 표본 하한(min_sample) 미만이면 true. 회색 처리·순위 제외" }
         }
       }
     }
-  }
+  },
+  "oneOf": [
+    {
+      "description": "v1: 속도 하나 기준",
+      "required": ["speed"],
+      "not": { "required": ["target"] },
+      "properties": {
+        "thresholds": { "required": ["short_ratio_median"] },
+        "items": { "items": { "required": ["n_short", "short_ratio", "mean_gap_s", "n_candidate"] } }
+      }
+    },
+    {
+      "description": "v2: 3단계 기준(목표 커버리지)",
+      "required": ["target"],
+      "not": { "required": ["speed"] },
+      "properties": {
+        "thresholds": { "required": ["mean_add_s_median"] },
+        "items": { "items": { "required": ["mean_add_s", "n_add2", "coverage_now_mean", "coverage_required_mean"] } }
+      }
+    }
+  ]
 }

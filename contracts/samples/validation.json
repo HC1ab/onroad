@@ -149,5 +149,51 @@
       }
     ]
   },
-  "v5": null
+  "v5": null,
+  "v6": {
+    "n_stations": 101,
+    "n_market_stations": 7,
+    "diff_pp": 10.95,
+    "p_value": 0.0036,
+    "n_permutations": 5000,
+    "seed": 20261101,
+    "slope": 0.8,
+    "uplift": 0.137,
+    "uplift_range": [
+      0.063,
+      0.157
+    ],
+    "sensitivity": [
+      {
+        "param": "radius_m",
+        "value": "500",
+        "n_market_stations": 10,
+        "diff_pp": 4.7,
+        "p_value": 0.0752,
+        "uplift": null
+      }
+    ]
+  },
+  "v7": {
+    "groups": [
+      {
+        "group": "senior_zone",
+        "radius_m": 300,
+        "n": 222,
+        "n_formula_07": 31
+      },
+      {
+        "group": "child_zone",
+        "radius_m": 150,
+        "n": 671,
+        "n_formula_07": 188
+      },
+      {
+        "group": "outside",
+        "radius_m": null,
+        "n": 2725,
+        "n_formula_07": 127
+      }
+    ]
+  }
 }
