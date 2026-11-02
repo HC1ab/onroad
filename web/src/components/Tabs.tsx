@@ -3,6 +3,7 @@ import { ROUTE_HASH, type Route } from '../lib/route'
 const TABS: { route: Route; label: string }[] = [
   { route: 'map', label: '지도' },
   { route: 'validation', label: '검증' },
+  { route: 'about', label: 'About' },
 ]
 
 /** 헤더 탭. 주소의 # 부분을 바꿔 화면을 전환한다. */

@@ -2,44 +2,35 @@ import type {
   AreaCrosswalksResponse,
   Radius,
   AreasResponse,
+  AreasV2Response,
   BoundariesResponse,
   CandidatesResponse,
   MetaResponse,
+  PointsResponse,
   Speed,
+  Target,
   ValidationResponse,
 } from './types'
+import { candidatesAsPoints, inBbox, mockPointsFor } from '../lib/points'
+import { ApiError, getJson, NOT_LOADED_MESSAGE } from './http'
+import { staticApi } from './static'
+import { MOCK_COEFFICIENTS, MOCK_V6, MOCK_V7, mockAreasV2, mockPointsV2, mockSensitivity } from '../lib/mockV2'
+
+export { ApiError }
 
 /**
  * real: 서버 API(/api)와 정적 경계 파일(/data)을 읽는다.
  * mock: contracts/samples 의 가상 데이터를 읽는다(서버 없이 화면 개발용, PRD F17).
+ * static: 서버가 내보낸 정적 묶음을 읽는다(서버 없이 데모, F18). `vite build --mode static`.
  * 값이 없으면 mock 으로 시작한다.
  */
-export type ApiMode = 'real' | 'mock'
-export const API_MODE: ApiMode = import.meta.env.VITE_API_MODE === 'real' ? 'real' : 'mock'
-
-export class ApiError extends Error {
-  status: number
-  constructor(message: string, status: number) {
-    super(message)
-    this.name = 'ApiError'
-    this.status = status
-  }
-}
-
-async function getJson<T>(url: string, signal?: AbortSignal): Promise<T> {
-  const res = await fetch(url, { signal, headers: { Accept: 'application/json' } })
-  if (!res.ok) {
-    let message = `요청에 실패했습니다 (${res.status}).`
-    try {
-      const body = await res.json()
-      if (body?.error?.message) message = body.error.message
-    } catch {
-      // 오류 본문이 JSON이 아니면 기본 문구를 쓴다.
-    }
-    throw new ApiError(message, res.status)
-  }
-  return res.json() as Promise<T>
-}
+export type ApiMode = 'real' | 'mock' | 'static'
+export const API_MODE: ApiMode =
+  import.meta.env.MODE === 'static' || import.meta.env.VITE_API_MODE === 'static'
+    ? 'static'
+    : import.meta.env.VITE_API_MODE === 'real'
+      ? 'real'
+      : 'mock'
 
 // ---- mock ----
 
@@ -96,12 +87,22 @@ async function mockRecenter(items: AreaCrosswalksResponse['items'], admCd: strin
   return items.map((c) => ({ ...c, lon: c.lon - mx + cx, lat: c.lat - my + cy }))
 }
 
+async function mockV2Base() {
+  const points = (await import('@contracts/samples/points.json')).default as unknown as PointsResponse
+  const areas = (await import('@contracts/samples/areas.json')).default as AreasResponse
+  return { points, areas }
+}
+
+/** contracts/samples 의 v2 샘플(points_v2·areas_v2)이 있는 조합 */
+const isV2SampleCombo = (target: Target, radius: Radius) => target === 0.85 && radius === 300
+
 // ---- 공개 API ----
 
 export const api = {
   /** 전국 읍면동 값. 지역 거르기는 화면에서 한다(지도 색은 전국 유지). */
   areas(speed: Speed, radius: Radius, signal?: AbortSignal): Promise<AreasResponse> {
     if (API_MODE === 'mock') return mockAreas(speed, radius, signal)
+    if (API_MODE === 'static') return staticApi.areas(speed, radius, signal)
     return getJson(`/api/areas?speed=${speed}&radius=${radius}`, signal)
   },
 
@@ -117,6 +118,7 @@ export const api = {
       })
       return delay({ ...sample, adm_cd: admCd, speed, radius_m: radius, items }, signal)
     }
+    if (API_MODE === 'static') return staticApi.areaCrosswalks(admCd, speed, radius, signal)
     return getJson(`/api/areas/${encodeURIComponent(admCd)}/crosswalks?speed=${speed}&radius=${radius}`, signal)
   },
 
@@ -127,22 +129,81 @@ export const api = {
       const features = radius === 200 ? sample.features.filter((f) => f.properties.exposure_cnt >= 2) : sample.features
       return delay({ ...sample, radius_m: radius, features }, signal)
     }
+    if (API_MODE === 'static') return staticApi.candidates(speed, radius, bbox)
     const q = new URLSearchParams({ speed: String(speed), radius: String(radius) })
     if (bbox) q.set('bbox', bbox.join(','))
     return getJson(`/api/crosswalks/candidates?${q}`, signal)
   },
 
+  /** 전체 횡단보도 점(분석·분석 제외, 피드백 1·12번). 서버·묶음에 아직 없으면 후보 점으로 대신한다. */
+  async points(speed: Speed, radius: Radius, bbox?: [number, number, number, number], signal?: AbortSignal): Promise<PointsResponse> {
+    if (API_MODE === 'mock') {
+      const sample = (await import('@contracts/samples/points.json')).default as unknown as PointsResponse
+      const data = mockPointsFor(sample, speed, radius)
+      return delay(bbox ? { ...data, features: data.features.filter((f) => inBbox(f.geometry.coordinates, bbox)) } : data, signal)
+    }
+    try {
+      if (API_MODE === 'static') return await staticApi.points(speed, radius, bbox)
+      const q = new URLSearchParams({ speed: String(speed), radius: String(radius) })
+      if (bbox) q.set('bbox', bbox.join(','))
+      return await getJson<PointsResponse>(`/api/crosswalks?${q}`, signal)
+    } catch (e) {
+      if (e instanceof ApiError && e.message === NOT_LOADED_MESSAGE) {
+        return candidatesAsPoints(await api.candidates(speed, radius, bbox, signal))
+      }
+      throw e
+    }
+  },
+
+  /** v2(결정 009) 읍면동 값. 서버·묶음이 아직 v2 를 내보내지 않으면 미적재 오류 */
+  async areasV2(target: Target, radius: Radius, signal?: AbortSignal): Promise<AreasV2Response> {
+    if (API_MODE === 'mock') {
+      // C3 샘플은 목표 85%·반경 300m 한 조합뿐이라, 나머지 조합은 기존 샘플에서 계산한 mock 으로 보여준다.
+      if (isV2SampleCombo(target, radius)) {
+        return delay((await import('@contracts/samples/areas_v2.json')).default as unknown as AreasV2Response, signal)
+      }
+      const { points, areas } = await mockV2Base()
+      return delay(mockAreasV2(areas, mockPointsV2(points, areas, target, radius), target, radius), signal)
+    }
+    if (API_MODE === 'static') throw new ApiError(NOT_LOADED_MESSAGE, 500)
+    return getJson(`/api/areas?target=${target}&radius=${radius}`, signal)
+  },
+
+  /** v2 횡단보도 점(단계·추가 초·이유·커버리지) */
+  async pointsV2(target: Target, radius: Radius, bbox?: [number, number, number, number], signal?: AbortSignal): Promise<PointsResponse> {
+    if (API_MODE === 'mock') {
+      const data = isV2SampleCombo(target, radius)
+        ? ((await import('@contracts/samples/points_v2.json')).default as unknown as PointsResponse)
+        : await mockV2Base().then(({ points, areas }) => mockPointsV2(points, areas, target, radius))
+      return delay(bbox ? { ...data, features: data.features.filter((f) => inBbox(f.geometry.coordinates, bbox)) } : data, signal)
+    }
+    if (API_MODE === 'static') throw new ApiError(NOT_LOADED_MESSAGE, 500)
+    const q = new URLSearchParams({ target: String(target), radius: String(radius) })
+    if (bbox) q.set('bbox', bbox.join(','))
+    return getJson(`/api/crosswalks?${q}`, signal)
+  },
+
   async validation(signal?: AbortSignal): Promise<ValidationResponse> {
-    if (API_MODE === 'mock') return delay((await import('@contracts/samples/validation.json')).default as ValidationResponse, signal)
+    if (API_MODE === 'mock') {
+      const v = (await import('@contracts/samples/validation.json')).default as ValidationResponse
+      // v6·v7 은 계약 C3(#73) 전이라 웹 mock 값(결정 009)을 붙인다.
+      return delay({ ...v, v6: v.v6 ?? MOCK_V6, v7: v.v7 ?? MOCK_V7 }, signal)
+    }
+    if (API_MODE === 'static') return staticApi.validation(signal)
     return getJson('/api/validation', signal)
   },
 
   async meta(signal?: AbortSignal): Promise<MetaResponse> {
-    if (API_MODE === 'mock') return delay((await import('@contracts/samples/meta.json')).default as MetaResponse, signal)
+    if (API_MODE === 'mock') {
+      const m = (await import('@contracts/samples/meta.json')).default as MetaResponse
+      const { points, areas } = await mockV2Base()
+      return delay({ ...m, coefficients: m.coefficients ?? MOCK_COEFFICIENTS, sensitivity: m.sensitivity ?? mockSensitivity(points, areas) }, signal)
+    }
+    if (API_MODE === 'static') return staticApi.meta(signal)
     return getJson('/api/meta', signal)
   },
 
-  /** 읍면동 경계. 값은 담지 않고 areas 의 adm_cd 로 붙인다. 실서비스는 nginx 정적 파일(/data). */
+  /** 읍면동 경계. 값은 담지 않고 areas 의 adm_cd 로 붙인다. 실서비스·static 모두 정적 파일(/data). */
   async boundaries(signal?: AbortSignal): Promise<BoundariesResponse> {
     if (API_MODE === 'mock') return (await import('@contracts/samples/boundaries.json')).default as unknown as BoundariesResponse
     return getJson('/data/boundaries.json', signal)

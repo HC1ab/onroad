@@ -5,6 +5,7 @@ import { classify, effectiveThresholds } from '../lib/quadrant'
 import { rankAreas, SORT_LABEL, TOP_N_OPTIONS, type SortKey } from '../lib/ranking'
 import { regionLabel } from '../lib/region'
 import { useAppState } from '../state/AppState'
+import { DownloadMenu } from './DownloadMenu'
 
 /** 상위 N 지역 목록 (F7). 행을 누르면 지도가 그 지역으로 이동하고 상세가 열린다. */
 export function TopList({ data }: { data: AreasResponse | null }) {
@@ -30,6 +31,7 @@ export function TopList({ data }: { data: AreasResponse | null }) {
     <section className="card toplist">
       <div className="card-head">
         <h3>{regionLabel(region)} 상위 {n}개 지역</h3>
+        <DownloadMenu />
       </div>
       <div className="toplist-controls">
         <label>

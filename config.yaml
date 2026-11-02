@@ -30,7 +30,7 @@ tier1_speed_mps: 0.7                     # 1단계: 노인보호구역(O1 코드
 big_market_min_stores: 200               # 2단계: 대형 전통시장 점포 수 기준 (V6 민감도: 100·150·300)
 market_exclude_keywords: ["산업용재", "공구", "전자", "기계", "자동차"]  # 고령자 목적지로 보기 어려운 상가
 market_elderly_uplift: 0.137             # 2단계: 이용자 고령 비율 = 주민 고령 비율 + 이 값 (V6: 10.95%p / 0.80)
-market_elderly_uplift_range: [0.063, 0.157]  # V6 역 하나씩·수안·부전 빼기 범위. 화면 민감도 표시용
+market_elderly_uplift_range: [0.060, 0.156]  # V6 역 하나씩·수안·부전 빼기 범위(EPSG:5179, D13 #76). 화면 민감도 표시용
 add_seconds_threshold: 2                 # n_add2: 이 초 이상 추가되는 횡단보도 수 (툴팁·상세용)
 area_metric: mean_add_s                  # 읍면동 채색·사분면 가로축: 평균 추가 초 (009 검수 보완)
 coverage_basis: elderly                  # 화면 커버리지는 고령 보행자 기준. 이용자 구성은 속도 v 계산에만
