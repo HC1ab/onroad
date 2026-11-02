@@ -105,7 +105,7 @@
         "enum": [
           0.7,
           0.8,
-          1
+          1.0
         ],
         "description": "보행 속도 가정(m/s). 0.7 노인, 0.8 보행약자, 1.0 일반."
       },
@@ -141,13 +141,12 @@
         "required": [
           "senior_center",
           "market",
-          "protect_zone",
-          "crash_zone_past"
+          "protect_zone"
         ],
         "properties": {
           "senior_center": {
             "type": "boolean",
-            "description": "경로당·마을회관"
+            "description": "경로당 밀집: 반경 안 경로당(마을회관및경로당 포함) 수가 부산 상위 25% 이상(config.yaml senior_center_density_quantile)"
           },
           "market": {
             "type": "boolean",
@@ -155,11 +154,7 @@
           },
           "protect_zone": {
             "type": "boolean",
-            "description": "노인·장애인 보호구역"
-          },
-          "crash_zone_past": {
-            "type": "boolean",
-            "description": "노인 보행사고 다발지역(과거 연도)"
+            "description": "노인 보호구역(장애인 보호구역 제외)"
           },
           "hospital": {
             "type": [
@@ -279,7 +274,7 @@
       },
       "thresholds": {
         "type": "object",
-        "description": "사분면 경계선 기본값(전국 중앙값). 화면에서 조절할 수 있다.",
+        "description": "사분면 경계선 기본값(부산 읍면동 중앙값). 화면에서 조절할 수 있다.",
         "required": [
           "short_ratio_median",
           "ratio_65plus_median"
