@@ -17,6 +17,7 @@ from .errors import NOT_LOADED
 
 SPEEDS = (0.7, 0.8, 1.0)
 RADII = (200, 300, 500)
+TARGETS = (0.85, 0.9, 0.95)
 
 
 def _loaded(load, *args):
@@ -69,8 +70,23 @@ def build(conn, out):
                 _write(out / 'points' / f'{key}.json', points)
             results.append({'speed': speed, 'radius_m': radius, **({'points': True} if points else {}),
                             'details': details})
+    results_v2 = []
+    for target in TARGETS:
+        for radius in RADII:
+            key = f'{target:.2f}_{radius}'
+            areas = _loaded(routes.load_areas_v2, conn, target, radius)
+            points = _loaded(routes.load_points_v2, conn, target, radius)
+            if areas is None:
+                if points is not None:
+                    print(f'skip {key}: areas_v2 없이 points_v2 만 적재됨')
+                continue
+            _write(out / 'areas_v2' / f'{key}.json', areas)
+            if points is not None:
+                _write(out / 'points_v2' / f'{key}.json', points)
+            results_v2.append({'target': target, 'radius_m': radius, **({'points': True} if points else {})})
     manifest = {**({'_sample': True} if sample else {}),
-                'built_at': datetime.now(timezone.utc).isoformat(timespec='seconds'), 'results': results}
+                'built_at': datetime.now(timezone.utc).isoformat(timespec='seconds'), 'results': results,
+                **({'results_v2': results_v2} if results_v2 else {})}
     _write(out / 'manifest.json', manifest)
     return manifest
 
@@ -87,7 +103,9 @@ def main():
     except (HTTPException, psycopg.Error, OSError) as exc:
         parser.exit(1, f'Export failed ({type(exc).__name__}).\n')
     combos = ', '.join(f"{r['speed']:.1f}/{r['radius_m']}m(상세 {len(r['details'])})" for r in manifest['results'])
-    print(f'Exported {len(manifest["results"])} combinations: {combos or "없음"}; sample={"_sample" in manifest}')
+    combos_v2 = ', '.join(f"{r['target']:.2f}/{r['radius_m']}m" for r in manifest.get('results_v2', []))
+    print(f'Exported {len(manifest["results"])} combinations: {combos or "없음"}; v2: {combos_v2 or "없음"}; '
+          f'sample={"_sample" in manifest}')
 
 
 if __name__ == '__main__':

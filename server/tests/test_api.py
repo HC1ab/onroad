@@ -35,20 +35,22 @@ def database(monkeypatch):
     ('/api/areas', 'areas'), ('/api/areas/21090730/crosswalks', 'area_crosswalks'),
     ('/api/crosswalks/candidates', 'candidates'), ('/api/meta', 'meta'),
     ('/api/validation', 'validation'), ('/api/crosswalks', 'points'),
+    ('/api/areas?target=0.85&radius=300', 'areas_v2'), ('/api/crosswalks?target=0.85&radius=300', 'points_v2'),
 ])
 def test_response_contract_and_source_values(database, path, kind):
     response = client.get(path)
     assert response.status_code == 200
     schemas = {p.name: json.loads(p.read_text(encoding='utf-8')) for p in ROOT.glob('*.schema.json')}
     registry = Registry().with_resources((n, Resource.from_contents(s)) for n, s in schemas.items())
-    Draft202012Validator(schemas[f'{kind}.schema.json'], registry=registry).validate(response.json())
+    schema = schemas[f"{kind.removesuffix('_v2')}.schema.json"]
+    Draft202012Validator(schema, registry=registry).validate(response.json())
     expected = json.loads((ROOT / 'samples' / f'{kind}.json').read_text(encoding='utf-8'))
     actual = response.json()
-    if kind == 'areas':
+    if kind in ('areas', 'areas_v2'):
         expected['items'].sort(key=lambda x: x['adm_cd'])
     elif kind == 'area_crosswalks':
         expected['items'].sort(key=lambda x: (-x['gap_s'], x['cw_id']))
-    elif kind in ('candidates', 'points'):
+    elif kind in ('candidates', 'points', 'points_v2'):
         expected['features'].sort(key=lambda x: x['properties']['cw_id'])
     assert actual == expected
 
@@ -64,6 +66,9 @@ def test_response_contract_and_source_values(database, path, kind):
     '/api/crosswalks/candidates?bbox=0,0,1,91',
     '/api/crosswalks/candidates?bbox=0,0,1',
     '/api/crosswalks?bbox=10,0,1,1', '/api/crosswalks?radius=250',
+    '/api/areas?target=0.8', '/api/areas?target=foo', '/api/areas?target=',
+    '/api/crosswalks?target=1', '/api/crosswalks?target=nan',
+    '/api/areas?target=0.85&speed=2', '/api/crosswalks?target=0.85&radius=400',
 ])
 def test_invalid_parameters_without_database(path):
     response = client.get(path)
@@ -161,6 +166,8 @@ def test_swagger_response_schemas():
         response = schema['paths'][path]['get']['responses']
         assert '422' not in response
         assert response['200']['content']['application/json']['schema']['required']
+    for path in ['/api/areas', '/api/crosswalks']:
+        assert 'target' in [p['name'] for p in schema['paths'][path]['get']['parameters']]
     if ROOT.exists():
         assert SCHEMAS == {p.name: json.loads(p.read_text(encoding='utf-8')) for p in ROOT.glob('*.schema.json')}
 
@@ -175,6 +182,9 @@ def test_csv_exports(database):
     expected = json.loads((ROOT / 'samples' / 'areas.json').read_text(encoding='utf-8'))
     assert [r['adm_cd'] for r in rows] == sorted(i['adm_cd'] for i in expected['items'])
     assert rows[0]['low_sample'] in ('true', 'false')
+    assert rows[0]['n_short'] != ''
+    # CSV 는 v1 형식 그대로다. C3 스키마의 v2 전용 필드가 빈 칼럼으로 섞이지 않는다.
+    assert not {'mean_add_s', 'n_add2', 'coverage_now_mean', 'coverage_required_mean'} & rows[0].keys()
 
     response = client.get('/api/export/crosswalks.csv')
     assert response.status_code == 200
@@ -200,9 +210,12 @@ def test_static_bundle_matches_api(database, tmp_path):
     Draft202012Validator(schemas['static_manifest.schema.json'], registry=registry).validate(manifest)
     assert manifest['_sample'] is True
     assert manifest['results'] == [{'speed': 0.8, 'radius_m': 300, 'points': True, 'details': ['21090730']}]
+    assert manifest['results_v2'] == [{'target': 0.85, 'radius_m': 300, 'points': True}]
     for file, path in (('areas/0.8_300.json', '/api/areas'), ('candidates/0.8_300.json', '/api/crosswalks/candidates'),
                        ('crosswalks/0.8_300/21090730.json', '/api/areas/21090730/crosswalks'),
                        ('points/0.8_300.json', '/api/crosswalks'),
+                       ('areas_v2/0.85_300.json', '/api/areas?target=0.85'),
+                       ('points_v2/0.85_300.json', '/api/crosswalks?target=0.85'),
                        ('meta.json', '/api/meta'), ('validation.json', '/api/validation')):
         assert json.loads((tmp_path / file).read_text(encoding='utf-8')) == client.get(path).json()
     for name in ('areas', 'crosswalks'):
@@ -236,3 +249,119 @@ def test_min_sample_and_points_optional(database):
         ingest(conn, bundle, True)
     assert client.get('/api/crosswalks').status_code == 500
     assert client.get('/api/areas').status_code == 200
+
+
+NOT_LOADED_MESSAGE = '요청한 속도·반경·지역의 결과가 아직 적재되지 않았습니다.'
+
+
+def test_v2_shape_keeps_v1_responses_apart(database):
+    v1, v2 = client.get('/api/areas').json(), client.get('/api/areas?target=0.85').json()
+    assert 'target' not in v1 and 'speed' in v1 and 'n_short' in v1['items'][0]
+    assert 'speed' not in v2 and v2['target'] == 0.85 and 'mean_add_s' in v2['items'][0]
+    assert v2['min_sample'] == 5 and 'mean_add_s_median' in v2['thresholds']
+    # 같은 cw_id 라도 target 없는 요청에는 v2 필드가 없다.
+    v1_point = client.get('/api/crosswalks').json()['features'][0]['properties']
+    assert 'tier' not in v1_point
+
+
+def test_v2_speed_handling(database):
+    """areas 는 target 이 있으면 speed 를 무시하고, 점의 v1 필드는 적재된 속도만 내준다."""
+    assert client.get('/api/areas?target=0.85&speed=0.7').json() == client.get('/api/areas?target=0.85').json()
+    assert client.get('/api/crosswalks?target=0.85&speed=0.8').status_code == 200
+    response = client.get('/api/crosswalks?target=0.85&speed=0.7')
+    assert response.status_code == 500
+    assert response.json()['error']['message'] == NOT_LOADED_MESSAGE
+
+
+def test_v2_not_loaded_is_not_empty(database):
+    for path in ('/api/areas?target=0.9', '/api/areas?target=0.95', '/api/areas?target=0.85&radius=500',
+                 '/api/crosswalks?target=0.9', '/api/crosswalks?target=0.85&radius=200'):
+        response = client.get(path)
+        assert response.status_code == 500
+        assert response.json()['error']['message'] == NOT_LOADED_MESSAGE
+
+
+def test_v2_filters_and_data_check(database):
+    filtered = client.get('/api/areas', params={'target': 0.85, 'sido': '부산광역시', 'sigungu': '해운대구'}).json()
+    everything = client.get('/api/areas?target=0.85').json()
+    assert 0 < len(filtered['items']) < len(everything['items'])
+    assert all(i['sigungu'] == '해운대구' for i in filtered['items'])
+    assert filtered['thresholds'] == everything['thresholds']
+
+    features = client.get('/api/crosswalks?target=0.85').json()['features']
+    assert {f['properties']['status'] for f in features} == {'analyzed', 'excluded', 'data_check'}
+    for p in (f['properties'] for f in features if f['properties']['status'] == 'data_check'):
+        assert p['check_reason'] and p['is_candidate'] is False
+        assert p['t_need_s'] is None and p['gap_s'] is None and p['t_required_s'] is None and p['add_s'] is None
+        assert p['tier'] is None
+    box = '129.13,35.17,129.16,35.19'
+    inside = client.get(f'/api/crosswalks?target=0.85&bbox={box}').json()['features']
+    assert 0 < len(inside) < len(features)
+    for f in inside:
+        x, y = f['geometry']['coordinates']
+        assert 129.13 <= x <= 129.16 and 35.17 <= y <= 35.19
+    assert client.get('/api/crosswalks?target=0.85&bbox=0,0,1,1').json()['features'] == []
+
+
+def test_target_is_part_of_the_key(database):
+    """목표 커버리지별 결과를 따로 적재하고, 요청한 target 의 값만 돌려준다."""
+    bundle = read_bundle(ROOT / 'samples', ROOT, True)
+    extra = []
+    for kind, data in bundle:
+        if kind == 'areas_v2':
+            copy = json.loads(json.dumps(data))
+            copy['target'] = 0.9
+            for item in copy['items']:
+                item['n_add2'] = item['n_add2'] + 1
+            extra.append((kind, copy))
+        elif kind == 'points_v2':
+            copy = json.loads(json.dumps(data))
+            copy['target'] = 0.9
+            copy['features'] = copy['features'][:3]
+            extra.append((kind, copy))
+    with psycopg.connect(database) as conn:
+        ingest(conn, bundle + extra, True)
+    a85, a90 = client.get('/api/areas?target=0.85').json(), client.get('/api/areas?target=0.90').json()
+    assert a90['target'] == 0.9
+    by85 = {i['adm_cd']: i['n_add2'] for i in a85['items']}
+    assert all(i['n_add2'] == by85[i['adm_cd']] + 1 for i in a90['items'])
+    assert len(client.get('/api/crosswalks?target=0.9').json()['features']) == 3
+    assert len(client.get('/api/crosswalks?target=0.85').json()['features']) == 87
+
+
+def test_v2_documents_pass_through(database):
+    validation = client.get('/api/validation').json()
+    assert validation['v6']['uplift_range'] and validation['v7']['groups']
+    assert client.get('/api/meta').json()['coefficients']
+
+
+def test_bundle_without_v2_keeps_v1(database):
+    bundle = [(k, d) for k, d in read_bundle(ROOT / 'samples', ROOT, True) if not k.endswith('_v2')]
+    with psycopg.connect(database) as conn:
+        ingest(conn, bundle, True)
+    assert client.get('/api/areas').status_code == 200
+    assert client.get('/api/crosswalks').status_code == 200
+    assert client.get('/api/areas?target=0.85').status_code == 500
+    assert client.get('/api/crosswalks?target=0.85').status_code == 500
+
+
+def test_static_bundle_omits_v2_when_not_loaded(database, tmp_path):
+    bundle = [(k, d) for k, d in read_bundle(ROOT / 'samples', ROOT, True) if not k.endswith('_v2')]
+    with psycopg.connect(database) as conn:
+        ingest(conn, bundle, True)
+    with routes.reader() as conn:
+        manifest = static_bundle.build(conn, tmp_path)
+    assert 'results_v2' not in manifest
+    assert not (tmp_path / 'areas_v2').exists()
+
+
+def test_v1_points_accept_data_check(database):
+    """C3: v1 점 묶음에도 status=data_check 가 올 수 있다."""
+    bundle = read_bundle(ROOT / 'samples', ROOT, True)
+    points = next(d for k, d in bundle if k == 'points')
+    p = next(f['properties'] for f in points['features'] if f['properties']['status'] == 'analyzed')
+    p.update(status='data_check', t_need_s=None, gap_s=None, is_candidate=False, check_reason='기록 방식 확인 필요')
+    with psycopg.connect(database) as conn:
+        ingest(conn, bundle, True)
+    statuses = {f['properties']['status'] for f in client.get('/api/crosswalks').json()['features']}
+    assert 'data_check' in statuses
