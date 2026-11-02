@@ -18,7 +18,10 @@ def _columns(item_schema, prefix=''):
     return columns
 
 
-AREA_COLUMNS = _columns(SCHEMAS['areas.schema.json']['properties']['items']['items'])
+_AREAS = SCHEMAS['areas.schema.json']
+# CSV 는 v1(speed) 집계만 내려준다. 스키마의 v2 전용 필드(oneOf 둘째)는 빈 칼럼이 되므로 뺀다.
+_V2_ONLY = set(_AREAS['oneOf'][1]['properties']['items']['items']['required'])
+AREA_COLUMNS = [c for c in _columns(_AREAS['properties']['items']['items']) if c not in _V2_ONLY]
 CROSSWALK_COLUMNS = ['adm_cd'] + _columns(SCHEMAS['area_crosswalks.schema.json']['properties']['items']['items'])
 
 
