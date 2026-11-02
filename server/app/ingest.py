@@ -12,6 +12,8 @@ from referencing import Registry, Resource
 from .settings import get_settings
 
 KINDS = ('areas', 'area_crosswalks', 'candidates', 'validation', 'meta')
+# 없어도 되는 묶음 항목. 전체 횡단보도 점은 파이프라인 결과에 있을 때만 적재한다.
+OPTIONAL_KINDS = ('points',)
 # 반경이 없는 묶음(계약 #46 이전)은 기본 반경으로 본다.
 DEFAULT_RADIUS = 300
 # 반경에 따라 달라지는 항목. 횡단보도 기본 속성(위치·연장·기록값) 비교에서 뺀다.
@@ -24,8 +26,10 @@ def read_bundle(source, contracts, sample=False):
     registry = Registry().with_resources(
         (name, Resource.from_contents(value)) for name, value in schemas.items())
     documents = []
-    for kind in KINDS:
+    for kind in KINDS + OPTIONAL_KINDS:
         paths = sorted(source.rglob(f'{kind}.json'))
+        if kind in OPTIONAL_KINDS and not paths:
+            continue
         if not paths or (kind in ('meta', 'validation') and len(paths) != 1):
             raise ValueError(f'{kind}: missing or duplicate singleton document')
         for path in paths:
@@ -33,8 +37,8 @@ def read_bundle(source, contracts, sample=False):
             Draft202012Validator(schemas[f'{kind}.schema.json'], registry=registry).validate(data)
             if data.get('_sample', False) != sample:
                 raise ValueError('Sample and real results must not be mixed')
-            if kind == 'candidates' and not {'speed', 'radius_m'} <= data.keys():
-                raise ValueError('Candidate import requires explicit speed and radius_m')
+            if kind in ('candidates', 'points') and not {'speed', 'radius_m'} <= data.keys():
+                raise ValueError('Point import requires explicit speed and radius_m')
             documents.append((kind, data))
     return documents
 
@@ -51,7 +55,7 @@ def ingest(conn, documents, sample=False):
     """Caller transaction covers migrations and all writes, including replacement."""
     conn.execute('SELECT pg_advisory_xact_lock(1373013)')
     migrate(conn)
-    conn.execute('TRUNCATE candidate, candidate_layer, crosswalk_gap, crosswalk, area_detail, area_vulnerability, area_summary, admin_area, result_document, dataset')
+    conn.execute('TRUNCATE crosswalk_point, point_layer, candidate, candidate_layer, crosswalk_gap, crosswalk, area_detail, area_vulnerability, area_summary, admin_area, result_document, dataset')
     conn.execute('INSERT INTO dataset (is_sample) VALUES (%s)', (sample,))
     areas = {}
     base_crosswalks = {}
@@ -60,8 +64,8 @@ def ingest(conn, documents, sample=False):
             continue
         speed = data['speed']
         radius = data.get('radius_m', DEFAULT_RADIUS)
-        conn.execute('INSERT INTO area_summary (speed, radius_m, thresholds) VALUES (%s,%s,%s)',
-                     (speed, radius, Jsonb(data['thresholds'])))
+        conn.execute('INSERT INTO area_summary (speed, radius_m, thresholds, min_sample) VALUES (%s,%s,%s,%s)',
+                     (speed, radius, Jsonb(data['thresholds']), data.get('min_sample')))
         for item in data['items']:
             code = item['adm_cd']
             attrs = tuple(item[k] for k in ('adm_name', 'sido', 'sigungu'))
@@ -102,6 +106,14 @@ def ingest(conn, documents, sample=False):
                 lon, lat = feature['geometry']['coordinates']
                 conn.execute('INSERT INTO candidate VALUES (%s,%s,%s,%s,ST_SetSRID(ST_MakePoint(%s,%s),4326),%s)',
                              (data['speed'], data['radius_m'], p['cw_id'], p['adm_cd'], lon, lat, Jsonb(feature)))
+        elif kind == 'points':
+            conn.execute('INSERT INTO point_layer VALUES (%s,%s)', (data['speed'], data['radius_m']))
+            for feature in data['features']:
+                p = feature['properties']
+                lon, lat = feature['geometry']['coordinates']
+                conn.execute('INSERT INTO crosswalk_point VALUES (%s,%s,%s,%s,%s,ST_SetSRID(ST_MakePoint(%s,%s),4326),%s)',
+                             (data['speed'], data['radius_m'], p['cw_id'], p['adm_cd'], p['status'], lon, lat,
+                              Jsonb(feature)))
         elif kind in ('meta', 'validation'):
             conn.execute('INSERT INTO result_document VALUES (%s,%s)', (kind, Jsonb(data)))
 

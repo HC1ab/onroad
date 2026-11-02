@@ -14,6 +14,13 @@ export class ApiError extends Error {
 
 export const notLoaded = () => new ApiError(NOT_LOADED_MESSAGE, 500)
 
+/**
+ * 결과가 아직 없다고 볼 오류: 미적재(500 안내 문구), 또는 서버가 그 경로를 아직 모름(404, 웹이 서버보다 먼저 배포된 경우).
+ * 이때는 화면을 오류로 막지 않고 대신할 수 있는 데이터로 보여준다.
+ */
+export const isNotAvailable = (e: unknown): boolean =>
+  e instanceof ApiError && (e.message === NOT_LOADED_MESSAGE || e.status === 404)
+
 /** 실패 응답을 ApiError 로 바꾼다. 본문이 계약 형식이면 그 문구를 쓴다. */
 export async function errorFrom(res: Response): Promise<ApiError> {
   let message = `요청에 실패했습니다 (${res.status}).`
