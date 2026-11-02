@@ -1,22 +1,59 @@
 import { useState } from 'react'
 import type { V1Result } from '../../api/types'
+import { saveBlob } from '../../api/download'
 import { meter, sec1 } from '../../lib/format'
+import { greensCsv, measurementsCsv, myV1 } from '../../lib/userInputs'
+import { useUserInputs } from '../../state/UserInputs'
 import { Metric, ValidationCard } from './ValidationCard'
+import { BASIS } from './basis'
 
 const W = 420
 const H = 170
 const PAD = { left: 36, right: 10, top: 10, bottom: 26 }
 
-/** V1 현장 실측: 기록된 녹색신호시간과 실제(점등 + 점멸)의 차이 */
-export function V1Card({ v1 }: { v1: V1Result | null }) {
+const MINE_PENDING = '아직 입력한 실측이 없습니다. 지도에서 횡단보도를 누르고 실측 점등·점멸 시간을 입력하면 여기에 바로 반영됩니다.'
+
+/** V1 현장 실측: 기록된 녹색신호시간과 실제(점등 + 점멸)의 차이. 공식 결과와 내 입력(검토 전)을 전환해 본다. */
+export function V1Card({ v1: official }: { v1: V1Result | null }) {
   const [open, setOpen] = useState(false)
+  const [mode, setMode] = useState<'official' | 'mine'>('official')
+  const { inputs } = useUserInputs()
+  const mine = myV1(inputs.measurements)
+  const v1 = mode === 'official' ? official : mine.v1
+  const download = (name: string, text: string) => saveBlob(new Blob([text], { type: 'text/csv;charset=utf-8' }), name)
+
+  const tools = (
+    <div className="seg small" role="radiogroup" aria-label="V1 결과 선택">
+      {(['official', 'mine'] as const).map((m) => (
+        <button key={m} type="button" role="radio" aria-checked={mode === m} className={mode === m ? 'seg-btn on' : 'seg-btn'} onClick={() => setMode(m)}>
+          {m === 'official' ? '공식' : `내 입력 ${inputs.measurements.length}`}
+        </button>
+      ))}
+    </div>
+  )
+
   return (
     <ValidationCard
       id="v1"
+      basis={BASIS.v1}
+      tools={tools}
       title="V1 현장 실측"
       question="기록된 녹색신호시간이 실제와 맞는가, 점멸 시간이 포함되는가"
-      caution="차이가 크면 녹색신호시간 필드의 의미가 달라져 전체 해석이 바뀝니다. 측정은 인도에서만 했습니다."
+      caution={mode === 'official'
+        ? '차이가 크면 녹색신호시간 필드의 의미가 달라져 전체 해석이 바뀝니다. 측정은 인도에서만 했습니다.'
+        : '내 입력은 이 브라우저에만 저장된 검토 전 값이라 공식 결과가 아닙니다. CSV로 내보내 팀 검토를 거친 뒤 공식 V1에 반영합니다.'}
       ready={!!v1}
+      pendingText={mode === 'mine' ? MINE_PENDING : undefined}
+      notice={mode === 'mine' && (
+        <div className="v-mine">
+          <span className="badge mine">내 입력 · 검토 전</span>
+          {mine.skipped > 0 && <span className="muted small">기록값이 없는 {mine.skipped}곳은 차이를 낼 수 없어 뺐습니다.</span>}
+          <span className="v-mine-actions">
+            <button type="button" className="link-btn" disabled={!inputs.measurements.length} onClick={() => download('my_measurements.csv', measurementsCsv(inputs.measurements))}>실측 CSV</button>
+            <button type="button" className="link-btn" disabled={!Object.keys(inputs.greens).length} onClick={() => download('my_green_inputs.csv', greensCsv(inputs.greens))}>녹색시간 입력 CSV</button>
+          </span>
+        </div>
+      )}
       metrics={v1 && (
         <>
           <Metric label="측정한 횡단보도" value={`${v1.n}곳`} />

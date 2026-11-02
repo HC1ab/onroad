@@ -1,10 +1,17 @@
 import type { ReactNode } from 'react'
+import type { Basis } from './basis'
 
 interface Props {
   id: string
   title: string
   /** 이 검증이 묻는 것 (PRD 7장) */
   question: string
+  /** 쓴 데이터 · 방법 · 읽는 법 (처음엔 접어 둔다) */
+  basis?: Basis
+  /** 제목 옆 도구(예: V1 공식/내 입력 전환) */
+  tools?: ReactNode
+  /** 결과 여부와 관계없이 질문 아래에 보여줄 안내 */
+  notice?: ReactNode
   /** 해석할 때 주의할 점. 인과로 읽히지 않게 한다. */
   caution: string
   /** null 이면 "아직 계산 전"을 보여준다 */
@@ -15,11 +22,25 @@ interface Props {
 }
 
 /** 검증 카드 공통 틀: 묻는 것 → 그림 → 보고 수치 → 해석 주의 */
-export function ValidationCard({ id, title, question, caution, ready, pendingText, metrics, children }: Props) {
+export function ValidationCard({ id, title, question, basis, tools, notice, caution, ready, pendingText, metrics, children }: Props) {
   return (
     <section className="card v-card" aria-labelledby={`${id}-title`}>
-      <h3 id={`${id}-title`}>{title}</h3>
+      <div className="card-head">
+        <h3 id={`${id}-title`}>{title}</h3>
+        {tools}
+      </div>
       <p className="v-question"><span className="muted">묻는 것</span> {question}</p>
+      {notice}
+      {basis && (
+        <details className="v-basis">
+          <summary>쓴 데이터 · 방법 · 읽는 법</summary>
+          <dl>
+            <dt>쓴 데이터</dt><dd>{basis.data}</dd>
+            <dt>방법</dt><dd>{basis.method}</dd>
+            <dt>읽는 법</dt><dd>{basis.read}</dd>
+          </dl>
+        </details>
+      )}
       {ready ? (
         <>
           <div className="v-figure">{children}</div>

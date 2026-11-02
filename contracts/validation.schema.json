@@ -144,6 +144,74 @@
           }
         }
       ]
+    },
+    "v6": {
+      "description": "v2. 지하철 무임 비율: 대형 전통시장 근처 역은 주민 고령 비율을 감안해도 무임 비율이 높은가(2단계 시장 보정의 근거). 무임에는 장애인·유공자가 섞여 있고 역 근처만 본다. 없으면 null 또는 생략",
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "required": ["n_stations", "n_market_stations", "diff_pp", "p_value", "n_permutations", "seed", "uplift", "uplift_range"],
+          "properties": {
+            "n_stations": { "type": "integer", "minimum": 0, "description": "비교한 역 수" },
+            "n_market_stations": { "type": "integer", "minimum": 0, "description": "대형 시장 반경 안 역 수" },
+            "diff_pp": { "type": "number", "description": "고령 비율 감안 후 무임 비율 차이(%p)" },
+            "p_value": { "type": "number", "minimum": 0, "maximum": 1, "description": "단측 순열 검정 p" },
+            "n_permutations": { "type": "integer", "minimum": 1 },
+            "seed": { "type": "integer" },
+            "slope": { "type": "number", "description": "주민 고령 비율 1 증가당 무임 비율 증가(회귀 기울기)" },
+            "uplift": { "type": "number", "description": "시장 보정 = diff_pp / 100 / slope (config market_elderly_uplift)" },
+            "uplift_range": {
+              "type": "array",
+              "prefixItems": [{ "type": "number" }, { "type": "number" }],
+              "minItems": 2,
+              "maxItems": 2,
+              "description": "민감도 범위 [최소, 최대] (config market_elderly_uplift_range)"
+            },
+            "sensitivity": {
+              "type": "array",
+              "description": "D13 민감도 표: 점포 기준·반경·연도·역 빼기를 바꿨을 때",
+              "items": {
+                "type": "object",
+                "required": ["param", "value", "diff_pp"],
+                "properties": {
+                  "param": { "type": "string", "enum": ["min_stores", "radius_m", "year", "drop_station"] },
+                  "value": { "type": "string", "description": "바꾼 값 (예: \"150\", \"2019\", \"수안\")" },
+                  "n_market_stations": { "type": "integer", "minimum": 0 },
+                  "diff_pp": { "type": "number" },
+                  "p_value": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+                  "uplift": { "type": ["number", "null"] }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "v7": {
+      "description": "v2. 정책 반영 점검: 기록 보행시간이 0.7 기준식과 같은 비율을 노인보호구역 반경 안 / 어린이보호구역 반경 안(노인 아님) / 둘 다 밖으로 비교. 없으면 null 또는 생략",
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "required": ["groups"],
+          "properties": {
+            "groups": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["group", "radius_m", "n", "n_formula_07"],
+                "properties": {
+                  "group": { "type": "string", "enum": ["senior_zone", "child_zone", "outside"] },
+                  "radius_m": { "type": ["integer", "null"], "minimum": 0, "description": "그 구역을 본 반경(m). outside 는 null" },
+                  "n": { "type": "integer", "minimum": 0, "description": "대상 횡단보도 수" },
+                  "n_formula_07": { "type": "integer", "minimum": 0, "description": "그중 0.7식 수" }
+                }
+              }
+            }
+          }
+        }
+      ]
     }
   }
 }

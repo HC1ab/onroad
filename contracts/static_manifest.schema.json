@@ -28,6 +28,20 @@
           }
         }
       }
+    },
+    "results_v2": {
+      "type": "array",
+      "description": "v2(결정 009) 목표 커버리지·반경 조합. 조합마다 areas_v2/{target}_{radius}.json 이 있다. 없으면 생략",
+      "items": {
+        "type": "object",
+        "required": ["target", "radius_m"],
+        "additionalProperties": false,
+        "properties": {
+          "target": { "$ref": "common.schema.json#/$defs/target" },
+          "radius_m": { "type": "integer", "enum": [200, 300, 500] },
+          "points": { "type": "boolean", "description": "points_v2/{target}_{radius}.json 이 있으면 true" }
+        }
+      }
     }
   }
 }

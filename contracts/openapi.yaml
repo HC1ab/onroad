@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: 한 박자 API
-  version: 0.1.0
+  version: 0.2.0
   summary: 횡단보도 초록불 시간 전수 점검 — 읽기 전용 API
   description: |
     전국 횡단보도의 기록된 녹색신호시간을 기준식 `7 + L/v`와 비교한 결과를 제공하는 **읽기 전용** API입니다.
@@ -11,9 +11,10 @@ info:
     - 응답 본문 형식은 같은 폴더의 `*.schema.json`(JSON Schema 2020-12)이 기준입니다. 이 문서는 그 스키마를 참조합니다.
     - `adm_cd`는 문자열, 좌표는 EPSG:4326, 시간은 초(`_s`), 비율은 0~1입니다.
     - 속도(`speed`)는 요청마다 하나이며 응답에는 그 속도의 값만 담깁니다.
+    - v2(결정 009, 3단계 기준): `/api/areas`와 `/api/crosswalks`는 목표 커버리지(`target`)를 받습니다. `target`을 주면 3단계 기준 값(단계·적용 속도·기준 적용 시간·추가 초·커버리지·이유)을 담습니다. 커버리지는 고령 보행자 기준이며 추천이 맞을 확률이 아닙니다.
     - 표현 원칙: 결과는 "점검 우선순위 후보", "기록값이 기준식보다 짧음"으로만 표현합니다. 위험·위반 판정이 아닙니다.
 
-    샘플 응답은 `contracts/samples/`에 있습니다(가상 값, `_sample: true`).
+    샘플 응답은 `contracts/samples/`에 있습니다(v1 은 가상 값, v2 는 부산 결과 일부 발췌. 모두 `_sample: true`).
   license:
     name: 데이터 출처 표기 필요 (admdongkor CC BY 4.0 등)
 servers:
@@ -27,7 +28,7 @@ tags:
   - name: 상세
     description: 지역별 횡단보도 목록
   - name: 검증·기준 정보
-    description: V1~V5, 기준월·커버리지·출처
+    description: V1~V7, 기준월·커버리지·출처·원본 기준일·계수
   - name: 내려받기
     description: CSV (P1)
   - name: 운영
@@ -39,9 +40,13 @@ paths:
       tags: [지도]
       operationId: listAreas
       summary: 읍면동별 집계
-      description: 지도 채색(F5), 사분면(F5), 상위 N(F7)에 쓰는 읍면동 단위 값. 속도 슬라이더를 바꾸면 이 요청만 다시 보냅니다(F6).
+      description: |
+        지도 채색(F5), 사분면(F5), 상위 N(F7)에 쓰는 읍면동 단위 값. 속도 슬라이더를 바꾸면 이 요청만 다시 보냅니다(F6).
+        `target`을 주면 v2 형태(평균 추가 초 `mean_add_s`, `n_add2`, 커버리지 평균, `thresholds.mean_add_s_median`)로 응답하고 `speed`는 무시합니다.
+        `target`이 없으면 v1 형태(속도 하나 기준 gap>0 비율)입니다.
       parameters:
         - $ref: '#/components/parameters/speed'
+        - $ref: '#/components/parameters/target'
         - name: sido
           in: query
           description: 시도명으로 거르기 (F10, P1)
@@ -98,8 +103,12 @@ paths:
         분석한 모든 횡단보도(status=analyzed)와 정제에서 제외된 횡단보도(status=excluded, 좌표 있는 것)의 GeoJSON 점.
         점 색(짧은 초), 필터, 클러스터링, 횡단보도 정보 카드에 쓴다. 후보만 필요하면 /api/crosswalks/candidates.
         bbox 없이 전국을 요청하면 응답이 커지므로 지도 화면 범위를 넘긴다. 미적재 속도·반경은 500(not_loaded 안내).
+        기록 방식 확인이 필요한 횡단보도는 status=data_check(시간 값 null, 사유 check_reason)로 담는다.
+        `target`을 주면 v2 필드(formula_class, tier, v_applied_mps, t_required_s, add_s, coverage_now, coverage_required, reason, reason_parts)를 함께 담는다.
+        이때도 v1 필드(t_need_s·gap_s·flags·is_candidate)는 `speed`(기본 0.8) 기준으로 그대로 둔다(하위 호환).
       parameters:
         - $ref: '#/components/parameters/speed'
+        - $ref: '#/components/parameters/target'
         - name: bbox
           in: query
           description: 화면 범위 `minLon,minLat,maxLon,maxLat` (EPSG:4326)
@@ -256,6 +265,19 @@ components:
         type: number
         enum: [0.7, 0.8, 1.0]
         default: 0.8
+
+    target:
+      name: target
+      in: query
+      required: false
+      description: |
+        v2 목표 커버리지(결정 009). 이용자의 이 비율이 시간 안에 건너도록 적용 속도를 정한다.
+        기본 0.85(신호 설계 15퍼센타일 관례), 0.90·0.95 는 민감도. 파이프라인이 셋 다 미리 계산해 둔다.
+        주지 않으면 v1 응답이다.
+      schema:
+        type: number
+        enum: [0.85, 0.9, 0.95]
+      example: 0.85
 
     radius:
       name: radius

@@ -2,6 +2,7 @@ import type { FacilityKind, V4Result } from '../../api/types'
 import { pct1 } from '../../lib/format'
 import { rho } from '../../lib/validation'
 import { Metric, ValidationCard } from './ValidationCard'
+import { BASIS } from './basis'
 
 const FACILITY: Record<FacilityKind, string> = {
   senior_center: '경로당',
@@ -15,6 +16,7 @@ export function V4Card({ v4 }: { v4: V4Result | null }) {
   return (
     <ValidationCard
       id="v4"
+      basis={BASIS.v4}
       title="V4 축 독립성 · 이미 조정됐는가"
       question="짧음 비율이 고령 거주 비율·목적지 노출과 어떤 관계인가"
       caution="음의 상관은 이미 조정됐을 가능성, 양의 상관은 지역 효과가 섞였을 가능성을 뜻합니다. 사분면 오른쪽 위 칸이 비어 있어도 그 자체가 결과입니다."

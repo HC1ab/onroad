@@ -24,6 +24,9 @@ PAIRS = {
     "boundaries.json": "boundaries.schema.json",
     "static_manifest.json": "static_manifest.schema.json",
     "points.json": "points.schema.json",
+    # v2(결정 009) 응답. 서버 적재(ingest)는 kind 이름과 같은 파일만 읽으므로 v1 샘플과 따로 둔다
+    "areas_v2.json": "areas.schema.json",
+    "points_v2.json": "points.schema.json",
 }
 
 

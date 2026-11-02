@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "points.schema.json",
   "title": "GET /api/crosswalks?bbox=&speed=&radius=",
-  "description": "전체 횡단보도 점 레이어(GeoJSON FeatureCollection). 후보만이 아니라 분석한 모든 횡단보도(status=analyzed)와, 좌표는 있지만 정제(F1)에서 제외된 횡단보도(status=excluded)를 담는다. 지도 점 색·필터·정보 카드에 쓴다. bbox 는 minLon,minLat,maxLon,maxLat.",
+  "description": "전체 횡단보도 점 레이어(GeoJSON FeatureCollection). 후보만이 아니라 분석한 모든 횡단보도(status=analyzed)와, 좌표는 있지만 정제(F1)에서 제외된 횡단보도(status=excluded), 기록 방식 확인이 필요한 횡단보도(status=data_check)를 담는다. target 을 주면 v2 필드(결정 009 3단계 기준)를 함께 담는다. 지도 점 색·필터·정보 카드에 쓴다. bbox 는 minLon,minLat,maxLon,maxLat.",
   "type": "object",
   "required": ["type", "features"],
   "properties": {
@@ -10,6 +10,7 @@
     "type": { "const": "FeatureCollection" },
     "speed": { "$ref": "common.schema.json#/$defs/speed" },
     "radius_m": { "type": "integer", "enum": [200, 300, 500], "description": "flags·exposure_cnt·is_candidate 를 계산한 노출 반경(m)." },
+    "target": { "$ref": "common.schema.json#/$defs/target", "description": "v2 필드(tier~reason_parts)를 계산한 목표 커버리지. 요청의 target 과 같다. v2 필드가 없는 응답이면 생략" },
     "features": {
       "type": "array",
       "items": {
@@ -36,7 +37,7 @@
             "properties": {
               "cw_id": { "type": "string" },
               "adm_cd": { "$ref": "common.schema.json#/$defs/adm_cd" },
-              "status": { "type": "string", "enum": ["analyzed", "excluded"], "description": "analyzed: 기준식과 비교함. excluded: 정제에서 제외(사유는 exclude_reason)." },
+              "status": { "type": "string", "enum": ["analyzed", "excluded", "data_check"], "description": "analyzed: 기준식과 비교함. excluded: 정제에서 제외(사유는 exclude_reason). data_check: 기록 보행시간이 일반 기준식(7 + L/1.0)보다도 짧아 기록 방식 확인 전까지 집계에서 뺌(사유는 check_reason). data_check 는 t_need_s·gap_s·v2 시간 값이 null, is_candidate 는 false." },
               "length_m": { "type": ["number", "null"], "minimum": 0, "description": "횡단보도 연장(m). 결측이면 null" },
               "green_s": { "type": ["number", "null"], "minimum": 0, "description": "기록된 녹색신호시간(초). 결측이면 null" },
               "t_need_s": { "type": ["number", "null"], "description": "기준식 필요 시간(초) = 진입 시간 + 연장/속도. excluded 면 null" },
@@ -48,7 +49,37 @@
                 "type": ["string", "null"],
                 "enum": ["green_missing", "length_missing", "green_out_of_range", "length_out_of_range", null],
                 "description": "excluded 의 사유(F1 제외 사유 표와 같은 기준). analyzed 면 null"
-              }
+              },
+              "formula_class": {
+                "type": ["string", "null"],
+                "enum": ["1.0", "0.8", "0.7", "other", null],
+                "description": "v2. 기록 보행시간이 어느 기준식(7 + L/v)과 같은지. 허용오차 config formula_tolerance_s, 두 식에 걸리면 1.0. excluded 면 null"
+              },
+              "tier": { "type": ["integer", "null"], "enum": [1, 2, 3, null], "description": "v2. 적용 단계. 1 노인보호구역 반경 안, 2 대형 전통시장 반경 안, 3 그 외(주민 고령 비율). analyzed 가 아니면 null" },
+              "resident_elderly_ratio": { "anyOf": [{ "$ref": "common.schema.json#/$defs/ratio" }, { "type": "null" }], "description": "v2. 반경 안 행정동 고령 비율의 면적 가중평균(주민 기준)" },
+              "user_elderly_ratio": { "anyOf": [{ "$ref": "common.schema.json#/$defs/ratio" }, { "type": "null" }], "description": "v2. 적용 속도 계산에 쓴 이용자 고령 비율. 1단계 1.0, 2단계 주민 + 시장 보정, 3단계 주민" },
+              "v_applied_mps": { "type": ["number", "null"], "minimum": 0, "description": "v2. 적용 속도(m/s). 1단계 0.7, 2·3단계는 목표 커버리지를 만족하는 속도(speed_bounds_mps 범위로 자름)" },
+              "t_required_s": { "type": ["number", "null"], "minimum": 0, "description": "v2. 기준 적용 시 시간(초) = max(green_s, 진입 시간 + length_m / v_applied_mps)" },
+              "add_s": { "type": ["number", "null"], "minimum": 0, "description": "v2. 추가 초 = t_required_s - green_s (0 이상)" },
+              "coverage_now": { "anyOf": [{ "$ref": "common.schema.json#/$defs/ratio" }, { "type": "null" }], "description": "v2. 기록 보행시간 안에 건널 수 있는 고령 보행자 비율(config coverage_basis). 추천이 맞을 확률이 아니다" },
+              "coverage_required": { "anyOf": [{ "$ref": "common.schema.json#/$defs/ratio" }, { "type": "null" }], "description": "v2. t_required_s 안에 건널 수 있는 고령 보행자 비율" },
+              "reason": { "type": ["string", "null"], "description": "v2. 파이프라인이 만든 한 줄 설명. 화면은 그대로 표시한다" },
+              "reason_parts": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "required": ["protect_zone_m", "market_name", "market_m"],
+                    "properties": {
+                      "protect_zone_m": { "type": ["number", "null"], "minimum": 0, "description": "가장 가까운 노인보호구역까지 거리(m)" },
+                      "market_name": { "type": ["string", "null"], "description": "가장 가까운 대형 전통시장 이름" },
+                      "market_m": { "type": ["number", "null"], "minimum": 0, "description": "그 시장까지 거리(m)" }
+                    }
+                  },
+                  { "type": "null" }
+                ],
+                "description": "v2. reason 을 만든 값. 화면에서 다시 조합할 때 쓴다"
+              },
+              "check_reason": { "type": ["string", "null"], "description": "data_check 의 사유. 아니면 null" }
             }
           }
         }
