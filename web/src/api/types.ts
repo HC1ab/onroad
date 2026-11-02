@@ -242,8 +242,20 @@ export interface V6Result {
   p_value: number
   n_permutations: number
   seed: number
+  /** 주민 고령 비율 1 증가당 무임 비율 증가(회귀 기울기) */
+  slope?: number
   uplift: number
-  uplift_range: [number, number]
+  /** [최소, 최대]. JSON 에서는 길이 2 배열 */
+  uplift_range: number[]
+  /** D13 민감도 표 */
+  sensitivity?: {
+    param: 'min_stores' | 'radius_m' | 'year' | 'drop_station'
+    value: string
+    n_market_stations?: number
+    diff_pp: number
+    p_value?: number | null
+    uplift?: number | null
+  }[]
 }
 
 /** V7 0.7식 적용률: 구역별 대상 수와 기록값이 0.7 기준식과 같은 수 */
