@@ -37,12 +37,16 @@ PR에서 `server/`가 바뀌면 GitHub Actions(`server.yml`)가 테스트와 `/h
 
 | 요청 | 동작 |
 | --- | --- |
-| `/api/areas?speed=0.8&radius=300&sido=부산광역시&sigungu=해운대구` | 읍면동 집계, 지역 필터. 사분면 기준은 저장된 부산 중앙값 유지 |
+| `/api/areas?speed=0.8&radius=300&sido=부산광역시&sigungu=해운대구` | 읍면동 집계, 지역 필터. 사분면 기준은 저장된 전국 기준 유지 |
 | `/api/areas/21090730/crosswalks?speed=0.8&radius=300` | gap_s 내림차순 상세 목록 |
 | `/api/crosswalks/candidates?speed=0.8&radius=300&bbox=129.05,35.13,129.22,35.23` | 저장된 후보 점을 지도 범위로 필터 |
 | `/api/crosswalks?speed=0.8&radius=300&bbox=129.05,35.13,129.22,35.23` | 전체 횡단보도 점(분석·분석 제외). 묶음에 `points.json`이 있을 때만 적재, 없으면 미적재 안내 |
-| `/api/validation` | V1~V5 결과 그대로 반환 |
-| `/api/meta` | 기준일·출처·한계 그대로 반환 |
+| `/api/areas?target=0.85&radius=300&sido=부산광역시` | v2 읍면동 집계(`mean_add_s`, `n_add2`, 커버리지 평균). `speed`는 무시 |
+| `/api/crosswalks?target=0.85&radius=300&bbox=129.05,35.13,129.22,35.23` | v2 전체 점(분석·분석 제외·`data_check`). 묶음에 `points_v2`가 있을 때만 적재, 없으면 미적재 안내 |
+| `/api/validation` | V1~V7 결과 그대로 반환 |
+| `/api/meta` | 기준일·출처·한계·v2 계수 그대로 반환 |
+
+target은 0.85/0.9/0.95(주지 않으면 v1 응답). v2 점의 v1 필드(`t_need_s`·`gap_s`·`flags`)는 조합마다 한 속도로만 계산돼 있으므로, 적재된 속도와 다른 `speed`를 주면 미적재 안내를 반환한다.
 
 speed는 0.7/0.8/1.0(기본 0.8), radius는 200/300/500(기본 300). sigungu는 sido와 함께 사용한다. 잘못된 입력은 400, 없는 읍면동은 404다. 미적재 속도·반경·상세는 500과 "요청한 속도·반경·지역의 결과가 아직 적재되지 않았습니다." 문구로, DB 오류는 일반 500 문구로 반환한다. 집계·상세·후보 모두 속도와 반경(radius_m, 없으면 300으로 적재)을 함께 키로 저장한다. 미적재 데이터를 0건으로 표시하지 않으며, 적재된 빈 목록은 200과 빈 배열로 반환한다. 현재 샘플은 0.8/300과 일부 상세만 제공한다.
 
@@ -63,7 +67,7 @@ docker compose -p onroad-server-tests -f server/compose.test.yml down
 
 | 요청 | 내용 |
 | --- | --- |
-| `/api/export/areas.csv?speed=0.8&radius=300` | 읍면동 집계. 칼럼은 areas 항목과 같다 |
+| `/api/export/areas.csv?speed=0.8&radius=300` | 읍면동 집계. 칼럼은 v1 areas 항목과 같다 |
 | `/api/export/crosswalks.csv?speed=0.8&radius=300` | 적재된 상세의 후보 횡단보도. `adm_cd` + 상세 항목, `flags.*`로 펼침 |
 
 UTF-8(BOM) CSV라 엑셀에서 바로 열린다. 참·거짓은 `true`/`false`, 값 없음은 빈칸. 샘플이면 파일 이름에 `_sample`이 붙는다. 미적재 조합은 API와 같은 500 안내 문구.
@@ -91,6 +95,10 @@ docker compose run --rm -v "${PWD}/contracts:/contracts:ro" -v "D:/onroad-result
 ```
 
 입력은 기존 contracts 응답 스키마를 만족하는 JSON 묶음이다. 디렉터리 아래 `areas.json`, `area_crosswalks.json`, `candidates.json`, `meta.json`, `validation.json`을 탐색한다. 속도·지역별 파일은 하위 폴더로 구분한다. meta와 validation은 각각 하나만 허용한다. 후보 파일은 적재 식별을 위해 speed와 radius_m이 반드시 필요하다. 파일 이름과 내용은 계약 기준이며 CSV나 원본 자료는 입력하지 않는다.
+
+v2 결과는 선택 항목이다. `areas_v2/{target}_{radius}.json`, `points_v2/{target}_{radius}.json`(샘플은 `areas_v2.json`, `points_v2.json`)을 탐색하며, 적재 키인 target·radius_m(점은 speed까지)이 반드시 있어야 한다. v2 표는 target·반경별로 v1 표와 따로 저장한다.
+
+마이그레이션은 적재할 때와 `deploy.sh`에서 실행된다(`python -m app.ingest --migrate-only`, 결과 행은 건드리지 않음). 그래서 배포만 해도 새 표가 생기고, 아직 적재하지 않은 v2 조합은 미적재 안내로 응답한다. `deploy.sh`를 거치지 않고 컨테이너만 올렸다면 위 명령을 직접 실행한다.
 
 전체 묶음 교체 방식이다. 누락된 속도나 지역을 이전 적재에서 유지하지 않는다. 입력 검증 후 마이그레이션과 교체를 한 트랜잭션으로 실행하며, 실패하면 기존 결과가 유지된다. 같은 묶음을 다시 넣어도 행이 누적되지 않는다. 동시 적재는 DB 잠금으로 직렬화한다.
 

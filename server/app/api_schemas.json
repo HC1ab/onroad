@@ -109,6 +109,15 @@
         ],
         "description": "보행 속도 가정(m/s). 0.7 노인, 0.8 보행약자, 1.0 일반."
       },
+      "target": {
+        "type": "number",
+        "enum": [
+          0.85,
+          0.9,
+          0.95
+        ],
+        "description": "v2 목표 커버리지. 기본 0.85, 0.9·0.95 는 민감도. 파이프라인이 셋 다 미리 계산한다."
+      },
       "ratio": {
         "type": "number",
         "minimum": 0,
@@ -141,12 +150,13 @@
         "required": [
           "senior_center",
           "market",
-          "protect_zone"
+          "protect_zone",
+          "crash_zone_past"
         ],
         "properties": {
           "senior_center": {
             "type": "boolean",
-            "description": "경로당 밀집: 반경 안 경로당(마을회관및경로당 포함) 수가 부산 상위 25% 이상(config.yaml senior_center_density_quantile)"
+            "description": "경로당·마을회관"
           },
           "market": {
             "type": "boolean",
@@ -154,7 +164,11 @@
           },
           "protect_zone": {
             "type": "boolean",
-            "description": "노인 보호구역(장애인 보호구역 제외)"
+            "description": "노인·장애인 보호구역"
+          },
+          "crash_zone_past": {
+            "type": "boolean",
+            "description": "노인 보행사고 다발지역(과거 연도)"
           },
           "hospital": {
             "type": [
@@ -243,11 +257,10 @@
   "areas.schema.json": {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "areas.schema.json",
-    "title": "GET /api/areas?speed=&radius=&sido=&sigungu=",
-    "description": "읍면동별 집계. 속도 하나 기준. 지도 채색(F5), 사분면(F5), 상위 N(F7)에 쓴다.",
+    "title": "GET /api/areas?speed=&radius=&sido=&sigungu= | GET /api/areas?target=&radius=&sido=&sigungu=",
+    "description": "읍면동별 집계. 지도 채색(F5), 사분면(F5), 상위 N(F7)에 쓴다. 두 가지 형태가 있다. speed 를 주면 v1(속도 하나 기준 gap>0 비율), target 을 주면 v2(3단계 기준 평균 추가 초, 결정 009). 한 응답에는 둘 중 하나만 있다.",
     "type": "object",
     "required": [
-      "speed",
       "thresholds",
       "items"
     ],
@@ -258,6 +271,10 @@
       "speed": {
         "$ref": "common.schema.json#/$defs/speed"
       },
+      "target": {
+        "$ref": "common.schema.json#/$defs/target",
+        "description": "v2. 목표 커버리지. 요청의 target 과 같다."
+      },
       "radius_m": {
         "type": "integer",
         "enum": [
@@ -265,7 +282,7 @@
           300,
           500
         ],
-        "description": "n_candidate 를 계산한 노출 반경(m). 요청의 radius 와 같다."
+        "description": "n_candidate·단계(1·2)를 계산한 반경(m). 요청의 radius 와 같다."
       },
       "min_sample": {
         "type": "integer",
@@ -274,14 +291,18 @@
       },
       "thresholds": {
         "type": "object",
-        "description": "사분면 경계선 기본값(부산 읍면동 중앙값). 화면에서 조절할 수 있다.",
+        "description": "사분면 경계선 기본값(중앙값, low_sample 제외). 화면에서 조절할 수 있다. v1 은 short_ratio_median, v2 는 mean_add_s_median 을 쓴다.",
         "required": [
-          "short_ratio_median",
           "ratio_65plus_median"
         ],
         "properties": {
           "short_ratio_median": {
             "$ref": "common.schema.json#/$defs/ratio"
+          },
+          "mean_add_s_median": {
+            "type": "number",
+            "minimum": 0,
+            "description": "v2. 읍면동 평균 추가 초의 중앙값"
           },
           "ratio_65plus_median": {
             "$ref": "common.schema.json#/$defs/ratio"
@@ -298,12 +319,8 @@
             "sido",
             "sigungu",
             "n_analyzed",
-            "n_short",
-            "short_ratio",
-            "mean_gap_s",
             "ratio_65plus",
             "quadrant",
-            "n_candidate",
             "low_sample"
           ],
           "properties": {
@@ -322,12 +339,12 @@
             "n_analyzed": {
               "type": "integer",
               "minimum": 0,
-              "description": "분석 가능한 횡단보도 수"
+              "description": "분석 가능한 횡단보도 수(v2 는 data_check 제외)"
             },
             "n_short": {
               "type": "integer",
               "minimum": 0,
-              "description": "gap > 0 인 횡단보도 수"
+              "description": "v1. gap > 0 인 횡단보도 수"
             },
             "short_ratio": {
               "type": [
@@ -336,14 +353,54 @@
               ],
               "minimum": 0,
               "maximum": 1,
-              "description": "n_short / n_analyzed. 분석 0건이면 null"
+              "description": "v1. n_short / n_analyzed. 분석 0건이면 null"
             },
             "mean_gap_s": {
               "type": [
                 "number",
                 "null"
               ],
-              "description": "gap > 0 인 횡단보도의 평균 짧은 초. 없으면 null"
+              "description": "v1. gap > 0 인 횡단보도의 평균 짧은 초. 없으면 null"
+            },
+            "n_candidate": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "v1. 후보 횡단보도 수(gap > 0 그리고 노출 1개 이상)"
+            },
+            "mean_add_s": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "description": "v2. 분석 횡단보도 전체(추가 0 포함)의 평균 추가 초. 채색·사분면 가로축. 분석 0건이면 null"
+            },
+            "n_add2": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "v2. 추가 초가 config add_seconds_threshold(2초) 이상인 횡단보도 수. 툴팁·상세용"
+            },
+            "coverage_now_mean": {
+              "anyOf": [
+                {
+                  "$ref": "common.schema.json#/$defs/ratio"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "v2. coverage_now 평균(고령 보행자 기준)"
+            },
+            "coverage_required_mean": {
+              "anyOf": [
+                {
+                  "$ref": "common.schema.json#/$defs/ratio"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "v2. coverage_required 평균(고령 보행자 기준)"
             },
             "ratio_65plus": {
               "type": [
@@ -366,12 +423,7 @@
                 "low_low",
                 null
               ],
-              "description": "짧음 비율_고령 비율 기준 사분면. high_high 가 점검 우선순위 후보. 값이 없으면 null"
-            },
-            "n_candidate": {
-              "type": "integer",
-              "minimum": 0,
-              "description": "후보 횡단보도 수(gap > 0 그리고 노출 1개 이상)"
+              "description": "가로축(v1 짧음 비율, v2 평균 추가 초)_고령 비율 기준 사분면. high_high 가 점검 우선순위 후보. 값이 없으면 null"
             },
             "low_sample": {
               "type": "boolean",
@@ -380,7 +432,65 @@
           }
         }
       }
-    }
+    },
+    "oneOf": [
+      {
+        "description": "v1: 속도 하나 기준",
+        "required": [
+          "speed"
+        ],
+        "not": {
+          "required": [
+            "target"
+          ]
+        },
+        "properties": {
+          "thresholds": {
+            "required": [
+              "short_ratio_median"
+            ]
+          },
+          "items": {
+            "items": {
+              "required": [
+                "n_short",
+                "short_ratio",
+                "mean_gap_s",
+                "n_candidate"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "description": "v2: 3단계 기준(목표 커버리지)",
+        "required": [
+          "target"
+        ],
+        "not": {
+          "required": [
+            "speed"
+          ]
+        },
+        "properties": {
+          "thresholds": {
+            "required": [
+              "mean_add_s_median"
+            ]
+          },
+          "items": {
+            "items": {
+              "required": [
+                "mean_add_s",
+                "n_add2",
+                "coverage_now_mean",
+                "coverage_required_mean"
+              ]
+            }
+          }
+        }
+      }
+    ]
   },
   "candidates.schema.json": {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -785,6 +895,182 @@
             }
           }
         ]
+      },
+      "v6": {
+        "description": "v2. 지하철 무임 비율: 대형 전통시장 근처 역은 주민 고령 비율을 감안해도 무임 비율이 높은가(2단계 시장 보정의 근거). 무임에는 장애인·유공자가 섞여 있고 역 근처만 본다. 없으면 null 또는 생략",
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "object",
+            "required": [
+              "n_stations",
+              "n_market_stations",
+              "diff_pp",
+              "p_value",
+              "n_permutations",
+              "seed",
+              "uplift",
+              "uplift_range"
+            ],
+            "properties": {
+              "n_stations": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "비교한 역 수"
+              },
+              "n_market_stations": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "대형 시장 반경 안 역 수"
+              },
+              "diff_pp": {
+                "type": "number",
+                "description": "고령 비율 감안 후 무임 비율 차이(%p)"
+              },
+              "p_value": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "description": "단측 순열 검정 p"
+              },
+              "n_permutations": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "seed": {
+                "type": "integer"
+              },
+              "slope": {
+                "type": "number",
+                "description": "주민 고령 비율 1 증가당 무임 비율 증가(회귀 기울기)"
+              },
+              "uplift": {
+                "type": "number",
+                "description": "시장 보정 = diff_pp / 100 / slope (config market_elderly_uplift)"
+              },
+              "uplift_range": {
+                "type": "array",
+                "prefixItems": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ],
+                "minItems": 2,
+                "maxItems": 2,
+                "description": "민감도 범위 [최소, 최대] (config market_elderly_uplift_range)"
+              },
+              "sensitivity": {
+                "type": "array",
+                "description": "D13 민감도 표: 점포 기준·반경·연도·역 빼기를 바꿨을 때",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "param",
+                    "value",
+                    "diff_pp"
+                  ],
+                  "properties": {
+                    "param": {
+                      "type": "string",
+                      "enum": [
+                        "min_stores",
+                        "radius_m",
+                        "year",
+                        "drop_station"
+                      ]
+                    },
+                    "value": {
+                      "type": "string",
+                      "description": "바꾼 값 (예: \"150\", \"2019\", \"수안\")"
+                    },
+                    "n_market_stations": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "diff_pp": {
+                      "type": "number"
+                    },
+                    "p_value": {
+                      "type": [
+                        "number",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "uplift": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "v7": {
+        "description": "v2. 정책 반영 점검: 기록 보행시간이 0.7 기준식과 같은 비율을 노인보호구역 반경 안 / 어린이보호구역 반경 안(노인 아님) / 둘 다 밖으로 비교. 없으면 null 또는 생략",
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "object",
+            "required": [
+              "groups"
+            ],
+            "properties": {
+              "groups": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "group",
+                    "radius_m",
+                    "n",
+                    "n_formula_07"
+                  ],
+                  "properties": {
+                    "group": {
+                      "type": "string",
+                      "enum": [
+                        "senior_zone",
+                        "child_zone",
+                        "outside"
+                      ]
+                    },
+                    "radius_m": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "description": "그 구역을 본 반경(m). outside 는 null"
+                    },
+                    "n": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "대상 횡단보도 수"
+                    },
+                    "n_formula_07": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "그중 0.7식 수"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
       }
     }
   },
@@ -838,6 +1124,10 @@
             "url"
           ],
           "properties": {
+            "id": {
+              "type": "string",
+              "description": "data/download_log.csv 의 원본 ID (예: B1, R3, O1)"
+            },
             "name": {
               "type": "string"
             },
@@ -848,7 +1138,34 @@
               "type": "string"
             },
             "modified": {
-              "type": "string"
+              "type": "string",
+              "description": "출처 페이지에 적힌 수정일"
+            },
+            "as_of": {
+              "type": "string",
+              "pattern": "^[0-9]{4}(-[0-9]{2}(-[0-9]{2})?)?$",
+              "description": "결과에 쓴 원본의 데이터 기준일(YYYY, YYYY-MM, YYYY-MM-DD). 화면의 \"이 결과는 언제 데이터 기준인가\" 표시용"
+            },
+            "update_cycle": {
+              "type": "string",
+              "enum": [
+                "monthly",
+                "quarterly",
+                "semiannual",
+                "yearly",
+                "irregular",
+                "unknown"
+              ],
+              "description": "출처가 밝힌(또는 확인한) 갱신 주기. 확인 못 했으면 unknown"
+            },
+            "fetched_at": {
+              "type": "string",
+              "format": "date",
+              "description": "우리가 원본을 받은 날"
+            },
+            "role": {
+              "type": "string",
+              "description": "결과에서 맡는 역할(예: 분석 대상, 1단계, V3 검증)"
             }
           }
         }
@@ -856,6 +1173,67 @@
       "limits_text": {
         "type": "string",
         "description": "모든 화면 하단에 그대로 표시하는 한계 문구"
+      },
+      "coefficients": {
+        "type": "array",
+        "description": "v2. 화면 \"계수와 근거\"에 표시하는 계수. 값은 config.yaml 에서 온다",
+        "items": {
+          "type": "object",
+          "required": [
+            "key",
+            "label",
+            "value",
+            "source",
+            "level"
+          ],
+          "properties": {
+            "key": {
+              "type": "string",
+              "description": "config.yaml 키 (예: market_elderly_uplift)"
+            },
+            "label": {
+              "type": "string",
+              "description": "화면에 쓰는 이름"
+            },
+            "value": {
+              "type": "string",
+              "description": "표시용 값과 단위 (예: \"0.137 (범위 0.063~0.157)\")"
+            },
+            "source": {
+              "type": "string",
+              "description": "근거 출처 (예: \"V6 지하철 무임 비율, 결정 009\")"
+            },
+            "level": {
+              "type": "string",
+              "enum": [
+                "standard",
+                "measured",
+                "literature",
+                "assumption"
+              ],
+              "description": "근거 수준: 공식 기준 / 우리 데이터로 측정 / 문헌 / 가정"
+            }
+          }
+        }
+      },
+      "sensitivity": {
+        "type": "array",
+        "description": "v2. 계수를 바꿨을 때 결과 요약 (예: 고령자 속도 0.76m/s 로 다시 계산한 2초 이상 추가 수)",
+        "items": {
+          "type": "object",
+          "required": [
+            "label",
+            "value"
+          ],
+          "properties": {
+            "label": {
+              "type": "string"
+            },
+            "value": {
+              "type": "string"
+            }
+          }
+        }
       }
     }
   },
@@ -950,6 +1328,35 @@
             }
           }
         }
+      },
+      "results_v2": {
+        "type": "array",
+        "description": "v2(결정 009) 목표 커버리지·반경 조합. 조합마다 areas_v2/{target}_{radius}.json 이 있다. 없으면 생략",
+        "items": {
+          "type": "object",
+          "required": [
+            "target",
+            "radius_m"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "target": {
+              "$ref": "common.schema.json#/$defs/target"
+            },
+            "radius_m": {
+              "type": "integer",
+              "enum": [
+                200,
+                300,
+                500
+              ]
+            },
+            "points": {
+              "type": "boolean",
+              "description": "points_v2/{target}_{radius}.json 이 있으면 true"
+            }
+          }
+        }
       }
     }
   },
@@ -957,7 +1364,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "points.schema.json",
     "title": "GET /api/crosswalks?bbox=&speed=&radius=",
-    "description": "전체 횡단보도 점 레이어(GeoJSON FeatureCollection). 후보만이 아니라 분석한 모든 횡단보도(status=analyzed)와, 좌표는 있지만 정제(F1)에서 제외된 횡단보도(status=excluded)를 담는다. 지도 점 색·필터·정보 카드에 쓴다. bbox 는 minLon,minLat,maxLon,maxLat.",
+    "description": "전체 횡단보도 점 레이어(GeoJSON FeatureCollection). 후보만이 아니라 분석한 모든 횡단보도(status=analyzed)와, 좌표는 있지만 정제(F1)에서 제외된 횡단보도(status=excluded), 기록 방식 확인이 필요한 횡단보도(status=data_check)를 담는다. target 을 주면 v2 필드(결정 009 3단계 기준)를 함께 담는다. 지도 점 색·필터·정보 카드에 쓴다. bbox 는 minLon,minLat,maxLon,maxLat.",
     "type": "object",
     "required": [
       "type",
@@ -981,6 +1388,10 @@
           500
         ],
         "description": "flags·exposure_cnt·is_candidate 를 계산한 노출 반경(m)."
+      },
+      "target": {
+        "$ref": "common.schema.json#/$defs/target",
+        "description": "v2 필드(tier~reason_parts)를 계산한 목표 커버리지. 요청의 target 과 같다. v2 필드가 없는 응답이면 생략"
       },
       "features": {
         "type": "array",
@@ -1046,9 +1457,10 @@
                   "type": "string",
                   "enum": [
                     "analyzed",
-                    "excluded"
+                    "excluded",
+                    "data_check"
                   ],
-                  "description": "analyzed: 기준식과 비교함. excluded: 정제에서 제외(사유는 exclude_reason)."
+                  "description": "analyzed: 기준식과 비교함. excluded: 정제에서 제외(사유는 exclude_reason). data_check: 기록 보행시간이 일반 기준식(7 + L/1.0)보다도 짧아 기록 방식 확인 전까지 집계에서 뺌(사유는 check_reason). data_check 는 t_need_s·gap_s·v2 시간 값이 null, is_candidate 는 false."
                 },
                 "length_m": {
                   "type": [
@@ -1112,6 +1524,156 @@
                     null
                   ],
                   "description": "excluded 의 사유(F1 제외 사유 표와 같은 기준). analyzed 면 null"
+                },
+                "formula_class": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "1.0",
+                    "0.8",
+                    "0.7",
+                    "other",
+                    null
+                  ],
+                  "description": "v2. 기록 보행시간이 어느 기준식(7 + L/v)과 같은지. 허용오차 config formula_tolerance_s, 두 식에 걸리면 1.0. excluded 면 null"
+                },
+                "tier": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "enum": [
+                    1,
+                    2,
+                    3,
+                    null
+                  ],
+                  "description": "v2. 적용 단계. 1 노인보호구역 반경 안, 2 대형 전통시장 반경 안, 3 그 외(주민 고령 비율). analyzed 가 아니면 null"
+                },
+                "resident_elderly_ratio": {
+                  "anyOf": [
+                    {
+                      "$ref": "common.schema.json#/$defs/ratio"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "v2. 반경 안 행정동 고령 비율의 면적 가중평균(주민 기준)"
+                },
+                "user_elderly_ratio": {
+                  "anyOf": [
+                    {
+                      "$ref": "common.schema.json#/$defs/ratio"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "v2. 적용 속도 계산에 쓴 이용자 고령 비율. 1단계 1.0, 2단계 주민 + 시장 보정, 3단계 주민"
+                },
+                "v_applied_mps": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "description": "v2. 적용 속도(m/s). 1단계 0.7, 2·3단계는 목표 커버리지를 만족하는 속도(speed_bounds_mps 범위로 자름)"
+                },
+                "t_required_s": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "description": "v2. 기준 적용 시 시간(초) = max(green_s, 진입 시간 + length_m / v_applied_mps)"
+                },
+                "add_s": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "description": "v2. 추가 초 = t_required_s - green_s (0 이상)"
+                },
+                "coverage_now": {
+                  "anyOf": [
+                    {
+                      "$ref": "common.schema.json#/$defs/ratio"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "v2. 기록 보행시간 안에 건널 수 있는 고령 보행자 비율(config coverage_basis). 추천이 맞을 확률이 아니다"
+                },
+                "coverage_required": {
+                  "anyOf": [
+                    {
+                      "$ref": "common.schema.json#/$defs/ratio"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "v2. t_required_s 안에 건널 수 있는 고령 보행자 비율"
+                },
+                "reason": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "v2. 파이프라인이 만든 한 줄 설명. 화면은 그대로 표시한다"
+                },
+                "reason_parts": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "required": [
+                        "protect_zone_m",
+                        "market_name",
+                        "market_m"
+                      ],
+                      "properties": {
+                        "protect_zone_m": {
+                          "type": [
+                            "number",
+                            "null"
+                          ],
+                          "minimum": 0,
+                          "description": "가장 가까운 노인보호구역까지 거리(m)"
+                        },
+                        "market_name": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "description": "가장 가까운 대형 전통시장 이름"
+                        },
+                        "market_m": {
+                          "type": [
+                            "number",
+                            "null"
+                          ],
+                          "minimum": 0,
+                          "description": "그 시장까지 거리(m)"
+                        }
+                      }
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "v2. reason 을 만든 값. 화면에서 다시 조합할 때 쓴다"
+                },
+                "check_reason": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "data_check 의 사유. 아니면 null"
                 }
               }
             }

@@ -10,10 +10,10 @@ cd "$(dirname "$0")/../.."
 WEB_PORT=$(grep -E '^WEB_PORT=' .env | cut -d= -f2)
 WEB_PORT=${WEB_PORT:-8080}
 
-echo "[1/4] 코드 갱신"
+echo "[1/5] 코드 갱신"
 if [ "${1:-}" = "--no-pull" ]; then echo "      건너뜀 (--no-pull)"; else git pull --ff-only; fi
 
-echo "[2/4] 프론트 빌드 (Node 컨테이너, 서버에 Node 설치 불필요)"
+echo "[2/5] 프론트 빌드 (Node 컨테이너, 서버에 Node 설치 불필요)"
 docker run --rm --user "$(id -u):$(id -g)" \
   -e VITE_API_MODE=real -e npm_config_cache=/tmp/.npm \
   -v "$PWD:/repo" -w /repo/web node:22-alpine \
@@ -26,12 +26,17 @@ if [ ! -f web/dist/data/boundaries.json ]; then
   echo "      경계: 샘플 사용 (web/public/data/boundaries.json 없음)"
 fi
 
-echo "[3/4] 컨테이너 재기동"
+echo "[3/5] DB 마이그레이션"
+# 새 코드가 뜨기 전에 스키마를 올린다. 실패하면 여기서 멈춰 기존 컨테이너가 그대로 남는다.
+docker compose build api
+docker compose run --rm -T api python -m app.ingest --migrate-only
+
+echo "[4/5] 컨테이너 재기동"
 docker compose up -d --build --remove-orphans
 # nginx 설정은 파일 마운트라 컨테이너가 그대로면 다시 읽게 한다
 docker compose exec -T nginx nginx -s reload >/dev/null
 
-echo "[4/4] 상태 확인"
+echo "[5/5] 상태 확인"
 for i in $(seq 1 30); do
   if curl -fsS "http://127.0.0.1:${WEB_PORT}/healthz" >/dev/null 2>&1; then
     echo "      healthz OK ($(git rev-parse --short HEAD))"

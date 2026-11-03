@@ -37,13 +37,51 @@ cp .env.example .env && chmod 600 .env
 ## 배포·적재
 ```bash
 cd /srv/onroad
-bash server/deploy/deploy.sh                 # git pull → 프론트 빌드 → compose up → /healthz 확인
+bash server/deploy/deploy.sh                 # git pull → 프론트 빌드 → DB 마이그레이션 → compose up → /healthz 확인
 bash server/deploy/load.sh --sample          # 샘플 적재 (실데이터 전까지)
-bash server/deploy/load.sh /srv/onroad-results   # 파이프라인 결과 적재 (scp 로 결과 JSON만 올린다)
+bash server/deploy/load_bundle.sh /srv/onroad-results/YYYYMMDD   # 결과 묶음 적재 (아래 "결과 데이터 관리")
 ```
 - 프론트는 Node 컨테이너로 빌드하므로 서버에 Node를 설치하지 않는다.
 - `web/public/data/boundaries.json`(D6 결과)이 없으면 샘플 경계를 쓴다.
 - 적재는 전체 교체다. 실패하면 이전 결과가 남는다.
+
+## 결과 데이터 관리
+코드와 데이터는 서버에 들어가는 길이 다르다.
+
+| 바뀐 것 | 예 | 서버 반영 |
+| --- | --- | --- |
+| 코드 | 화면, API, DB 마이그레이션 | `main` 병합 → 자동 배포(아래 "자동 배포") |
+| 결과 데이터 | 파이프라인 결과 묶음(zip), 계수 | 손으로 `load_bundle.sh` |
+| 읍면동 경계 | 묶음 안 `web/boundaries.json` | `load_bundle.sh`가 바뀐 경우만 교체·다시 빌드 |
+
+결과 묶음은 git 에 없으므로(R1, 팀 채팅으로 zip 전달) 자동 배포로는 반영되지 않는다.
+
+```text
+/srv/onroad-results/            배포 계정 소유 (sudo mkdir 후 chown)
+├── 20261103/                   받은 zip 을 그대로 푼 것. 넣은 뒤에는 고치지 않는다
+│   ├── bundle/                 적재 대상 (load.sh 는 이 안의 JSON 을 모두 읽는다)
+│   └── web/boundaries.json     경계 (bundle/ 밖에 둔다)
+├── current -> 20261103         지금 DB 에 들어 있는 묶음
+└── LOADED.log                  적재 기록: 시각 · 폴더 · zip 해시 · 문서 수 · 서버 커밋
+```
+
+새 묶음 반영:
+```bash
+# 로컬: zip 해시를 이슈에 적힌 값과 비교 (서버에는 unzip 이 없어 로컬에서 푼다)
+sha256sum onroad_bundle_YYYYMMDD.zip | cut -c1-16
+mkdir x && unzip -q onroad_bundle_YYYYMMDD.zip -d x
+ssh <서버> 'mkdir /srv/onroad-results/YYYYMMDD'            # 반드시 빈 새 폴더
+tar -C x -cf - . | ssh <서버> 'tar -C /srv/onroad-results/YYYYMMDD -xf -'
+# 서버
+cd /srv/onroad
+bash server/deploy/load_bundle.sh /srv/onroad-results/YYYYMMDD <zip 해시 앞 16자>
+```
+- 마지막 줄에 `Imported N documents; sample=False`가 담긴 기록이 나오면 성공. 적재 중(수십 초~2분) API는 오류를 낸다.
+- 실패하면 DB는 이전 결과 그대로이고 `current`·`LOADED.log`도 바뀌지 않는다.
+- 데이터 되돌리기: 이전 날짜 폴더로 같은 명령을 실행한다.
+- 보관: 날짜 폴더는 최근 3개만 남기고 지운다(`current`가 가리키는 폴더는 지우지 않는다).
+- `web/public/data/boundaries.json`은 git 밖 파일이다. 코드 배포(git pull)는 이 파일을 건드리지 않는다.
+- 실데이터가 들어간 뒤에는 `load.sh --sample`을 쓰지 않는다(샘플로 덮어쓴다).
 
 정적 묶음(서버 없이 데모, F18)은 적재 후 비어 있는 폴더로 내보낸다.
 ```bash
