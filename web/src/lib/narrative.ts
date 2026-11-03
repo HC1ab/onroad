@@ -8,6 +8,13 @@ import { V2_COEF } from './recommend'
 const pct = (v: number) => `${Math.round(v * 100)}%`
 const s1 = (v: number) => `${v.toFixed(1)}초`
 const m0 = (v: number) => `${Math.round(v)}m`
+/** 강조할 핵심 수치. 화면에서 굵게 그린다(**…**, renderRich). 일반 텍스트로 쓸 때는 plainText 로 지운다 */
+const b = (t: string) => `**${t}**`
+
+/** 강조 표시(**…**)를 지운 일반 텍스트 */
+export const plainText = (t: string) => t.replace(/\*\*/g, '')
+/** 강조 표시를 기준으로 [일반, 강조, 일반, …] 조각으로 나눈다. 홀수 번째 조각이 강조 */
+export const richParts = (t: string) => t.split('**')
 
 const FORMULA_TEXT: Record<string, string> = {
   '1.0': '일반 기준식(1.0m/s)',
@@ -24,7 +31,7 @@ export interface Narrative {
 
 const CAVEAT = '보행시간 정의(점멸 포함 여부) 확정 전 값입니다. 점검 우선순위를 정하기 위한 후보이며 판정이 아닙니다.'
 
-/** 3단계 기준(v2) 횡단보도 요약 */
+/** 상황별 기준(v2) 횡단보도 요약 */
 export function v2Narrative(p: PointProps, target: Target, radius: Radius): Narrative {
   if (p.status === 'excluded') {
     const why = p.exclude_reason ? EXCLUDE_REASON_LABEL[p.exclude_reason] : '기록 확인이 필요한 값'
@@ -41,16 +48,16 @@ export function v2Narrative(p: PointProps, target: Target, radius: Radius): Narr
   const parts = p.reason_parts
   if (p.tier === 1) {
     const d = parts?.protect_zone_m != null ? `노인보호구역에서 ${m0(parts.protect_zone_m)} 거리라 ` : ''
-    out.push({ title: '적용 속도', text: `${d}보호구역 기준을 적용했습니다. 보호구역 보행속도 ${V2_COEF.tier1Speed}m/s를 적용합니다.` })
+    out.push({ title: '적용 속도', text: `${d}보호구역 기준을 적용했습니다. 보호구역 보행속도 ${b(`${V2_COEF.tier1Speed}m/s`)}를 적용합니다.` })
   } else if (p.tier === 2 && v != null) {
     const where = !parts?.market_name ? '' : parts.market_m != null ? `${parts.market_name}에서 ${m0(parts.market_m)} 거리라 ` : `${parts.market_name} 근처라 `
     const users = p.resident_elderly_ratio != null && p.user_elderly_ratio != null
-      ? `반경 주민 고령 비율 ${pct(p.resident_elderly_ratio)}에 시장 이용 보정을 더해 이용자 고령 비율을 ${pct(p.user_elderly_ratio)}로 보고, `
+      ? `반경 주민 고령 비율 ${pct(p.resident_elderly_ratio)}에 시장 이용 보정을 더해 이용자 고령 비율을 ${b(pct(p.user_elderly_ratio))}로 보고, `
       : ''
-    out.push({ title: '적용 속도', text: `${where}시장 기준을 적용했습니다. ${users}이용자 ${pct(target)}가 건널 수 있는 속도 ${v.toFixed(2)}m/s를 적용합니다.` })
+    out.push({ title: '적용 속도', text: `${where}시장 기준을 적용했습니다. ${users}이용자 ${pct(target)}가 건널 수 있는 속도 ${b(`${v.toFixed(2)}m/s`)}를 적용합니다.` })
   } else if (v != null) {
-    const res = p.resident_elderly_ratio != null ? `반경 ${radius}m 안 주민 고령 비율 ${pct(p.resident_elderly_ratio)}로 이용자 구성을 보고, ` : ''
-    out.push({ title: '적용 속도', text: `${res}이용자 ${pct(target)}가 건널 수 있는 속도 ${v.toFixed(2)}m/s를 적용합니다(주민 기준).` })
+    const res = p.resident_elderly_ratio != null ? `반경 ${radius}m 안 주민 고령 비율 ${b(pct(p.resident_elderly_ratio))}로 이용자 구성을 보고, ` : ''
+    out.push({ title: '적용 속도', text: `${res}이용자 ${pct(target)}가 건널 수 있는 속도 ${b(`${v.toFixed(2)}m/s`)}를 적용합니다(주민 기준).` })
   }
 
   if (p.t_required_s != null && p.green_s != null && p.length_m != null) {
@@ -58,8 +65,8 @@ export function v2Narrative(p: PointProps, target: Target, radius: Radius): Narr
     out.push({
       title: '기준 적용 시간',
       text: add > 0
-        ? `연장 ${m0(p.length_m)}를 이 속도로 건너려면 진입 ${V2_COEF.entryS}초를 더해 ${s1(p.t_required_s)}가 필요합니다. 현재 기록 ${s1(p.green_s)}보다 ${s1(add)} 깁니다.`
-        : `현재 기록 ${s1(p.green_s)}가 기준 적용 시간 ${s1(p.t_required_s)} 이상이라 더할 시간이 없습니다.`,
+        ? `연장 ${m0(p.length_m)}를 이 속도로 건너려면 진입 ${V2_COEF.entryS}초를 더해 ${b(s1(p.t_required_s))}가 필요합니다. 현재 기록 ${b(s1(p.green_s))}보다 ${b(s1(add))} 깁니다.`
+        : `현재 기록 ${b(s1(p.green_s))}가 기준 적용 시간 ${b(s1(p.t_required_s))} 이상이라 더할 시간이 없습니다.`,
     })
   }
 
@@ -68,8 +75,8 @@ export function v2Narrative(p: PointProps, target: Target, radius: Radius): Narr
     out.push({
       title: '고령 보행자 커버리지',
       text: same
-        ? `고령 보행자 중 현재 시간 안에 건널 수 있는 비율은 ${pct(p.coverage_now)}입니다.`
-        : `고령 보행자 중 시간 안에 건널 수 있는 비율이 현재 ${pct(p.coverage_now)}에서 기준 적용 시 ${pct(p.coverage_required)}가 됩니다. 정답 확률이 아니라 속도 분포로 계산한 값입니다.`,
+        ? `고령 보행자 중 현재 시간 안에 건널 수 있는 비율은 ${b(pct(p.coverage_now))}입니다.`
+        : `고령 보행자 중 시간 안에 건널 수 있는 비율이 현재 ${b(pct(p.coverage_now))}에서 기준 적용 시 ${b(pct(p.coverage_required))}가 됩니다. 정답 확률이 아니라 속도 분포로 계산한 값입니다.`,
     })
   }
 
@@ -78,13 +85,13 @@ export function v2Narrative(p: PointProps, target: Target, radius: Radius): Narr
       title: '현재 기록의 기준식',
       text: p.formula_class === 'other'
         ? '현재 기록은 세 기준식(1.0·0.8·0.7m/s) 어느 것과도 같지 않습니다.'
-        : `현재 기록은 ${FORMULA_TEXT[p.formula_class]}으로 계산한 값과 같습니다.`,
+        : `현재 기록은 ${b(FORMULA_TEXT[p.formula_class])}으로 계산한 값과 같습니다.`,
     })
   }
   return { paragraphs: out, caveat: CAVEAT }
 }
 
-/** 기록값 기준(v1) 횡단보도 요약 */
+/** 일괄 속도 비교(v1) 횡단보도 요약 */
 export function v1Narrative(p: PointProps, speed: Speed): Narrative {
   if (p.status === 'excluded') return v2Narrative(p, 0.85, 300)
   const out: Narrative['paragraphs'] = []
@@ -93,14 +100,14 @@ export function v1Narrative(p: PointProps, speed: Speed): Narrative {
     out.push({
       title: '기준식 비교',
       text: g > 0
-        ? `보행 속도 ${speed.toFixed(1)}m/s 기준식으로는 ${s1(p.t_need_s)}가 필요한데 기록은 ${s1(p.green_s)}라 ${s1(g)} 짧습니다.`
-        : `보행 속도 ${speed.toFixed(1)}m/s 기준식 ${s1(p.t_need_s)}보다 기록 ${s1(p.green_s)}가 ${s1(Math.abs(g))} 여유 있습니다.`,
+        ? `보행 속도 ${speed.toFixed(1)}m/s 기준식으로는 ${b(s1(p.t_need_s))}가 필요한데 기록은 ${b(s1(p.green_s))}라 ${b(s1(g))} 짧습니다.`
+        : `보행 속도 ${speed.toFixed(1)}m/s 기준식 ${b(s1(p.t_need_s))}보다 기록 ${b(s1(p.green_s))}가 ${b(s1(Math.abs(g)))} 여유 있습니다.`,
     })
   }
   out.push({
     title: '노출',
     text: p.exposure_cnt > 0
-      ? `반경 안에 고령자 목적지 ${p.exposure_cnt}종이 있습니다.${p.is_candidate ? ' 기록이 기준식보다 짧으면서 노출이 있어 점검 우선순위 후보입니다.' : ''}`
+      ? `반경 안에 고령자 목적지 ${b(`${p.exposure_cnt}종`)}이 있습니다.${p.is_candidate ? ' 기록이 기준식보다 짧으면서 노출이 있어 점검 우선순위 후보입니다.' : ''}`
       : '반경 안에 고령자 목적지가 없습니다.',
   })
   return { paragraphs: out, caveat: CAVEAT }

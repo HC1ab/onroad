@@ -452,3 +452,46 @@ a { color: var(--accent); }
 .ml-tier { display: grid; grid-template-columns: 74px 1fr; gap: 6px; align-items: baseline; }
 .ml-tier b { color: var(--text); font-weight: 700; }
 .ml-tier span { color: var(--muted); font-size: 11px; }
+
+/* 왼쪽 필터 접기 */
+.workspace.filters-closed { grid-template-columns: 44px minmax(0, 1fr) 380px; }
+.workspace.filters-closed.wide { grid-template-columns: 44px minmax(0, 1fr) 420px; }
+.f-head { display: flex; align-items: center; justify-content: space-between; padding: 6px 12px 6px 18px; font-size: 13px; font-weight: 700; color: var(--text); }
+.icon-btn.small { width: 28px; height: 28px; font-size: 14px; line-height: 1; }
+.filters.collapsed { padding: 8px 0; display: flex; justify-content: center; }
+.f-fold { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 32px; padding: 8px 0; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--text-2); cursor: pointer; font: inherit; font-size: 12px; font-weight: 700; }
+.f-fold:hover { border-color: var(--accent); color: var(--accent-strong); }
+.f-fold-text { writing-mode: vertical-rl; letter-spacing: 0.1em; }
+@media (max-width: 900px) {
+  .workspace.filters-closed, .workspace.filters-closed.wide { grid-template-columns: 1fr; }
+  .filters.collapsed { justify-content: flex-start; padding: 6px 12px; }
+  .filters.collapsed .f-fold { flex-direction: row; width: auto; padding: 4px 12px; }
+  .filters.collapsed .f-fold-text { writing-mode: horizontal-tb; }
+}
+
+/* 상단 바 정렬: 탭·전환·목표 버튼을 같은 높이(32px)와 같은 묶음 모양으로 */
+.topbar { gap: 20px; }
+.topbar .tabs { align-items: center; gap: 2px; }
+.topbar .tab { display: inline-flex; align-items: center; height: 32px; padding: 0 14px; }
+.topbar-controls { gap: 20px; padding-left: 20px; }
+.topbar .basis { gap: 20px; }
+.topbar .speed { gap: 8px; }
+.topbar .speed-title { margin: 0; font-size: 12px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+/* 묶음(세그먼트) 컨테이너 */
+.topbar .seg, .topbar .seg-group {
+  display: inline-flex; align-items: center; gap: 2px; margin: 0; padding: 3px;
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px;
+}
+.topbar .seg-btn, .topbar .speed-btn {
+  flex: none; display: inline-flex; flex-direction: row; align-items: baseline; justify-content: center; gap: 4px;
+  height: 30px; min-width: 0; padding: 0 12px; line-height: 30px;
+  border: none; border-radius: 7px; background: transparent; color: var(--text-2); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.topbar .seg-btn:hover, .topbar .speed-btn:hover { color: var(--text); background: var(--surface); }
+.topbar .seg-btn.on, .topbar .speed-btn.on { background: var(--accent); color: #fff; box-shadow: var(--shadow-sm); }
+.topbar .speed-btn b { font-size: 13px; font-weight: 700; }
+.topbar .speed-btn small { font-size: 11px; font-weight: 500; color: var(--muted); }
+.topbar .speed-btn.on small { color: rgb(255 255 255 / 0.85); }
+
+/* 분석 요약의 핵심 수치 강조 */
+.cwd-para p strong { color: var(--text); font-weight: 800; font-variant-numeric: tabular-nums; }

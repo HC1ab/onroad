@@ -1,6 +1,6 @@
 import type { Speed } from '../api/types'
 import { meter, sec1 } from '../lib/format'
-import { v1Narrative, v2Narrative } from '../lib/narrative'
+import { richParts, v1Narrative, v2Narrative } from '../lib/narrative'
 import { needSeconds } from '../lib/points'
 import { fmtPct, TIER_DESC, TIER_LABEL } from '../lib/recommend'
 import { ROUTE_HASH } from '../lib/route'
@@ -48,7 +48,7 @@ export function CrosswalkDetail({ areaName }: { areaName: string | null }) {
         {narrative.paragraphs.map((x) => (
           <div key={x.title} className="cwd-para">
             <h4>{x.title}</h4>
-            <p>{x.text}</p>
+            <p>{richParts(x.text).map((t, i) => (i % 2 ? <strong key={i}>{t}</strong> : t))}</p>
           </div>
         ))}
         <p className="cwd-caveat">{narrative.caveat}</p>

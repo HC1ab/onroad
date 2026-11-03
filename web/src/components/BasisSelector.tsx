@@ -20,12 +20,14 @@ export function BasisSelector() {
       ) : (
         <div className="speed" role="radiogroup" aria-label="목표 커버리지">
           <span className="speed-title" title="고령 보행자 중 이 비율이 시간 안에 건너도록 맞춘 기준 (정답 확률 아님)">목표 커버리지</span>
+          <span className="seg-group">
           {TARGETS.map((t) => (
             <button key={t} type="button" role="radio" aria-checked={t === target} className={t === target ? 'speed-btn on' : 'speed-btn'} onClick={() => setTarget(t)}>
               <b>{Math.round(t * 100)}%</b>
               <small>{t === 0.85 ? '기본' : '민감도'}</small>
             </button>
           ))}
+          </span>
         </div>
       )}
     </div>

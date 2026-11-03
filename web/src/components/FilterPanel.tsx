@@ -4,20 +4,38 @@ import { useAppState } from '../state/AppState'
 import { RegionFilter } from './RegionFilter'
 
 interface Props {
+  /** 접혀 있으면 펼치기 버튼만 있는 얇은 막대로 그린다 */
+  open: boolean
+  onToggle: () => void
   boundaries: BoundariesResponse | null
   /** 필터를 적용한 뒤 지도에 보이는 점 수 */
   shown: { analyzed: number; candidates: number; excluded: number } | null
 }
 
 /** 왼쪽 패널: 지도에 무엇을 그릴지만 고른다(지역·레이어·점 필터·반경). 의미 설명은 지도 위 범례(MapLegend)에 둔다. */
-export function FilterPanel({ boundaries, shown }: Props) {
+export function FilterPanel({ open, onToggle, boundaries, shown }: Props) {
   const { basis, layers, toggleLayer, radius, setRadius, pointFilter: f, setPointFilter } = useAppState()
   const set = (patch: Partial<PointFilter>) => setPointFilter({ ...f, ...patch })
   const v2 = basis === 'v2'
   const n = (v: number | undefined) => (shown && layers.points && v !== undefined ? v.toLocaleString() : null)
 
+  if (!open) {
+    return (
+      <aside className="filters collapsed" aria-label="지도 필터 (접힘)">
+        <button type="button" className="f-fold" aria-expanded={false} aria-label="필터 펼치기" title="필터 펼치기" onClick={onToggle}>
+          <span aria-hidden>»</span>
+          <span className="f-fold-text">필터</span>
+        </button>
+      </aside>
+    )
+  }
+
   return (
     <aside className="filters" aria-label="지도 필터">
+      <div className="f-head">
+        <span>필터</span>
+        <button type="button" className="icon-btn small" aria-expanded aria-label="필터 접기" title="필터 접기" onClick={onToggle}>«</button>
+      </div>
       <section className="f-section">
         <h2 className="f-title">지역</h2>
         <RegionFilter boundaries={boundaries} />
