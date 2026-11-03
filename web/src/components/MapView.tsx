@@ -15,9 +15,8 @@ import {
   MY_INPUT_STROKE,
   NO_VALUE_COLOR,
   ADD_SIZE,
-  ADD_STEPS,
   POINT_STROKE,
-  TIER_COLORS,
+  POINT_ADD_STEPS,
 } from './mapStyle'
 
 // 배경 지도: OpenFreeMap(키 없음). 출처 표기는 스타일이 자동으로 넣는다.
@@ -47,7 +46,7 @@ const gapColor = (value: ExpressionSpecification): ExpressionSpecification =>
 
 const MINE: ExpressionSpecification = ['boolean', ['get', 'mine'], false]
 
-/** 점 색·크기·테두리. 기록값 화면: 짧은 초 발산 색, 후보 굵은 테두리. 3단계 기준 화면: 단계 색, 추가 초 크기 */
+/** 점 색·크기·테두리. 일괄 속도 비교: 짧은 초 발산 색, 후보 굵은 테두리. 상황별 기준: 추가 초 순차 색·크기 */
 function pointPaint(v2: boolean): Record<string, unknown> {
   if (!v2) {
     const cand: ExpressionSpecification = ['boolean', ['get', 'is_candidate'], false]
@@ -61,9 +60,10 @@ function pointPaint(v2: boolean): Record<string, unknown> {
   const add: ExpressionSpecification = ['to-number', ['coalesce', ['get', 'add_s'], 0]]
   const big: ExpressionSpecification = ['>=', add, 2]
   return {
-    'circle-color': ['match', ['get', 'tier'], 1, TIER_COLORS[1], 2, TIER_COLORS[2], TIER_COLORS[3]],
+    'circle-color': ['step', add, POINT_ADD_STEPS[0][1], ...POINT_ADD_STEPS.slice(1).flat()],
     'circle-radius': ['interpolate', ['linear'], add, 0, ADD_SIZE.min, ADD_SIZE.maxS, ADD_SIZE.max],
-    'circle-stroke-color': ['case', MINE, MY_INPUT_STROKE, big, CANDIDATE_STROKE, '#ffffff'],
+    // 연한 점이 연한 주황 채색 위에서도 보이게 기본 테두리를 회색으로
+    'circle-stroke-color': ['case', MINE, MY_INPUT_STROKE, big, CANDIDATE_STROKE, POINT_STROKE],
     'circle-stroke-width': ['case', ['any', MINE, big], 1.8, 0.8],
   }
 }
@@ -71,7 +71,7 @@ function pointPaint(v2: boolean): Record<string, unknown> {
 /** 묶음 색: 묶인 점 중 가장 큰 값(기록값: 짧은 초, 3단계: 추가 초) */
 const clusterColor = (v2: boolean): ExpressionSpecification =>
   v2
-    ? ['case', ['==', ['get', 'n_analyzed'], 0], 'rgba(255,255,255,0.6)', ['step', ['get', 'max_add'], ADD_STEPS[0][1], ...ADD_STEPS.slice(1).flat()]] as ExpressionSpecification
+    ? ['case', ['==', ['get', 'n_analyzed'], 0], 'rgba(255,255,255,0.6)', ['step', ['get', 'max_add'], POINT_ADD_STEPS[0][1], ...POINT_ADD_STEPS.slice(1).flat()]] as ExpressionSpecification
     : ['case', ['==', ['get', 'n_analyzed'], 0], 'rgba(255,255,255,0.6)', gapColor(['get', 'max_gap'])]
 
 const EMPTY: GeoJSON.FeatureCollection = { type: 'FeatureCollection', features: [] }

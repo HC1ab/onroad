@@ -8,6 +8,7 @@ export function SpeedSelector() {
   return (
     <div className="speed" role="radiogroup" aria-label="보행 속도 기준">
       <span className="speed-title">속도 기준</span>
+      <span className="seg-group">
       {SPEEDS.map((s) => (
         <button
           key={s}
@@ -21,6 +22,7 @@ export function SpeedSelector() {
           <small>{LABEL[s]}</small>
         </button>
       ))}
+      </span>
     </div>
   )
 }

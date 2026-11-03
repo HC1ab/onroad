@@ -7,7 +7,6 @@ import { gap1, meter, pct1, sec1 } from '../lib/format'
 import { classify, effectiveThresholds } from '../lib/quadrant'
 import { sortCrosswalks } from '../lib/ranking'
 import { fmtPct, TIER_LABEL } from '../lib/recommend'
-import { TIER_COLORS } from './mapStyle'
 import { useAppState } from '../state/AppState'
 
 const FLAGS: { key: keyof ExposureFlags; short: string; label: string }[] = [
@@ -58,7 +57,7 @@ export function AreaDetail({ area, thresholdsData, metric }: Props) {
       </div>
       <h2>{area.adm_name}</h2>
       <p className="muted">
-        {area.sido} {area.sigungu} · {v2 ? `3단계 기준 · 목표 커버리지 ${Math.round(target * 100)}%` : `속도 기준 ${speed.toFixed(1)} m/s`} · 노출 반경 {radius}m
+        {area.sido} {area.sigungu} · {v2 ? `상황별 기준 · 목표 커버리지 ${Math.round(target * 100)}%` : `속도 기준 ${speed.toFixed(1)} m/s`} · 노출 반경 {radius}m
       </p>
 
       <dl className="stats">
@@ -181,7 +180,7 @@ function CrosswalksV2({ admCd }: { admCd: string }) {
       ) : (
         <table className="cw-table">
           <thead>
-            <tr><th>단계</th><th>연장</th><th>기록</th><th>기준 적용</th><th>고령 커버리지</th></tr>
+            <tr><th>적용 기준</th><th>연장</th><th>기록</th><th>기준 적용</th><th>고령 커버리지</th></tr>
           </thead>
           <tbody>
             {rows.map((f) => {
@@ -195,7 +194,7 @@ function CrosswalksV2({ admCd }: { admCd: string }) {
                   onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onRow(f)}
                 >
                   <td>
-                    {p.tier ? <i className="dot" style={{ background: TIER_COLORS[p.tier] }} title={TIER_LABEL[p.tier]} /> : '—'} {p.tier ?? ''}
+                    {p.tier ? TIER_LABEL[p.tier] : '—'}
                   </td>
                   <td>{p.length_m === null ? '—' : meter(p.length_m)}</td>
                   <td>{sec1(p.green_s)}</td>
@@ -214,7 +213,7 @@ function CrosswalksV2({ admCd }: { admCd: string }) {
         </table>
       )}
       <p className="muted small">
-        단계 1 노인보호구역 · 2 대형 전통시장 · 3 주민 고령 비율. 기준 적용 = max(기록값, 7 + 연장/적용 속도). 고령 커버리지는 고령 보행자 중 그 시간 안에 건너는 비율로, 정답 확률이 아닙니다. 행을 누르면 지도에서 위치를 보여줍니다.
+        적용 기준: 보호구역(반경 안 노인보호구역, 0.7m/s) → 시장(대형 전통시장) → 주민(그 외, 주민 고령 비율) 순으로 먼저 걸리는 하나. 기준 적용 = max(기록값, 7 + 연장/적용 속도). 고령 커버리지는 고령 보행자 중 그 시간 안에 건너는 비율로, 정답 확률이 아닙니다. 행을 누르면 지도에서 위치를 보여줍니다.
       </p>
     </>
   )

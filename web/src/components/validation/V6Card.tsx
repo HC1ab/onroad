@@ -18,7 +18,7 @@ export function V6Card({ v6 }: { v6: V6Result | null | undefined }) {
           <div><dt>잔차 차이</dt><dd><b>+{v6.diff_pp.toFixed(2)}%p</b></dd></div>
           <div><dt>단측 p (순열 {v6.n_permutations.toLocaleString()}회, 시드 {v6.seed})</dt><dd><b>{v6.p_value}</b></dd></div>
           <div><dt>역 수</dt><dd>전체 {v6.n_stations} · 대형 시장 300m 안 {v6.n_market_stations}</dd></div>
-          <div><dt>2단계 보정 (고령 비율)</dt><dd>+{v6.uplift} (민감도 {v6.uplift_range.join('~')})</dd></div>
+          <div><dt>시장 기준 보정 (고령 비율)</dt><dd>+{v6.uplift} (민감도 {v6.uplift_range.join('~')})</dd></div>
         </dl>
       )}
     </ValidationCard>

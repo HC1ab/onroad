@@ -5,7 +5,6 @@ import { TOP_N_OPTIONS } from '../lib/ranking'
 import { fmtPct, TIER_LABEL } from '../lib/recommend'
 import { regionLabel } from '../lib/region'
 import { useAppState } from '../state/AppState'
-import { TIER_COLORS } from './mapStyle'
 
 interface Props {
   /** 3단계 기준 횡단보도 점(지도 범위와 관계없이 전체) */
@@ -68,7 +67,7 @@ export function CrosswalkTopList({ points, areas, error, onRetry }: Props) {
                   <span className="name">
                     <b>{area.adm_name}</b>
                     <small className="muted">
-                      {p.tier && <i className="dot" style={{ background: TIER_COLORS[p.tier] }} title={TIER_LABEL[p.tier]} />} {p.tier}단계 ·{' '}
+                      {p.tier ? `${TIER_LABEL[p.tier]} · ` : ''}
                       {p.length_m !== null ? meter(p.length_m) : '—'} · 고령 {fmtPct(p.coverage_now)} → {fmtPct(p.coverage_required)}
                     </small>
                   </span>
@@ -81,7 +80,7 @@ export function CrosswalkTopList({ points, areas, error, onRetry }: Props) {
         </ol>
       )}
       <p className="toplist-foot muted">
-        기준 적용 시 추가 초 큰 순, 같으면 단계 1(노인보호구역) → 2(대형 시장) → 3. 오른쪽 숫자: 추가 초. 보행시간 정의 확정 전 값입니다.
+        기준 적용 시 추가 초 큰 순, 같으면 보호구역 → 시장 → 주민 기준 순. 오른쪽 숫자: 추가 초. 보행시간 정의 확정 전 값입니다.
       </p>
     </section>
   )

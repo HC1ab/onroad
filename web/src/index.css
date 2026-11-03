@@ -446,3 +446,52 @@ a { color: var(--accent); }
 .measure .card-head { margin-bottom: 4px; }
 .measure-forms { display: flex; flex-direction: column; gap: 8px; margin: 10px 0; }
 .measure .point-form input[type='datetime-local'] { width: auto; }
+
+/* 범례: 적용 기준 목록(색 없이 글자) */
+.ml-sub { margin-top: 6px !important; }
+.ml-tier { display: grid; grid-template-columns: 74px 1fr; gap: 6px; align-items: baseline; }
+.ml-tier b { color: var(--text); font-weight: 700; }
+.ml-tier span { color: var(--muted); font-size: 11px; }
+
+/* 왼쪽 필터 접기: 접으면 칸을 없애고 지도 왼쪽 위에 범례 머리 같은 작은 버튼만 둔다 */
+.workspace.filters-closed { grid-template-columns: minmax(0, 1fr) 380px; }
+.workspace.filters-closed.wide { grid-template-columns: minmax(0, 1fr) 420px; }
+.f-head { display: flex; align-items: center; justify-content: space-between; padding: 6px 12px 6px 18px; font-size: 13px; font-weight: 700; color: var(--text); }
+.icon-btn.small { width: 28px; height: 28px; font-size: 14px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; }
+.map-chip {
+  position: absolute; z-index: 3; display: inline-flex; align-items: center; gap: 12px; height: 36px; padding: 0 14px;
+  background: rgb(255 255 255 / 0.96); backdrop-filter: blur(4px); border: 1px solid var(--border); border-radius: var(--radius);
+  box-shadow: var(--shadow-md); font: inherit; font-size: 12px; font-weight: 700; line-height: 1; color: var(--text); cursor: pointer;
+}
+.map-chip:hover { border-color: var(--accent); }
+.filter-chip { top: 12px; left: 12px; }
+@media (max-width: 900px) {
+  .workspace.filters-closed, .workspace.filters-closed.wide { grid-template-columns: 1fr; grid-template-rows: 60vh auto; }
+}
+
+/* 상단 바 정렬: 탭·전환·목표 버튼을 같은 높이(32px)와 같은 묶음 모양으로 */
+.topbar { gap: 20px; }
+.topbar .tabs { align-items: center; gap: 2px; }
+.topbar .tab { display: inline-flex; align-items: center; height: 32px; padding: 0 14px; }
+.topbar-controls { gap: 20px; padding-left: 20px; }
+.topbar .basis { gap: 20px; }
+.topbar .speed { gap: 8px; }
+.topbar .speed-title { margin: 0; font-size: 12px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+/* 묶음(세그먼트) 컨테이너 */
+.topbar .seg, .topbar .seg-group {
+  display: inline-flex; align-items: center; gap: 2px; margin: 0; padding: 3px;
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px;
+}
+.topbar .seg-btn, .topbar .speed-btn {
+  flex: none; display: inline-flex; flex-direction: row; align-items: center; justify-content: center; gap: 4px;
+  height: 30px; min-width: 0; padding: 0 12px; line-height: 1;
+  border: none; border-radius: 7px; background: transparent; color: var(--text-2); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.topbar .seg-btn:hover, .topbar .speed-btn:hover { color: var(--text); background: var(--surface); }
+.topbar .seg-btn.on, .topbar .speed-btn.on { background: var(--accent); color: #fff; box-shadow: var(--shadow-sm); }
+.topbar .speed-btn b { font-size: 13px; font-weight: 700; line-height: 1; }
+.topbar .speed-btn small { font-size: 11px; font-weight: 500; line-height: 1; color: var(--muted); }
+.topbar .speed-btn.on small { color: rgb(255 255 255 / 0.85); }
+
+/* 분석 요약의 핵심 수치 강조 */
+.cwd-para p strong { color: var(--text); font-weight: 800; font-variant-numeric: tabular-nums; }
