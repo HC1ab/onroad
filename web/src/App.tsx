@@ -14,7 +14,7 @@ import { BasisSelector } from './components/BasisSelector'
 import { Tabs } from './components/Tabs'
 import { TopList } from './components/TopList'
 import { useApi } from './hooks/useApi'
-import { ADD_METRIC, RATIO_METRIC, v2AsAreas } from './lib/areaMetric'
+import { ADD_METRIC, RATIO_METRIC, v2AsAreas, withQuantileSteps } from './lib/areaMetric'
 import { countPoints, filterPoints } from './lib/points'
 import { filterAreas } from './lib/region'
 import { useRoute } from './lib/route'
@@ -29,6 +29,9 @@ function Main() {
   const route = useRoute()
   const onMap = route === 'map'
   const [bbox, setBbox] = useState<Bbox | null>(null)
+  // 왼쪽 필터 패널 접기. 지도를 넓게 보고 싶을 때 쓰며, 다음 방문에도 기억한다(이 브라우저에만).
+  const [filtersOpen, setFiltersOpen] = useState(() => readFiltersOpen())
+  const toggleFilters = () => setFiltersOpen((o) => { writeFiltersOpen(!o); return !o })
   const boundaries = useApi((s) => api.boundaries(s), [])
   // 기준 전환(#80): 기록값은 속도별(v1), 3단계 기준은 목표 커버리지별(v2) 결과를 읽는다.
   const isV2 = basis === 'v2'
@@ -36,7 +39,11 @@ function Main() {
     (s) => (isV2 ? api.areasV2(target, radius, s).then(v2AsAreas) : api.areas(speed, radius, s)),
     [isV2, target, speed, radius],
   )
-  const metric = isV2 ? ADD_METRIC : RATIO_METRIC
+  // 지도 색 구간은 지금 설정의 전국 값 5분위(#124). 지역 필터와 관계없이 전국으로 정한다.
+  const metric = useMemo(
+    () => withQuantileSteps(isV2 ? ADD_METRIC : RATIO_METRIC, areas.data?.items ?? []),
+    [isV2, areas.data],
+  )
   // 횡단보도 점은 켜져 있고 지도 범위를 알 때만 요청한다. 지도를 움직이거나 속도·반경을 바꾸면 다시 요청.
   const bboxKey = bbox?.join(',') ?? ''
   const points = useApi(
@@ -99,8 +106,8 @@ function Main() {
       </header>
 
       {/* 검증·About 화면에서도 지도는 지우지 않고 숨긴다(돌아왔을 때 위치·선택 유지). */}
-      <main className={point || selectedArea ? 'workspace wide' : 'workspace'} hidden={!onMap}>
-        <FilterPanel boundaries={boundaries.data} shown={shownCount} />
+      <main className={`workspace${point || selectedArea ? ' wide' : ''}${filtersOpen ? '' : ' filters-closed'}`} hidden={!onMap}>
+        <FilterPanel open={filtersOpen} onToggle={toggleFilters} boundaries={boundaries.data} shown={shownCount} />
         <section className="map-wrap">
           <MapView
             boundaries={boundaries.data}
@@ -113,6 +120,12 @@ function Main() {
             onBoundsChange={setBbox}
             visible={onMap}
           />
+          {!filtersOpen && (
+            <button type="button" className="map-chip filter-chip" aria-expanded={false} aria-label="필터 펼치기" title="필터 펼치기" onClick={toggleFilters}>
+              <span>필터</span>
+              <span aria-hidden>▸</span>
+            </button>
+          )}
           <MapLegend metric={metric} minSample={minSample} candidatesOnly={candidatesOnly} />
           <LoadState loading={boundaries.loading || areas.loading} error={error} onRetry={retry} />
         </section>
@@ -153,6 +166,22 @@ function Main() {
       )}
     </div>
   )
+}
+
+const FILTERS_KEY = 'onroad.filtersOpen'
+function readFiltersOpen(): boolean {
+  try {
+    return window.localStorage.getItem(FILTERS_KEY) !== '0'
+  } catch {
+    return true
+  }
+}
+function writeFiltersOpen(open: boolean) {
+  try {
+    window.localStorage.setItem(FILTERS_KEY, open ? '1' : '0')
+  } catch {
+    // 저장소를 못 쓰면 이번 방문 동안만 유지한다
+  }
 }
 
 export default function App() {

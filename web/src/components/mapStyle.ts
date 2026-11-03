@@ -40,8 +40,17 @@ export const EXCLUDED_STROKE = '#6b7280'
 export const MY_INPUT_STROKE = '#7c3aed'
 export const CLUSTER_STROKE = '#ffffff'
 
-/** v2 단계 색(Okabe–Ito, 색맹 구분 가능): 1 노인보호구역 · 2 대형 시장 · 3 주민 고령 비율 */
-export const TIER_COLORS: Record<1 | 2 | 3, string> = { 1: '#0072B2', 2: '#CC79A7', 3: '#009E73' }
+/**
+ * v2 횡단보도 점 색: 기준 적용 시 추가 초(순차형, 파랑 한 색 명도). 읍면동 채색(주황)과 겹쳐도 구분되게 다른 색 계열.
+ * 적용 기준(보호구역·시장·주민)은 크기 순서가 아니라 분류라 색으로 칠하지 않고 글자로 보여준다.
+ */
+export const POINT_ADD_STEPS: [number, string][] = [
+  [0, '#c6dbef'],
+  [1, '#9ecae1'],
+  [2, '#6baed6'],
+  [4, '#3182bd'],
+  [8, '#08519c'],
+]
 /** 분석 제외·기록 방식 확인 점(속 빈 회색) */
 export const HOLLOW_STROKE = '#9ca3af'
 /** 점 반지름(px): 추가 0초 → 최소, 이 초 이상 → 최대 */
