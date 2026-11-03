@@ -36,9 +36,9 @@ const fillColor = (steps: [number, string][]): ExpressionSpecification => [
   'case',
   ['boolean', ['feature-state', 'low_sample'], false],
   LOW_SAMPLE_COLOR,
-  ['==', ['feature-state', 'value'], null],
+  ['!=', ['typeof', ['feature-state', 'value']], 'number'],
   NO_VALUE_COLOR,
-  ['step', ['to-number', ['coalesce', ['feature-state', 'value'], 0]], steps[0][1], ...steps.slice(1).flat()],
+  ['step', ['number', ['feature-state', 'value'], 0], steps[0][1], ...steps.slice(1).flat()],
 ]
 
 const gapColor = (value: ExpressionSpecification): ExpressionSpecification =>

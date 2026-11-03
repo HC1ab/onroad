@@ -45,9 +45,10 @@ export function MapLegend({ metric, minSample, candidatesOnly }: Props) {
             <section className="ml-section">
               <h3>읍면동 · {metric.legendTitle}{v2 && ` (목표 ${Math.round(target * 100)}%)`}</h3>
               <div className="ml-ramp">
-                {metric.steps.map(([v, c]) => <span key={v} style={{ background: c }} title={`${metric.tick(v)} 이상`} />)}
+                {metric.steps.map(([v, c]) => <span key={v} style={{ background: c }} title={`${metric.fmt(v)} 이상`} />)}
               </div>
-              <div className="ml-scale"><span>{metric.scale[0]}</span><span>{metric.scale[1]}</span></div>
+              <div className="ml-scale">{(metric.legendStops ?? metric.scale).map((s, i) => <span key={i}>{s}</span>)}</div>
+              {metric.legendStops && <p className="ml-note">색 구간: 지금 설정의 전국 값을 5등분(분위). 설정을 바꾸면 구간도 바뀝니다.</p>}
               <div className="ml-row"><i className="sw hatch" style={{ backgroundColor: LOW_SAMPLE_COLOR }} />
                 표본 부족 ({minSample ? `분석 ${minSample}곳 미만` : '표본 하한 미만'}, 순위 제외)</div>
               <div className="ml-row"><i className="sw" style={{ background: NO_VALUE_COLOR }} />값 없음</div>
