@@ -16,6 +16,8 @@ export interface AreaMetric {
   ticks: (max: number) => number[]
   legendTitle: string
   scale: [string, string]
+  /** 5분위로 다시 정한 경우 범례 구간 경계 글자(최솟값 … 최댓값). 없으면 scale 양 끝만 쓴다 */
+  legendStops?: string[]
   axisLabel: string
   short: string
   tooltip: (a: { value: number | null; n_add2?: number }) => string
@@ -66,6 +68,43 @@ export const ADD_METRIC: AreaMetric = {
   axisLabel: '기준 적용 시 평균 추가 초 →',
   short: '평균 추가',
   tooltip: ({ value, n_add2 }) => `기준 적용 시 평균 +${sec1(value)}${n_add2 !== undefined ? ` · 2초 이상 추가 ${n_add2}곳` : ''}`,
+}
+
+/**
+ * 지도 색 구간을 지금 화면 값의 5분위로 다시 정한다(#124). 고정 구간은 실데이터에서 값이 한쪽에 몰려
+ * 거의 한 색으로 보였다. 표본 부족·값 없음은 빼고 계산한다.
+ * 같은 값이 몰려 경계가 겹치면(예: 대부분 0%) 그 값 위쪽을 다시 나누고, 그래도 모자라면 구간 수를 줄인다.
+ * 색은 양 끝을 살려 고르게 고른다. 값이 2개 미만이면 고정 구간을 그대로 쓴다.
+ */
+export function withQuantileSteps(metric: AreaMetric, items: AreaItem[]): AreaMetric {
+  const values = items
+    .filter((a) => !a.low_sample)
+    .map(metric.value)
+    .filter((v): v is number => typeof v === 'number')
+    .sort((a, b) => a - b)
+  if (values.length < 2) return metric
+  const colors = metric.steps.map(([, c]) => c)
+  const n = colors.length
+  // breaks[i] = i번째 구간의 하한. 남은 값(마지막 하한 이상)을 남은 구간 수로 나눠 다음 하한을 고른다.
+  const breaks = [values[0]]
+  while (breaks.length < n) {
+    const last = breaks[breaks.length - 1]
+    const rest = values.filter((v) => v >= last)
+    const above = rest.find((v) => v > last)
+    if (above === undefined) break
+    const next = rest[Math.round(rest.length / (n - breaks.length + 1))]
+    breaks.push(next > last ? next : above)
+  }
+  const k = breaks.length
+  const pick = (i: number) => colors[k === 1 ? 0 : Math.round((i * (n - 1)) / (k - 1))]
+  const max = values[values.length - 1]
+  return {
+    ...metric,
+    steps: breaks.map((b, i) => [b, pick(i)]),
+    scale: [metric.fmt(values[0]), metric.fmt(max)],
+    // 마지막 구간이 한 값(예: 100%)뿐이면 끝 글자를 겹쳐 쓰지 않는다
+    legendStops: [...breaks.map((v) => metric.fmt(v)), max > breaks[breaks.length - 1] ? metric.fmt(max) : ''],
+  }
 }
 
 /**

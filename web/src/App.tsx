@@ -14,7 +14,7 @@ import { BasisSelector } from './components/BasisSelector'
 import { Tabs } from './components/Tabs'
 import { TopList } from './components/TopList'
 import { useApi } from './hooks/useApi'
-import { ADD_METRIC, RATIO_METRIC, v2AsAreas } from './lib/areaMetric'
+import { ADD_METRIC, RATIO_METRIC, v2AsAreas, withQuantileSteps } from './lib/areaMetric'
 import { countPoints, filterPoints } from './lib/points'
 import { filterAreas } from './lib/region'
 import { useRoute } from './lib/route'
@@ -39,7 +39,11 @@ function Main() {
     (s) => (isV2 ? api.areasV2(target, radius, s).then(v2AsAreas) : api.areas(speed, radius, s)),
     [isV2, target, speed, radius],
   )
-  const metric = isV2 ? ADD_METRIC : RATIO_METRIC
+  // 지도 색 구간은 지금 설정의 전국 값 5분위(#124). 지역 필터와 관계없이 전국으로 정한다.
+  const metric = useMemo(
+    () => withQuantileSteps(isV2 ? ADD_METRIC : RATIO_METRIC, areas.data?.items ?? []),
+    [isV2, areas.data],
+  )
   // 횡단보도 점은 켜져 있고 지도 범위를 알 때만 요청한다. 지도를 움직이거나 속도·반경을 바꾸면 다시 요청.
   const bboxKey = bbox?.join(',') ?? ''
   const points = useApi(
