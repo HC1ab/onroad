@@ -41,16 +41,16 @@ export function v2Narrative(p: PointProps, target: Target, radius: Radius): Narr
   const parts = p.reason_parts
   if (p.tier === 1) {
     const d = parts?.protect_zone_m != null ? `노인보호구역에서 ${m0(parts.protect_zone_m)} 거리라 ` : ''
-    out.push({ title: '적용 속도', text: `${d}1단계로 분류했습니다. 보호구역 기준 보행속도 ${V2_COEF.tier1Speed}m/s를 적용합니다.` })
+    out.push({ title: '적용 속도', text: `${d}보호구역 기준을 적용했습니다. 보호구역 보행속도 ${V2_COEF.tier1Speed}m/s를 적용합니다.` })
   } else if (p.tier === 2 && v != null) {
     const where = !parts?.market_name ? '' : parts.market_m != null ? `${parts.market_name}에서 ${m0(parts.market_m)} 거리라 ` : `${parts.market_name} 근처라 `
     const users = p.resident_elderly_ratio != null && p.user_elderly_ratio != null
       ? `반경 주민 고령 비율 ${pct(p.resident_elderly_ratio)}에 시장 이용 보정을 더해 이용자 고령 비율을 ${pct(p.user_elderly_ratio)}로 보고, `
       : ''
-    out.push({ title: '적용 속도', text: `${where}2단계로 분류했습니다. ${users}이용자 ${pct(target)}가 건널 수 있는 속도 ${v.toFixed(2)}m/s를 적용합니다.` })
+    out.push({ title: '적용 속도', text: `${where}시장 기준을 적용했습니다. ${users}이용자 ${pct(target)}가 건널 수 있는 속도 ${v.toFixed(2)}m/s를 적용합니다.` })
   } else if (v != null) {
     const res = p.resident_elderly_ratio != null ? `반경 ${radius}m 안 주민 고령 비율 ${pct(p.resident_elderly_ratio)}로 이용자 구성을 보고, ` : ''
-    out.push({ title: '적용 속도', text: `${res}이용자 ${pct(target)}가 건널 수 있는 속도 ${v.toFixed(2)}m/s를 적용합니다(3단계).` })
+    out.push({ title: '적용 속도', text: `${res}이용자 ${pct(target)}가 건널 수 있는 속도 ${v.toFixed(2)}m/s를 적용합니다(주민 기준).` })
   }
 
   if (p.t_required_s != null && p.green_s != null && p.length_m != null) {

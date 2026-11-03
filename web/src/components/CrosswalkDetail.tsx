@@ -2,11 +2,10 @@ import type { Speed } from '../api/types'
 import { meter, sec1 } from '../lib/format'
 import { v1Narrative, v2Narrative } from '../lib/narrative'
 import { needSeconds } from '../lib/points'
-import { fmtPct, TIER_LABEL } from '../lib/recommend'
+import { fmtPct, TIER_DESC, TIER_LABEL } from '../lib/recommend'
 import { ROUTE_HASH } from '../lib/route'
 import { useAppState } from '../state/AppState'
 import { useUserInputs } from '../state/UserInputs'
-import { TIER_COLORS } from './mapStyle'
 
 type Props = NonNullable<ReturnType<typeof useAppState>['point']>['props']
 
@@ -32,7 +31,7 @@ export function CrosswalkDetail({ areaName }: { areaName: string | null }) {
             {status ? (
               <span className="chip muted-chip">{status}</span>
             ) : v2 && p.tier ? (
-              <span className="chip"><i className="dot" style={{ background: TIER_COLORS[p.tier] }} />{TIER_LABEL[p.tier]}</span>
+              <span className="chip" title={TIER_DESC[p.tier]}>{TIER_LABEL[p.tier]}</span>
             ) : p.is_candidate ? (
               <span className="chip accent-chip">점검 우선순위 후보</span>
             ) : null}

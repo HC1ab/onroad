@@ -9,10 +9,10 @@ export function BasisSelector() {
     <div className="basis">
       <div className="seg" role="radiogroup" aria-label="화면 기준">
         <button type="button" role="radio" aria-checked={basis === 'recorded'} className={basis === 'recorded' ? 'seg-btn on' : 'seg-btn'} onClick={() => setBasis('recorded')}>
-          기록값
+          일괄 속도 비교
         </button>
         <button type="button" role="radio" aria-checked={basis === 'v2'} className={basis === 'v2' ? 'seg-btn on' : 'seg-btn'} onClick={() => setBasis('v2')}>
-          3단계 기준
+          상황별 기준
         </button>
       </div>
       {basis === 'recorded' ? (

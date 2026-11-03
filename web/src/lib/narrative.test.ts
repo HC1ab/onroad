@@ -11,7 +11,7 @@ const base: PointProps = {
 }
 
 describe('분석 요약 문장', () => {
-  it('1단계: 보호구역 거리·속도·시간·커버리지·기준식이 내보낸 값 그대로 들어간다', () => {
+  it('보호구역 기준: 보호구역 거리·속도·시간·커버리지·기준식이 내보낸 값 그대로 들어간다', () => {
     const n = v2Narrative(base, 0.85, 300)
     const text = n.paragraphs.map((p) => p.text).join(' ')
     expect(n.paragraphs.map((p) => p.title)).toEqual(['적용 속도', '기준 적용 시간', '고령 보행자 커버리지', '현재 기록의 기준식'])

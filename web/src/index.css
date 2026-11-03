@@ -446,3 +446,9 @@ a { color: var(--accent); }
 .measure .card-head { margin-bottom: 4px; }
 .measure-forms { display: flex; flex-direction: column; gap: 8px; margin: 10px 0; }
 .measure .point-form input[type='datetime-local'] { width: auto; }
+
+/* 범례: 적용 기준 목록(색 없이 글자) */
+.ml-sub { margin-top: 6px !important; }
+.ml-tier { display: grid; grid-template-columns: 74px 1fr; gap: 6px; align-items: baseline; }
+.ml-tier b { color: var(--text); font-weight: 700; }
+.ml-tier span { color: var(--muted); font-size: 11px; }

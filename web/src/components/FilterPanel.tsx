@@ -57,7 +57,7 @@ export function FilterPanel({ boundaries, shown }: Props) {
       </section>
 
       <section className="f-section">
-        <h2 className="f-title" title="이 거리 안의 노인보호구역·대형 시장·주민 고령 비율로 단계를 정합니다. 기본 300m는 보호구역 지정 범위를 따랐습니다">
+        <h2 className="f-title" title="이 거리 안의 노인보호구역·대형 시장·주민 고령 비율로 적용 기준을 정합니다. 기본 300m는 보호구역 지정 범위를 따랐습니다">
           노출 반경
         </h2>
         <div className="seg" role="radiogroup" aria-label="노출 반경">
