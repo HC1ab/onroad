@@ -495,3 +495,52 @@ a { color: var(--accent); }
 
 /* 분석 요약의 핵심 수치 강조 */
 .cwd-para p strong { color: var(--text); font-weight: 800; font-variant-numeric: tabular-nums; }
+
+/* 소개·검증 화면 가독성 (피드백: 글꼴·크기). 지도 화면에는 영향이 없도록 두 화면 안으로만 한정한다.
+   글자 크기는 rem 대신 px로 두어 기존 규칙과 같은 방식을 쓴다. 본문 16px, 보조 글 14px 이상. */
+.about-page, .v-page {
+  font-family: 'Pretendard Variable', 'Pretendard', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  font-size: 17px; line-height: 1.7; color: var(--text); letter-spacing: -0.01em; word-break: keep-all;
+}
+.about-page { max-width: 940px; font-size: 17px; }
+.about-page h2, .v-page .card h2 { font-size: 24px; line-height: 1.35; margin-bottom: 10px; }
+.about-page h3, .v-page .card h3 { font-size: 19px; line-height: 1.4; margin-bottom: 8px; }
+.about-page p, .about-page li, .about-page dd, .about-page dt { font-size: 17px; }
+.about-page .small, .v-page .small { font-size: 15px; }
+.about-page .muted, .v-page .muted { color: #475467; }
+.about-page ul { padding-left: 22px; }
+.about-terms { grid-template-columns: 200px 1fr; gap: 10px 16px; }
+.coef-table { font-size: 16px; }
+.coef-table th, .coef-table td { padding: 8px 10px; }
+.about-dl { gap: 8px 16px; }
+
+.v-page { max-width: 1000px; }
+/* 가로가 넓으면 시선 이동이 길어서 카드를 한 줄에 하나씩 둔다 */
+.v-page .v-grid { grid-template-columns: minmax(0, 1fr); }
+.v-head h2 { font-size: 28px; }
+.v-head p, .v-intro, .v-intro p { font-size: 17px; }
+.v-status { font-size: 15px; padding: 6px 14px; }
+.v-summary { font-size: 16px; gap: 6px 20px; }
+.v-question, .v-caution { font-size: 16px; }
+.v-basis, .v-basis summary, .v-details summary { font-size: 15px; }
+.v-basis dl { grid-template-columns: 84px 1fr; gap: 6px 10px; }
+.v-metric { font-size: 15px; padding: 8px 12px; }
+.v-metric b { font-size: 22px; }
+.v-metric small { font-size: 14px; }
+.v-pending { font-size: 16px; }
+.v-table { font-size: 15px; }
+.v-table th, .v-table td { padding: 8px 10px; }
+.v4-legend, .v4-row { font-size: 15px; }
+.v4-row { grid-template-columns: 84px 1fr; }
+.v4-bar { font-size: 14px; padding: 3px 8px; }
+.v-page .card-head .badge, .v-page .badge { font-size: 14px; padding: 4px 12px; }
+.v-page .v-mine, .v-page .v-mine-actions { font-size: 15px; }
+.v-page .point-form label { font-size: 14px; }
+.v-page .point-form input { font-size: 15px; width: 84px; padding: 4px 6px; }
+.v-page .point-form button { font-size: 15px; padding: 5px 14px; }
+.v-page .tag, .about-page .tag { font-size: 13px; }
+/* 검증 그림(SVG): 글자가 그림 비율대로 커지므로, 그림 폭을 제한하고 글자는 원래 값에 가깝게 둔다 */
+.v-page .v-svg { max-width: 640px; margin: 0 auto; }
+.v-page .q-tick { font-size: 11px; }
+.v-page .q-label { font-size: 12px; }
+.v-page .v-observed-label { font-size: 12px; }
