@@ -19,16 +19,7 @@ export function FilterPanel({ open, onToggle, boundaries, shown }: Props) {
   const v2 = basis === 'v2'
   const n = (v: number | undefined) => (shown && layers.points && v !== undefined ? v.toLocaleString() : null)
 
-  if (!open) {
-    return (
-      <aside className="filters collapsed" aria-label="지도 필터 (접힘)">
-        <button type="button" className="f-fold" aria-expanded={false} aria-label="필터 펼치기" title="필터 펼치기" onClick={onToggle}>
-          <span aria-hidden>»</span>
-          <span className="f-fold-text">필터</span>
-        </button>
-      </aside>
-    )
-  }
+  if (!open) return null
 
   return (
     <aside className="filters" aria-label="지도 필터">

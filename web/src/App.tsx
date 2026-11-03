@@ -116,6 +116,12 @@ function Main() {
             onBoundsChange={setBbox}
             visible={onMap}
           />
+          {!filtersOpen && (
+            <button type="button" className="map-chip filter-chip" aria-expanded={false} aria-label="필터 펼치기" title="필터 펼치기" onClick={toggleFilters}>
+              <span>필터</span>
+              <span aria-hidden>▸</span>
+            </button>
+          )}
           <MapLegend metric={metric} minSample={minSample} candidatesOnly={candidatesOnly} />
           <LoadState loading={boundaries.loading || areas.loading} error={error} onRetry={retry} />
         </section>

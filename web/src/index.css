@@ -453,20 +453,20 @@ a { color: var(--accent); }
 .ml-tier b { color: var(--text); font-weight: 700; }
 .ml-tier span { color: var(--muted); font-size: 11px; }
 
-/* 왼쪽 필터 접기 */
-.workspace.filters-closed { grid-template-columns: 44px minmax(0, 1fr) 380px; }
-.workspace.filters-closed.wide { grid-template-columns: 44px minmax(0, 1fr) 420px; }
+/* 왼쪽 필터 접기: 접으면 칸을 없애고 지도 왼쪽 위에 범례 머리 같은 작은 버튼만 둔다 */
+.workspace.filters-closed { grid-template-columns: minmax(0, 1fr) 380px; }
+.workspace.filters-closed.wide { grid-template-columns: minmax(0, 1fr) 420px; }
 .f-head { display: flex; align-items: center; justify-content: space-between; padding: 6px 12px 6px 18px; font-size: 13px; font-weight: 700; color: var(--text); }
-.icon-btn.small { width: 28px; height: 28px; font-size: 14px; line-height: 1; }
-.filters.collapsed { padding: 8px 0; display: flex; justify-content: center; }
-.f-fold { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 32px; padding: 8px 0; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--text-2); cursor: pointer; font: inherit; font-size: 12px; font-weight: 700; }
-.f-fold:hover { border-color: var(--accent); color: var(--accent-strong); }
-.f-fold-text { writing-mode: vertical-rl; letter-spacing: 0.1em; }
+.icon-btn.small { width: 28px; height: 28px; font-size: 14px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; }
+.map-chip {
+  position: absolute; z-index: 3; display: inline-flex; align-items: center; gap: 12px; height: 36px; padding: 0 14px;
+  background: rgb(255 255 255 / 0.96); backdrop-filter: blur(4px); border: 1px solid var(--border); border-radius: var(--radius);
+  box-shadow: var(--shadow-md); font: inherit; font-size: 12px; font-weight: 700; line-height: 1; color: var(--text); cursor: pointer;
+}
+.map-chip:hover { border-color: var(--accent); }
+.filter-chip { top: 12px; left: 12px; }
 @media (max-width: 900px) {
-  .workspace.filters-closed, .workspace.filters-closed.wide { grid-template-columns: 1fr; }
-  .filters.collapsed { justify-content: flex-start; padding: 6px 12px; }
-  .filters.collapsed .f-fold { flex-direction: row; width: auto; padding: 4px 12px; }
-  .filters.collapsed .f-fold-text { writing-mode: horizontal-tb; }
+  .workspace.filters-closed, .workspace.filters-closed.wide { grid-template-columns: 1fr; grid-template-rows: 60vh auto; }
 }
 
 /* 상단 바 정렬: 탭·전환·목표 버튼을 같은 높이(32px)와 같은 묶음 모양으로 */
@@ -483,14 +483,14 @@ a { color: var(--accent); }
   background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px;
 }
 .topbar .seg-btn, .topbar .speed-btn {
-  flex: none; display: inline-flex; flex-direction: row; align-items: baseline; justify-content: center; gap: 4px;
-  height: 30px; min-width: 0; padding: 0 12px; line-height: 30px;
+  flex: none; display: inline-flex; flex-direction: row; align-items: center; justify-content: center; gap: 4px;
+  height: 30px; min-width: 0; padding: 0 12px; line-height: 1;
   border: none; border-radius: 7px; background: transparent; color: var(--text-2); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
 }
 .topbar .seg-btn:hover, .topbar .speed-btn:hover { color: var(--text); background: var(--surface); }
 .topbar .seg-btn.on, .topbar .speed-btn.on { background: var(--accent); color: #fff; box-shadow: var(--shadow-sm); }
-.topbar .speed-btn b { font-size: 13px; font-weight: 700; }
-.topbar .speed-btn small { font-size: 11px; font-weight: 500; color: var(--muted); }
+.topbar .speed-btn b { font-size: 13px; font-weight: 700; line-height: 1; }
+.topbar .speed-btn small { font-size: 11px; font-weight: 500; line-height: 1; color: var(--muted); }
 .topbar .speed-btn.on small { color: rgb(255 255 255 / 0.85); }
 
 /* 분석 요약의 핵심 수치 강조 */
