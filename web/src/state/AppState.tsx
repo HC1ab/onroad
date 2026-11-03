@@ -66,8 +66,8 @@ const Ctx = createContext<AppState | null>(null)
 export const DEFAULT_SPEED: Speed = 0.8
 export const DEFAULT_RADIUS: Radius = 300
 export const DEFAULT_TARGET: Target = 0.85
-/** v2 결과는 계약 C3(#73) 전이라 mock 에만 있다. 서버·묶음이 v2 를 내보내면 v2 를 기본으로 바꾼다. */
-const DEFAULT_BASIS: Basis = API_MODE === 'mock' ? 'v2' : 'recorded'
+/** 서버(B7)와 mock 은 v2 를 내보내므로 v2 가 기본이다. 정적 묶음은 v2 를 아직 못 읽어(#105) 기록값으로 연다. */
+const DEFAULT_BASIS: Basis = API_MODE === 'static' ? 'recorded' : 'v2'
 
 export function AppStateProvider({ children }: { children: ReactNode }) {
   const [basis, setBasisState] = useState<Basis>(DEFAULT_BASIS)

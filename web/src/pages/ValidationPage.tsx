@@ -1,6 +1,7 @@
 import { api } from '../api/client'
 import type { MetaResponse } from '../api/types'
 import { SUMMARY } from '../components/validation/basis'
+import { MeasureInput } from '../components/validation/MeasureInput'
 import { V1Card } from '../components/validation/V1Card'
 import { V2Card } from '../components/validation/V2Card'
 import { V3Card } from '../components/validation/V3Card'
@@ -26,7 +27,7 @@ export function ValidationPage({ meta }: { meta: MetaResponse | null }) {
         <div>
           <h2>검증 결과</h2>
           <p className="muted">
-            <b>전국 기준</b> · 지도의 지역 선택과 관계없습니다(V1 현장 실측만 부산) · 결과가 기대와 다르게 나와도 그대로 표시합니다 · 모든 검증은 연관성이며 인과가 아닙니다
+            <b>부산 기준</b> · 지도의 지역 선택과 관계없습니다 · 결과가 기대와 다르게 나와도 그대로 표시합니다 · 모든 검증은 연관성이며 인과가 아닙니다
           </p>
         </div>
         {meta && (
@@ -47,6 +48,8 @@ export function ValidationPage({ meta }: { meta: MetaResponse | null }) {
           ))}
         </ol>
       </section>
+
+      <MeasureInput />
 
       {v.error ? (
         <div className="load-inline error" role="alert">
