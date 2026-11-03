@@ -341,7 +341,7 @@ a { color: var(--accent); }
 .f-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--text-2); }
 .f-inline { display: flex; gap: 4px; }
 .f-inline input { width: 52px; font: inherit; font-size: 13px; padding: 4px 6px; border: 1px solid var(--border-strong); border-radius: 6px; }
-.f-inline select, .filters .region select { font: inherit; font-size: 13px; padding: 4px 6px; border: 1px solid var(--border-strong); border-radius: 6px; background: var(--surface); color: var(--text); }
+.f-inline select, .f-row > select, .filters .region select { font: inherit; font-size: 13px; padding: 4px 6px; border: 1px solid var(--border-strong); border-radius: 6px; background: var(--surface); color: var(--text); }
 .filters .region { flex-direction: column; align-items: stretch; gap: 6px; }
 .filters .region select { max-width: none; width: 100%; }
 .filters .seg { margin: 0; }
@@ -385,6 +385,21 @@ a { color: var(--accent); }
 .side > * + * { margin-top: 0; }
 .overview { display: flex; flex-direction: column; gap: 10px; }
 .ov-hint { margin: 0; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--surface); border: 1px dashed var(--border-strong); font-size: 12px; color: var(--muted); }
+
+/* 첫 화면 발견 카드: 결론을 먼저 읽고, 눌러서 지도에서 확인한다 */
+.findings { display: flex; flex-direction: column; gap: 10px; }
+.fd-title { margin: 0; font-size: 15px; font-weight: 800; letter-spacing: -0.01em; color: var(--text); }
+.finding { display: flex; flex-direction: column; gap: 6px; padding: 14px 16px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--accent); box-shadow: var(--shadow-sm); }
+.finding p { margin: 0; }
+.fd-eyebrow { font-size: 12px; font-weight: 700; color: var(--accent-strong); }
+.fd-value { font-size: 32px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; color: var(--text); font-variant-numeric: tabular-nums; }
+.fd-value small { font-size: 14px; font-weight: 600; color: var(--muted); margin-left: 6px; letter-spacing: 0; }
+.fd-text { font-size: 13px; line-height: 1.6; color: var(--text-2); font-variant-numeric: tabular-nums; }
+.fd-text b { color: var(--text); }
+.fd-action { align-self: flex-start; margin-top: 2px; padding: 5px 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-strong); background: var(--surface); color: var(--text); font: inherit; font-size: 12px; font-weight: 700; text-decoration: none; cursor: pointer; }
+.fd-action:hover { border-color: var(--accent); color: var(--accent-strong); }
+.fd-action.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.fd-note { margin: 0; font-size: 11px; color: var(--muted); }
 
 /* 수치 타일 */
 .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0; }
