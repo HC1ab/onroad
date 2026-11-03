@@ -1,5 +1,6 @@
-import { RADII, type BoundariesResponse } from '../api/types'
+import { RADII, type BoundariesResponse, type Tier } from '../api/types'
 import { ADD_THRESHOLD_S, type PointFilter } from '../lib/points'
+import { TIER_LABEL } from '../lib/recommend'
 import { useAppState } from '../state/AppState'
 import { RegionFilter } from './RegionFilter'
 
@@ -61,6 +62,16 @@ export function FilterPanel({ open, onToggle, boundaries, shown }: Props) {
             </select>
           </span>
         </label>
+        {v2 && (
+          <label className="f-row">
+            <span>적용 기준</span>
+            <select value={f.tier ?? ''} aria-label="적용 기준" disabled={!layers.points}
+              onChange={(e) => set({ tier: e.target.value ? (Number(e.target.value) as Tier) : null })}>
+              <option value="">전체</option>
+              {([1, 2, 3] as const).map((t) => <option key={t} value={t}>{TIER_LABEL[t]}</option>)}
+            </select>
+          </label>
+        )}
         <Toggle checked={f.showExcluded} onChange={() => set({ showExcluded: !f.showExcluded })} disabled={!layers.points}
           label={v2 ? '분석 제외·기록 확인 점' : '분석 제외 점'} count={f.showExcluded ? n(shown?.excluded) : null} />
       </section>

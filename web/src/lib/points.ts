@@ -1,4 +1,4 @@
-import type { CandidatesResponse, ExcludeReason, PointProps, PointsResponse, Radius, Speed } from '../api/types'
+import type { CandidatesResponse, ExcludeReason, PointProps, PointsResponse, Radius, Speed, Tier } from '../api/types'
 
 // 전체 횡단보도 점(지도 점 레이어, 정보 카드)에 쓰는 순수 함수. 화면 코드와 테스트가 함께 쓴다.
 
@@ -13,9 +13,11 @@ export interface PointFilter {
   gapValue: number
   /** 분석 제외(녹색신호시간 없음 등) 점 표시 */
   showExcluded: boolean
+  /** 3단계 기준 화면의 적용 기준. null 이면 전체 */
+  tier: Tier | null
 }
 
-export const DEFAULT_POINT_FILTER: PointFilter = { scope: 'all', gapOp: null, gapValue: 0, showExcluded: false }
+export const DEFAULT_POINT_FILTER: PointFilter = { scope: 'all', gapOp: null, gapValue: 0, showExcluded: false, tier: null }
 
 export const EXCLUDE_REASON_LABEL: Record<ExcludeReason, string> = {
   green_missing: '녹색신호시간 기록 없음',
@@ -45,6 +47,7 @@ export function filterPoints(data: PointsResponse, f: PointFilter, v2 = false): 
   const features = data.features.filter(({ properties: p }) => {
     if (isHollow(p)) return f.showExcluded
     if (f.scope === 'candidates' && !isHighlighted(p, v2)) return false
+    if (v2 && f.tier && p.tier !== f.tier) return false
     const v = filterValue(p, v2)
     if (f.gapOp && v !== null) {
       if (f.gapOp === 'gte' && v < f.gapValue) return false

@@ -5,6 +5,7 @@ import { AreaDetail } from './components/AreaDetail'
 import { CrosswalkTopList } from './components/CrosswalkTopList'
 import { CrosswalkDetail } from './components/CrosswalkDetail'
 import { FilterPanel } from './components/FilterPanel'
+import { Findings } from './components/Findings'
 import { LoadState } from './components/LoadState'
 import { MapLegend } from './components/MapLegend'
 import { MapView, type Bbox } from './components/MapView'
@@ -129,7 +130,7 @@ function Main() {
           <MapLegend metric={metric} minSample={minSample} candidatesOnly={candidatesOnly} />
           <LoadState loading={boundaries.loading || areas.loading} error={error} onRetry={retry} />
         </section>
-        {/* 오른쪽 패널: 횡단보도를 고르면 그 상세, 읍면동만 고르면 지역 상세, 아무것도 없으면 개요(사분면·우선순위 목록). */}
+        {/* 오른쪽 패널: 횡단보도를 고르면 그 상세, 읍면동만 고르면 지역 상세, 아무것도 없으면 발견 카드·개요(사분면·우선순위 목록). */}
         <aside className="side">
           {point ? (
             <CrosswalkDetail key={point.cwId} areaName={pointArea ? `${pointArea.sigungu} ${pointArea.adm_name}` : null} />
@@ -142,6 +143,7 @@ function Main() {
             </section>
           ) : (
             <>
+              {isV2 && <Findings points={allV2.data} />}
               <Overview points={allV2.data} />
               {isV2 ? (
                 <CrosswalkTopList points={allV2.data} areas={scoped?.items ?? null} error={allV2.error} onRetry={allV2.reload} />

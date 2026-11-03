@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import candidates from '@contracts/samples/candidates.json'
 import sample from '@contracts/samples/points.json'
+import sampleV2 from '@contracts/samples/points_v2.json'
 import type { CandidatesResponse, PointsResponse } from '../api/types'
 import { candidatesAsPoints, countPoints, DEFAULT_POINT_FILTER, filterPoints, gapWithGreen, mockPointsFor } from './points'
 
@@ -49,5 +50,20 @@ describe('전체 점이 없을 때 후보 점으로 대신', () => {
     const p = candidatesAsPoints(candidates as unknown as CandidatesResponse)
     expect(p.features.length).toBe(candidates.features.length)
     expect(p.features[0].properties).toMatchObject({ status: 'analyzed', is_candidate: true, length_m: null, green_s: null })
+  })
+})
+
+describe('적용 기준 필터 (첫 화면 발견 카드)', () => {
+  const v2 = sampleV2 as unknown as PointsResponse
+
+  it('3단계 기준 화면에서는 고른 기준의 점만 남긴다', () => {
+    const z = filterPoints(v2, { ...DEFAULT_POINT_FILTER, tier: 1 }, true)
+    expect(z.features.length).toBeGreaterThan(0)
+    expect(z.features.every((f) => f.properties.tier === 1)).toBe(true)
+  })
+
+  it('기록값 화면에서는 적용 기준을 보지 않는다', () => {
+    expect(filterPoints(v2, { ...DEFAULT_POINT_FILTER, tier: 1 }).features.length)
+      .toBe(filterPoints(v2, DEFAULT_POINT_FILTER).features.length)
   })
 })
