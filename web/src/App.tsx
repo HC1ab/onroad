@@ -29,6 +29,9 @@ function Main() {
   const route = useRoute()
   const onMap = route === 'map'
   const [bbox, setBbox] = useState<Bbox | null>(null)
+  // 왼쪽 필터 패널 접기. 지도를 넓게 보고 싶을 때 쓰며, 다음 방문에도 기억한다(이 브라우저에만).
+  const [filtersOpen, setFiltersOpen] = useState(() => readFiltersOpen())
+  const toggleFilters = () => setFiltersOpen((o) => { writeFiltersOpen(!o); return !o })
   const boundaries = useApi((s) => api.boundaries(s), [])
   // 기준 전환(#80): 기록값은 속도별(v1), 3단계 기준은 목표 커버리지별(v2) 결과를 읽는다.
   const isV2 = basis === 'v2'
@@ -99,8 +102,8 @@ function Main() {
       </header>
 
       {/* 검증·About 화면에서도 지도는 지우지 않고 숨긴다(돌아왔을 때 위치·선택 유지). */}
-      <main className={point || selectedArea ? 'workspace wide' : 'workspace'} hidden={!onMap}>
-        <FilterPanel boundaries={boundaries.data} shown={shownCount} />
+      <main className={`workspace${point || selectedArea ? ' wide' : ''}${filtersOpen ? '' : ' filters-closed'}`} hidden={!onMap}>
+        <FilterPanel open={filtersOpen} onToggle={toggleFilters} boundaries={boundaries.data} shown={shownCount} />
         <section className="map-wrap">
           <MapView
             boundaries={boundaries.data}
@@ -113,6 +116,12 @@ function Main() {
             onBoundsChange={setBbox}
             visible={onMap}
           />
+          {!filtersOpen && (
+            <button type="button" className="map-chip filter-chip" aria-expanded={false} aria-label="필터 펼치기" title="필터 펼치기" onClick={toggleFilters}>
+              <span>필터</span>
+              <span aria-hidden>▸</span>
+            </button>
+          )}
           <MapLegend metric={metric} minSample={minSample} candidatesOnly={candidatesOnly} />
           <LoadState loading={boundaries.loading || areas.loading} error={error} onRetry={retry} />
         </section>
@@ -153,6 +162,22 @@ function Main() {
       )}
     </div>
   )
+}
+
+const FILTERS_KEY = 'onroad.filtersOpen'
+function readFiltersOpen(): boolean {
+  try {
+    return window.localStorage.getItem(FILTERS_KEY) !== '0'
+  } catch {
+    return true
+  }
+}
+function writeFiltersOpen(open: boolean) {
+  try {
+    window.localStorage.setItem(FILTERS_KEY, open ? '1' : '0')
+  } catch {
+    // 저장소를 못 쓰면 이번 방문 동안만 유지한다
+  }
 }
 
 export default function App() {

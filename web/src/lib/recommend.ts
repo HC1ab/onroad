@@ -95,9 +95,16 @@ export function needsDataCheck(green_s: number, length_m: number): boolean {
 }
 
 export const TIER_LABEL: Record<Tier, string> = {
-  1: '1단계 노인보호구역',
-  2: '2단계 대형 전통시장',
-  3: '3단계 주민 고령 비율',
+  1: '보호구역 기준',
+  2: '시장 기준',
+  3: '주민 기준',
+}
+
+/** 적용 기준 설명(위에서부터 먼저 걸리는 하나). 순서는 판정 순서일 뿐 크기 순서가 아니다 */
+export const TIER_DESC: Record<Tier, string> = {
+  1: '반경 안 노인보호구역 · 0.7m/s 고정',
+  2: '반경 안 대형 전통시장 · 주민 고령 비율 + 시장 보정',
+  3: '그 외 · 반경 안 주민 고령 비율',
 }
 
 export const fmtPct = (v: number | null | undefined) => (v === null || v === undefined ? '—' : `${Math.round(v * 100)}%`)
